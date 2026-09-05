@@ -119,6 +119,34 @@ the server has, with an error — the set is never faked into the list.
   routine builder so 11d's set form reuses it — genuine two-call-site reuse, not
   speculative componentization.
 
+## History is a pure read (11e)
+
+`/history` and `/history/:id` issue only `GET /api/workouts` and
+`GET /api/workouts/:id`. No mutations, no new endpoints. A history page can
+re-fetch freely (it's a query — idempotent, no side effect), unlike set logging.
+
+- **Server ordering is authoritative.** `GET /api/workouts` returns newest-first
+  (`date DESC, id DESC`); `History` renders the array as-is with no client sort.
+  Re-implementing the sort in React would be a second copy of a rule that can
+  drift from the backend's.
+- **Flat API, grouped display.** `GET /api/workouts/:id` returns a flat
+  `sets[]` (ordered by set id = log order). `SetList` groups it by exercise
+  *for rendering only*, recomputed each render — never stored. The backend stays
+  a clean relational list; "group by exercise" is one of several possible views
+  and belongs in the component that needs it.
+- **URL carries the state.** `/history/7` holds everything needed:
+  `WorkoutDetail` parses `7`, calls `GET /api/workouts/7`, renders from the
+  response. Nothing depends on prior React state, so a hard refresh is identical
+  to a normal navigation. (Contrast 11d: an active workout's *unsent* form input
+  is not in the URL and is lost on refresh.)
+- **Dates: stored UTC, shown local.** `formatDate` in `src/format.js` appends
+  `Z` to the backend's `"YYYY-MM-DD HH:MM:SS"` and calls `toLocaleString`, so
+  the time shown follows the viewer's device. No per-user timezone setting in
+  v1; the stored value is never modified. (`WorkoutSession` still has its own
+  local `formatStarted` — candidate to consolidate onto `formatDate` in 11f.)
+- **Empty workout ≠ error.** V1 has no "finish" state, so a workout row with
+  zero sets is valid data. `WorkoutDetail` shows "No sets logged", not an error.
+
 ## Dev workflow
 
 ```bash

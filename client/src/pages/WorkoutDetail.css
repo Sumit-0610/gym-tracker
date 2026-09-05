@@ -1,0 +1,18 @@
+.wd-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.wd-head h1 {
+  overflow-wrap: anywhere;
+}
+
+.wd-meta {
+  font-size: var(--t-sm);
+  color: var(--c-text-dim);
+}
+
+.wd-head + section h2 {
+  margin-bottom: var(--s-3);
+}

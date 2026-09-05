@@ -52,7 +52,8 @@ See `../CLAUDE_CODE_START_HERE.md` for the full plan. Current progress:
   - [x] 11b — auth UI: login, signup, logout, refresh-persistent session
   - [x] 11c — exercises browser (search) + routines (list, create, detail, add exercise)
   - [x] 11d — workout logging (start routine/freestyle, log sets, live set list)
-  - [ ] 11e — workout history
+  - [x] 11e — workout history (list + detail, grouped sets, freestyle label)
+  - [ ] 11f — polish + tests
   - [ ] 11e — history
   - [ ] 11f — polish + tests
 - [ ] Phase 12 — Deploy config for the phone

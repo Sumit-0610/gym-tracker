@@ -33,7 +33,10 @@ export default function SetList({ sets }) {
       {groups.map((g) => (
         <li key={g.exercise_id} className="set-group">
           <div className="set-group-head">
-            <span className="set-group-name">{g.name}</span>
+            {/* h3: the page owns h1, the "Sets"/"Logged sets" section owns h2,
+                so each exercise is an h3 — screen readers can jump between
+                exercises via heading navigation. */}
+            <h3 className="set-group-name">{g.name}</h3>
             {g.muscle_group && (
               <span className="set-group-muscle">{g.muscle_group}</span>
             )}

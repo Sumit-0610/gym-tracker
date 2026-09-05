@@ -21,6 +21,9 @@
 }
 
 .set-group-name {
+  /* rendered as <h3> — normalise it back to body-size inline-looking text */
+  margin: 0;
+  font-size: var(--t-base);
   font-weight: 600;
   overflow-wrap: anywhere;
 }

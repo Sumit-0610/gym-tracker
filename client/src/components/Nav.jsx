@@ -18,7 +18,10 @@ export default function Nav() {
   return (
     <nav className="nav" aria-label="Main navigation">
       {TABS.map((t) => {
-        const active = path === t.to;
+        // "/" is only active on exactly "/"; other tabs stay active on their
+        // sub-routes too (/routines/3 keeps the Routines tab lit).
+        const active =
+          t.to === '/' ? path === '/' : path === t.to || path.startsWith(`${t.to}/`);
         return (
           <Link
             key={t.to}

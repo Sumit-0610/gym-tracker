@@ -2,7 +2,7 @@ import './styles/tokens.css';
 import './styles/global.css';
 
 import { AuthProvider, useAuth } from './auth';
-import { Router, useRouter, matchPath, Redirect } from './router';
+import { Router, useRouter, matchPath, Redirect, Link } from './router';
 import Nav from './components/Nav';
 import Spinner from './components/Spinner';
 
@@ -37,7 +37,7 @@ function NotFound() {
     <div className="page">
       <h1>Not found</h1>
       <p>
-        No screen for this address. <a href="/">Go home</a>
+        No screen for this address. <Link to="/">Go home</Link>
       </p>
     </div>
   );
@@ -63,21 +63,22 @@ function Shell() {
     }
   }
 
-  if (!match) return <NotFound />;
-
   // Frontend route guarding is a UI convenience only. The backend is still the
   // real security boundary: it 401s every /api call that has no session.
-  if (!match.route.public && !authed) return <Redirect to="/login" />;
-  if (match.route.public && authed) return <Redirect to="/" />;
+  if (match) {
+    if (!match.route.public && !authed) return <Redirect to="/login" />;
+    if (match.route.public && authed) return <Redirect to="/" />;
+  }
 
-  const View = match.route.component;
+  const View = match ? match.route.component : NotFound;
+  const params = match ? match.params : {};
 
-  if (!authed) return <View {...match.params} />;
+  if (!authed) return <View {...params} />;
 
   return (
     <>
       <div className="with-nav">
-        <View {...match.params} />
+        <View {...params} />
       </div>
       <Nav />
     </>

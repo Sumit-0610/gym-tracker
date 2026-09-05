@@ -147,6 +147,33 @@ re-fetch freely (it's a query — idempotent, no side effect), unlike set loggin
 - **Empty workout ≠ error.** V1 has no "finish" state, so a workout row with
   zero sets is valid data. `WorkoutDetail` shows "No sets logged", not an error.
 
+## Polish decisions (11f)
+
+- **One error→text map.** `describeError(error)` in `src/format.js` turns an
+  `ApiError` status into a sentence; `ErrorMessage` and both auth screens use it.
+  Auth screens override 401/409 first (a 401 on the login page means "wrong
+  password", not "session expired").
+- **`inFlight` useRef on every mutation form** — login, signup, create routine,
+  add exercise, start workout, log set. `disabled={pending}` alone doesn't stop a
+  submit fired before React re-renders; the ref does. No global request manager.
+- **`formatDate` is the only date formatter** — `WorkoutSession`'s old local copy
+  was removed.
+- **`SetList` exercise names are `<h3>`** (page = h1, section = h2, exercise =
+  h3) so screen readers can jump between exercises. CSS normalises the h3 back to
+  body size — no visual change.
+- **Nav**: bottom-tab stays active on sub-routes (`/history/5` → "History"); all
+  five items fit on one line down to 320px via `white-space: nowrap` + a small
+  `clamp()` font.
+- **Unknown routes** render inside the normal shell (with the nav bar when
+  logged in) and link home with `<Link>`, not a full page reload.
+
+## Known limitations (carried into V1)
+
+MemoryStore sessions (restart = logout) · no resume-last-workout endpoint · no
+explicit workout completion state · weight assumed kg · dates stored UTC / shown
+local, no per-user tz · no history pagination · no automated browser E2E
+framework (`E2E-CHECKLIST.md` is the manual pass).
+
 ## Dev workflow
 
 ```bash

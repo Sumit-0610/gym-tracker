@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useAuth } from '../auth';
 import { Link } from '../router';
 import { ApiError } from '../api';
+import { describeError } from '../format';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import Button from '../components/Button';
@@ -18,9 +19,11 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [pending, setPending] = useState(false);
+  const inFlight = useRef(false);
 
   async function onSubmit(e) {
     e.preventDefault();
+    if (inFlight.current) return;
 
     // Frontend validation is for fast feedback only — the backend re-checks.
     if (!username.trim() || !password) {
@@ -28,12 +31,14 @@ export default function Login() {
       return;
     }
 
+    inFlight.current = true;
     setError(null);
     setPending(true);
     try {
       await login(username.trim(), password);
       // success: AuthProvider navigates away, this component unmounts
     } catch (err) {
+      inFlight.current = false;
       setPending(false);
       setError(err instanceof ApiError ? err : new ApiError(0));
     }
@@ -42,7 +47,7 @@ export default function Login() {
   const message =
     error?.status === 401
       ? 'Invalid username or password.'
-      : error?.message;
+      : error && describeError(error);
 
   return (
     <div className="page auth-page">

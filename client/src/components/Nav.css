@@ -14,13 +14,16 @@
 
 .nav-item {
   flex: 1;
+  min-width: 0;
   min-height: var(--tap-min);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--s-2);
-  font-size: var(--t-sm);
+  padding: var(--s-2) var(--s-1);
+  /* shrink a touch on very narrow phones so all 5 items fit on one line */
+  font-size: clamp(0.72rem, 3.4vw, var(--t-sm));
   font-weight: 600;
+  white-space: nowrap;
   color: var(--c-text-dim);
   text-decoration: none;
   background: transparent;

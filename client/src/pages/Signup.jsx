@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useAuth } from '../auth';
 import { Link } from '../router';
 import { ApiError } from '../api';
+import { describeError } from '../format';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import Button from '../components/Button';
@@ -16,9 +17,11 @@ export default function Signup() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [pending, setPending] = useState(false);
+  const inFlight = useRef(false);
 
   async function onSubmit(e) {
     e.preventDefault();
+    if (inFlight.current) return;
 
     if (!username.trim()) {
       setError(new ApiError(400, 'Choose a username.'));
@@ -29,11 +32,13 @@ export default function Signup() {
       return;
     }
 
+    inFlight.current = true;
     setError(null);
     setPending(true);
     try {
       await signup(username.trim(), password);
     } catch (err) {
+      inFlight.current = false;
       setPending(false);
       setError(err instanceof ApiError ? err : new ApiError(0));
     }
@@ -42,7 +47,7 @@ export default function Signup() {
   const message =
     error?.status === 409
       ? 'That username is already taken.'
-      : error?.message;
+      : error && describeError(error);
 
   return (
     <div className="page auth-page">

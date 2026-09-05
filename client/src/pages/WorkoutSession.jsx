@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { api } from '../api';
 import { useApi } from '../hooks/useApi';
 import { useNavigate, Link } from '../router';
+import { formatDate } from '../format';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Spinner from '../components/Spinner';
@@ -10,12 +11,6 @@ import EmptyState from '../components/EmptyState';
 import SetForm from './SetForm';
 import SetList from './SetList';
 import './WorkoutSession.css';
-
-// The backend stores dates as "YYYY-MM-DD HH:MM:SS" in UTC.
-function formatStarted(raw) {
-  const d = new Date(raw.replace(' ', 'T') + 'Z');
-  return Number.isNaN(d.getTime()) ? raw : d.toLocaleString();
-}
 
 export default function WorkoutSession({ id }) {
   const navigate = useNavigate();
@@ -69,7 +64,7 @@ export default function WorkoutSession({ id }) {
     <div className="page">
       <header className="ws-head">
         <h1>{w.routine_name || 'Freestyle workout'}</h1>
-        <p className="ws-started">Started {formatStarted(w.date)}</p>
+        <p className="ws-started">Started {formatDate(w.date)}</p>
       </header>
 
       {routineId && routine.data && routine.data.exercises.length > 0 && (

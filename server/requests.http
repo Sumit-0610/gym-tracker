@@ -1,0 +1,35 @@
+# Example requests. Replay these with the VS Code "REST Client" extension,
+# or translate to curl. Run them top-to-bottom; the session cookie is kept
+# between requests automatically by REST Client.
+
+@base = http://localhost:3000
+
+### health check
+GET {{base}}/
+
+### signup (also logs you in)
+POST {{base}}/api/signup
+Content-Type: application/json
+
+{ "username": "sumit", "password": "hunter2" }
+
+### signup again with same name -> 409
+POST {{base}}/api/signup
+Content-Type: application/json
+
+{ "username": "sumit", "password": "whatever" }
+
+### login
+POST {{base}}/api/login
+Content-Type: application/json
+
+{ "username": "sumit", "password": "hunter2" }
+
+### who am I (protected) -> 200 when logged in
+GET {{base}}/api/me
+
+### logout
+POST {{base}}/api/logout
+
+### who am I after logout -> 401
+GET {{base}}/api/me

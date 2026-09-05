@@ -1,0 +1,5 @@
+# The app runs on Termux (Linux) — keep LF in the repo regardless of dev OS.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

@@ -51,7 +51,8 @@ See `../CLAUDE_CODE_START_HERE.md` for the full plan. Current progress:
   - [x] 11a — foundation: router, API client, auth context, design system
   - [x] 11b — auth UI: login, signup, logout, refresh-persistent session
   - [x] 11c — exercises browser (search) + routines (list, create, detail, add exercise)
-  - [ ] 11d — workout logging
+  - [x] 11d — workout logging (start routine/freestyle, log sets, live set list)
+  - [ ] 11e — workout history
   - [ ] 11e — history
   - [ ] 11f — polish + tests
 - [ ] Phase 12 — Deploy config for the phone
@@ -87,6 +88,17 @@ Errors are always `{ "error": "<message>" }`.
 | POST | `/api/workouts/:id/sets` | `{exercise_id, set_number, reps, weight}` | `201 {id, workout_id, …}` |
 | GET | `/api/workouts` | — | `200 [{id, date, routine_name, set_count}]` |
 | GET | `/api/workouts/:id` | — | `200 {id, date, routine_id, routine_name, sets:[…]}` |
+
+### Client routes
+
+`/login` · `/signup` · `/` (dashboard) · `/exercises` · `/routines` · `/routines/:id`
+· `/workout` (start) · `/workout/:id` (active session) · `/history` · `/history/:id`
+
+**Known limitation:** an active workout lives at `/workout/:id`, so a refresh
+recovers it (via `GET /api/workouts/:id`). But there is no "resume my last
+workout" — landing on `/workout` with no id always shows the start screen.
+There is no backend endpoint for "the current unfinished workout" and V1 does
+not add one; any sets already logged are safe in the database.
 
 ## Tests
 

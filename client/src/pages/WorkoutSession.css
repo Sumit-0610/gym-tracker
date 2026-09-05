@@ -1,0 +1,43 @@
+.ws-head h1 {
+  overflow-wrap: anywhere;
+}
+
+.ws-started {
+  color: var(--c-text-dim);
+  font-size: var(--t-sm);
+}
+
+.ws-plan h2 {
+  font-size: var(--t-base);
+  margin-bottom: var(--s-3);
+}
+
+.ws-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.ws-chip {
+  min-height: var(--tap-min);
+  padding: var(--s-2) var(--s-3);
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  color: var(--c-text);
+  font-size: var(--t-sm);
+  cursor: pointer;
+}
+
+.ws-chip-active {
+  border-color: var(--c-primary);
+  color: var(--c-primary);
+}
+
+.ws-chip-target {
+  color: var(--c-text-dim);
+}
+
+.ws-logged h2 {
+  margin-bottom: var(--s-3);
+}

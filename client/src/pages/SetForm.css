@@ -1,0 +1,27 @@
+.set-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.set-form-context {
+  font-size: var(--t-sm);
+  color: var(--c-text-dim);
+}
+
+.set-form-row {
+  display: flex;
+  gap: var(--s-3);
+}
+
+.set-form-row .field {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Bigger numeric inputs — they're the thing you tap most in a gym. */
+.set-form-row input {
+  min-height: 52px;
+  font-size: var(--t-lg);
+  text-align: center;
+}

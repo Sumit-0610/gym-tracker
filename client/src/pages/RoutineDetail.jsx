@@ -1,10 +1,10 @@
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { api, ApiError } from '../api';
 import { useApi } from '../hooks/useApi';
 import { Link } from '../router';
 import Card from '../components/Card';
 import Input from '../components/Input';
-import Select from '../components/Select';
+import ExerciseSelect from '../components/ExerciseSelect';
 import Button from '../components/Button';
 import Spinner from '../components/Spinner';
 import ErrorMessage from '../components/ErrorMessage';
@@ -29,17 +29,6 @@ function AddExerciseForm({ routineId, exercises, onAdded }) {
   const [error, setError] = useState(null);
   const [pending, setPending] = useState(false);
   const inFlight = useRef(false); // see the note in Routines.jsx
-
-  // Group the library by muscle so the <select> can use <optgroup>.
-  const groups = useMemo(() => {
-    const byMuscle = new Map();
-    for (const e of exercises) {
-      const key = e.muscle_group || 'Other';
-      if (!byMuscle.has(key)) byMuscle.set(key, []);
-      byMuscle.get(key).push(e);
-    }
-    return [...byMuscle.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  }, [exercises]);
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -81,22 +70,11 @@ function AddExerciseForm({ routineId, exercises, onAdded }) {
   return (
     <Card as="form" onSubmit={onSubmit} noValidate className="add-exercise">
       <h2>Add an exercise</h2>
-      <Select
-        label="Exercise"
+      <ExerciseSelect
+        exercises={exercises}
         value={exerciseId}
         onChange={(e) => setExerciseId(e.target.value)}
-      >
-        <option value="">Select an exercise…</option>
-        {groups.map(([muscle, list]) => (
-          <optgroup key={muscle} label={muscle}>
-            {list.map((ex) => (
-              <option key={ex.id} value={ex.id}>
-                {ex.name}
-              </option>
-            ))}
-          </optgroup>
-        ))}
-      </Select>
+      />
 
       <div className="target-row">
         <Input

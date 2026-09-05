@@ -7,6 +7,7 @@ import './Button.css';
 // (user taps "Log set" twice before the first request returns).
 export default function Button({
   pending = false,
+  pendingLabel = 'Working…',
   variant = 'primary',
   className = '',
   disabled = false,
@@ -20,7 +21,7 @@ export default function Button({
       aria-busy={pending || undefined}
       {...rest}
     >
-      {pending ? 'Working…' : children}
+      {pending ? pendingLabel : children}
     </button>
   );
 }

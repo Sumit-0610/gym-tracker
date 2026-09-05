@@ -1,0 +1,56 @@
+.set-groups {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.set-group {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: var(--s-3) var(--s-4);
+}
+
+.set-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  margin-bottom: var(--s-2);
+}
+
+.set-group-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.set-group-muscle {
+  font-size: var(--t-sm);
+  color: var(--c-text-dim);
+}
+
+.set-rows {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.set-row {
+  display: flex;
+  gap: var(--s-3);
+  padding: var(--s-1) 0;
+}
+
+.set-row-n {
+  flex-shrink: 0;
+  width: 3.5rem;
+  color: var(--c-text-dim);
+  font-size: var(--t-sm);
+}
+
+.set-row-detail {
+  font-variant-numeric: tabular-nums;
+}

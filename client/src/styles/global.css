@@ -46,10 +46,22 @@ select,
 textarea {
   font: inherit;
   color: inherit;
-  /* Opt out of native control styling so our CSS actually applies on mobile. */
+}
+
+/* Opt text-like controls out of native styling so our CSS applies on mobile.
+   Radios and checkboxes keep their native rendering — we want the real dot/tick. */
+button,
+select,
+textarea,
+input:not([type='radio']):not([type='checkbox']) {
   appearance: none;
   -webkit-appearance: none;
   border-radius: 0;
+}
+
+input[type='radio'],
+input[type='checkbox'] {
+  accent-color: var(--c-primary);
 }
 
 /* Visible focus for keyboard users on every interactive element. Never remove

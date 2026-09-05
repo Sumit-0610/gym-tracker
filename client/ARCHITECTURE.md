@@ -99,6 +99,26 @@ is needed at this scope. Revisit only if the frontend ever becomes cross-origin.
   suppressed. `min`/`type` attributes stay as hints.
 - **`<select>` is native.** On a phone the OS picker beats anything custom.
 
+## Intent vs confirmed server state (11d)
+
+The active workout screen (`/workout/:id`) never shows a set because a button was
+clicked. The flow is: submit → `POST /api/workouts/:id/sets` → **the server
+confirms the row exists** → `workout.reload()` re-fetches → the set renders from
+`GET /api/workouts/:id`. A failed request leaves the screen showing exactly what
+the server has, with an error — the set is never faked into the list.
+
+- **Set number is derived, not typed.** `nextSetNumber = sets.filter(s =>
+  s.exercise_id === chosen).length + 1`, recomputed each render. Client sends it
+  explicitly (the backend requires it); it advances on its own after each logged
+  set and resets per exercise.
+- **The workout id is in the URL.** `/workout/:id` means a mid-workout refresh
+  reloads the session from the existing `GET /api/workouts/:id`. The route was
+  already in the table; no backend change. Limitation: no "resume last workout"
+  from bare `/workout` (no endpoint for it) — documented in the README.
+- **`ExerciseSelect`** (grouped-by-muscle `<select>`) was extracted from the 11c
+  routine builder so 11d's set form reuses it — genuine two-call-site reuse, not
+  speculative componentization.
+
 ## Dev workflow
 
 ```bash

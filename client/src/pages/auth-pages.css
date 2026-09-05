@@ -1,0 +1,19 @@
+.auth-page {
+  padding-top: var(--s-8);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.auth-error {
+  color: var(--c-danger);
+  font-size: var(--t-sm);
+}
+
+.auth-switch {
+  text-align: center;
+  color: var(--c-text-dim);
+}

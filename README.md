@@ -8,8 +8,8 @@ Learning project — small scale (~10 users), clarity over scalability.
 - **Backend:** Node.js + Express (`server/`)
 - **Database:** SQLite via `node:sqlite` (built into Node 22.5+ — no native addon to compile)
 - **Auth:** `bcryptjs` password hashing + `express-session` cookie sessions
-- **Frontend:** React + Vite (`client/`) — *not built yet*
-- **Reverse proxy (on the phone):** nginx in front of the Express app
+- **Frontend:** React + Vite (`client/`) — see `client/ARCHITECTURE.md`
+- **Reverse proxy (on the phone):** nginx serves `client/dist/` + proxies `/api` → Express
 
 ## Requirements
 
@@ -47,10 +47,25 @@ See `../CLAUDE_CODE_START_HERE.md` for the full plan. Current progress:
 - [x] Phase 8 — Routines API
 - [x] Phase 9 — Workout logging
 - [x] Phase 10 — Workout history
-- [ ] Phase 11 — Frontend (architecture TBD)
+- [~] Phase 11 — Frontend (React + Vite)
+  - [x] 11a — foundation: router, API client, auth context, design system
+  - [x] 11b — auth UI: login, signup, logout, refresh-persistent session
+  - [ ] 11c — exercises + routines
+  - [ ] 11d — workout logging
+  - [ ] 11e — history
+  - [ ] 11f — polish + tests
 - [ ] Phase 12 — Deploy config for the phone
 
-**Backend v1 is complete.** All 65 checks in `test/smoke.sh` pass.
+**Backend v1 is complete.** All 65 checks in `server/test/smoke.sh` pass.
+
+## Run it (development)
+
+```bash
+cd server && npm install && npm start      # terminal 1 — API on :3000
+cd client && npm install && npm run dev     # terminal 2 — UI on :5173 (proxies /api)
+```
+
+Open http://localhost:5173.
 
 ## API (v1)
 

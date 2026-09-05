@@ -1,0 +1,42 @@
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: flex;
+  background: var(--c-surface);
+  border-top: 1px solid var(--c-border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.nav-item {
+  flex: 1;
+  min-height: var(--tap-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-2);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--c-text-dim);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.nav-item-active {
+  color: var(--c-primary);
+}
+
+.nav-logout {
+  color: var(--c-text-dim);
+}
+
+/* Screens add this class so their content isn't hidden behind the fixed bar. */
+.with-nav {
+  padding-bottom: calc(var(--tap-min) + var(--s-5) + env(safe-area-inset-bottom));
+}

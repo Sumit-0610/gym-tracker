@@ -1,0 +1,15 @@
+.empty {
+  text-align: center;
+  padding: var(--s-6) var(--s-4);
+  color: var(--c-text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  align-items: center;
+}
+
+.empty-title {
+  font-size: var(--t-lg);
+  color: var(--c-text);
+  font-weight: 600;
+}

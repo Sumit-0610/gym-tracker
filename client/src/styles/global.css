@@ -1,0 +1,68 @@
+/* Reset + base element styles. Component-specific styles live next to their
+   component, not here. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font);
+  font-size: var(--t-base);
+  line-height: 1.5;
+  color: var(--c-text);
+  background: var(--c-bg);
+  /* pad for phone notches / home indicator */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#root {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: var(--t-xl);
+}
+h2 {
+  font-size: var(--t-lg);
+}
+
+a {
+  color: var(--c-primary);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  /* Opt out of native control styling so our CSS actually applies on mobile. */
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 0;
+}
+
+/* Visible focus for keyboard users on every interactive element. Never remove
+   this without replacing it — it's how keyboard users see where they are. */
+:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+/* Utility used by a few screens for the page title + spacing rhythm. */
+.page {
+  padding: var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}

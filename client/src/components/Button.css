@@ -1,0 +1,48 @@
+.btn {
+  /* Without this, mobile browsers render a native button chrome and ignore
+     our background-color. */
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: var(--tap-min);
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  font-size: var(--t-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--c-primary);
+  color: #05210f;
+}
+.btn-primary:not(:disabled):active {
+  background: var(--c-primary-press);
+}
+
+.btn-secondary {
+  background: var(--c-surface-2);
+  color: var(--c-text);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--c-text-dim);
+  border-color: var(--c-border);
+}
+
+.btn-danger {
+  background: var(--c-danger-bg);
+  color: var(--c-danger);
+  border-color: var(--c-danger);
+}
+
+.btn-block {
+  width: 100%;
+}

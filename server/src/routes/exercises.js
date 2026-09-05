@@ -8,6 +8,7 @@ const { db } = require('../db');
 const requireAuth = require('../middleware/auth');
 
 const router = express.Router();
+router.use(requireAuth);
 
 // GET /api/exercises
 //   Auth:     session required
@@ -22,7 +23,7 @@ const router = express.Router();
 //     but every seeded row has one.
 //   - No parameters, so nothing to parameterize — there is no user input in
 //     this query at all.
-router.get('/exercises', requireAuth, (req, res) => {
+router.get('/exercises', (req, res) => {
   const exercises = db
     .prepare(
       `SELECT id, name, muscle_group

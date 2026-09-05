@@ -67,6 +67,45 @@ check "no leaked columns"          "true" \
 check "exercises deterministically ordered" "true" \
   "$(body | jget "JSON.stringify(d) === JSON.stringify([...d].sort((x,y)=>(x.muscle_group+x.name).localeCompare(y.muscle_group+y.name)))")"
 
+echo "== phase 8: routines =="
+# --- create / validate ---
+check "create routine (alice)"      201 "$(code POST /api/routines "$A" '{"name":"Push Day"}')"
+RID="$(body | jget 'd.id')"
+check "create routine empty name"   400 "$(code POST /api/routines "$A" '{"name":"   "}')"
+check "create routine no body"      400 "$(code POST /api/routines "$A" '{}')"
+check "create routine ignores client user_id" 201 \
+  "$(code POST /api/routines "$A" '{"name":"Pull Day","user_id":999999}')"
+RID2="$(body | jget 'd.id')"
+
+# --- list is per-user ---
+code GET /api/routines "$A" >/dev/null
+check "alice sees her routine"      "true" "$(body | jget "d.some(r=>r.id===$RID)")"
+code GET /api/routines "$B" >/dev/null
+check "bob does NOT see alice's routine" "false" "$(body | jget "d.some(r=>r.id===$RID)")"
+
+# --- view one: ownership ---
+check "alice views her routine"     200 "$(code GET /api/routines/$RID "$A")"
+check "  ...has empty exercises[]"  "0" "$(body | jget 'd.exercises.length')"
+check "bob CANNOT view alice's routine (404)" 404 "$(code GET /api/routines/$RID "$B")"
+check "view nonexistent routine"    404 "$(code GET /api/routines/999999 "$A")"
+check "view non-numeric id"         404 "$(code GET /api/routines/abc "$A")"
+
+# --- add exercise: validation + ownership + existence ---
+check "add exercise (alice)"        201 "$(code POST /api/routines/$RID/exercises "$A" '{"exercise_id":1,"target_sets":3,"target_reps":10}')"
+check "add exercise unknown id"     400 "$(code POST /api/routines/$RID/exercises "$A" '{"exercise_id":999999}')"
+check "add exercise missing id"     400 "$(code POST /api/routines/$RID/exercises "$A" '{}')"
+check "add exercise bad target"     400 "$(code POST /api/routines/$RID/exercises "$A" '{"exercise_id":1,"target_sets":-2}')"
+check "bob CANNOT add to alice's routine (404)" 404 "$(code POST /api/routines/$RID/exercises "$B" '{"exercise_id":2}')"
+check "add to nonexistent routine"  404 "$(code POST /api/routines/999999/exercises "$A" '{"exercise_id":1}')"
+
+# --- nested read reflects writes; duplicates allowed ---
+code POST /api/routines/$RID/exercises "$A" '{"exercise_id":1}' >/dev/null   # same exercise again
+code GET /api/routines/$RID "$A" >/dev/null
+check "routine now has 2 exercises (dupes allowed)" "2" "$(body | jget 'd.exercises.length')"
+check "  ...first has target_sets 3" "3" "$(body | jget 'd.exercises[0].target_sets')"
+check "  ...second has null targets"  "null" "$(body | jget 'String(d.exercises[1].target_sets)')"
+check "  ...exercise name joined in"  "true" "$(body | jget "d.exercises.every(e=>typeof e.name==='string' && e.name.length>0)")"
+
 echo
 echo "passed: $pass   failed: $fail"
 [ "$fail" -eq 0 ]

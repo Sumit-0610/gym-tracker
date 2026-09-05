@@ -43,12 +43,44 @@ See `../CLAUDE_CODE_START_HERE.md` for the full plan. Current progress:
 - [x] Phase 3 — Signup (bcrypt)
 - [x] Phase 4 — Login + sessions
 - [x] Phase 5 — Auth middleware + protected route
-- [ ] Phase 7 — Exercises API
-- [ ] Phase 8 — Routines API
-- [ ] Phase 9 — Workout logging
-- [ ] Phase 10 — Workout history
-- [ ] Phase 11 — React client
+- [x] Phase 7 — Exercises API
+- [x] Phase 8 — Routines API
+- [x] Phase 9 — Workout logging
+- [x] Phase 10 — Workout history
+- [ ] Phase 11 — Frontend (architecture TBD)
 - [ ] Phase 12 — Deploy config for the phone
+
+**Backend v1 is complete.** All 65 checks in `test/smoke.sh` pass.
+
+## API (v1)
+
+Every route except `/api/signup` and `/api/login` requires a session cookie.
+Errors are always `{ "error": "<message>" }`.
+
+| Method | Path | Body | Success |
+|---|---|---|---|
+| POST | `/api/signup` | `{username, password}` | `201 {id, username}` |
+| POST | `/api/login` | `{username, password}` | `200 {id, username}` |
+| POST | `/api/logout` | — | `200 {ok:true}` |
+| GET | `/api/me` | — | `200 {id, username, created_at}` |
+| GET | `/api/exercises` | — | `200 [{id, name, muscle_group}]` |
+| POST | `/api/routines` | `{name}` | `201 {id, name}` |
+| GET | `/api/routines` | — | `200 [{id, name}]` |
+| GET | `/api/routines/:id` | — | `200 {id, name, exercises:[…]}` |
+| POST | `/api/routines/:id/exercises` | `{exercise_id, target_sets?, target_reps?}` | `201 {id, routine_id, …}` |
+| POST | `/api/workouts` | `{routine_id?}` | `201 {id, routine_id, date}` |
+| POST | `/api/workouts/:id/sets` | `{exercise_id, set_number, reps, weight}` | `201 {id, workout_id, …}` |
+| GET | `/api/workouts` | — | `200 [{id, date, routine_name, set_count}]` |
+| GET | `/api/workouts/:id` | — | `200 {id, date, routine_id, routine_name, sets:[…]}` |
+
+## Tests
+
+```bash
+cd server
+npm start                # terminal 1
+rm -f data/app.db        # optional: start from an empty DB
+bash test/smoke.sh       # terminal 2 — exits 0 if all checks pass
+```
 
 ## Deploying to the phone
 

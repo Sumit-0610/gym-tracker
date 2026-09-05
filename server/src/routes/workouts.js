@@ -104,4 +104,87 @@ router.post('/workouts/:id/sets', (req, res) => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Phase 10 — history
+// ---------------------------------------------------------------------------
+
+// GET /api/workouts
+//   Returns: 200 [{ id, date, routine_name, set_count }]  newest first
+//
+// One query, not "list workouts then fetch sets for each" (that would be 1 + N
+// queries). The joins + GROUP BY do it in a single round trip:
+//   - LEFT JOIN routines: routine_id is NULL for freestyle workouts; a plain
+//     JOIN would drop those rows. LEFT JOIN keeps them with routine_name = NULL.
+//   - LEFT JOIN workout_sets: a workout with no sets yet must still appear.
+//     COUNT(ws.id) counts non-NULL ids, so "no sets" -> 0 (not 1).
+//   - GROUP BY w.id: the sets join produces one row per set; grouping collapses
+//     them back to one row per workout. Selecting w.date / r.name alongside the
+//     aggregate is well-defined here because we group by the workouts primary key.
+router.get('/workouts', (req, res) => {
+  const workouts = db
+    .prepare(
+      `SELECT w.id,
+              w.date,
+              r.name AS routine_name,
+              COUNT(ws.id) AS set_count
+         FROM workouts w
+         LEFT JOIN routines r      ON r.id = w.routine_id
+         LEFT JOIN workout_sets ws ON ws.workout_id = w.id
+        WHERE w.user_id = ?
+        GROUP BY w.id
+        ORDER BY w.date DESC, w.id DESC`
+    )
+    .all(req.userId);
+
+  res.json(workouts);
+});
+
+// GET /api/workouts/:id
+//   Returns: 200 { id, date, routine_id, routine_name, sets: [
+//                    { id, exercise_id, exercise_name, muscle_group,
+//                      set_number, reps, weight } ] }
+//            404 if the workout doesn't exist OR isn't the caller's
+router.get('/workouts/:id', (req, res) => {
+  const workoutId = parseId(req.params.id);
+  if (workoutId === null) {
+    return res.status(404).json({ error: 'workout not found' });
+  }
+
+  // Query 1 — authorize + metadata. `AND w.user_id = ?` is the ownership gate;
+  // no row => 404 (exists-but-not-yours is indistinguishable from doesn't-exist).
+  const workout = db
+    .prepare(
+      `SELECT w.id, w.date, w.routine_id, r.name AS routine_name
+         FROM workouts w
+         LEFT JOIN routines r ON r.id = w.routine_id
+        WHERE w.id = ? AND w.user_id = ?`
+    )
+    .get(workoutId, req.userId);
+  if (!workout) {
+    return res.status(404).json({ error: 'workout not found' });
+  }
+
+  // Query 2 — the sets. Safe without another ownership check: query 1 proved
+  // the caller owns workoutId, and we filter only by that id. JOIN (not LEFT)
+  // to exercises because every set has a valid exercise_id (enforced on insert
+  // and by the foreign key).
+  const sets = db
+    .prepare(
+      `SELECT ws.id,
+              ws.exercise_id,
+              e.name AS exercise_name,
+              e.muscle_group,
+              ws.set_number,
+              ws.reps,
+              ws.weight
+         FROM workout_sets ws
+         JOIN exercises e ON e.id = ws.exercise_id
+        WHERE ws.workout_id = ?
+        ORDER BY ws.id`
+    )
+    .all(workoutId);
+
+  res.json({ ...workout, sets });
+});
+
 module.exports = router;

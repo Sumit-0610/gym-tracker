@@ -134,6 +134,32 @@ check "log set to nonexistent workout (404)" 404 \
 check "log set to non-numeric workout id (404)" 404 \
   "$(code POST /api/workouts/abc/sets "$A" '{"exercise_id":1,"set_number":1,"reps":10,"weight":60}')"
 
+echo "== phase 10: history =="
+code GET /api/workouts "$A" >/dev/null
+check "alice history lists her workouts" "2" "$(body | jget 'd.length')"
+check "  ...newest first (date DESC, id DESC)" "true" \
+  "$(body | jget 'd[0].id >= d[1].id')"
+check "  ...routine workout shows routine_name" "true" \
+  "$(body | jget "d.some(w=>w.routine_name==='Push Day')")"
+check "  ...freestyle workout has null routine_name" "true" \
+  "$(body | jget "d.some(w=>w.routine_name===null)")"
+check "  ...set_count present on the logged workout" "2" \
+  "$(body | jget "d.find(w=>w.id===$WID).set_count")"
+check "  ...empty workout has set_count 0" "0" \
+  "$(body | jget "d.find(w=>w.id===$WID_FREE).set_count")"
+code GET /api/workouts "$B" >/dev/null
+check "bob's history is empty" "0" "$(body | jget 'd.length')"
+
+check "alice views workout detail"  200 "$(code GET /api/workouts/$WID "$A")"
+check "  ...has sets array of 2"     "2" "$(body | jget 'd.sets.length')"
+check "  ...set has exercise_name joined" "true" \
+  "$(body | jget "typeof d.sets[0].exercise_name==='string' && d.sets[0].exercise_name.length>0")"
+check "  ...set has reps and weight" "true" \
+  "$(body | jget "d.sets.every(s=>typeof s.reps==='number' && typeof s.weight==='number')")"
+check "bob CANNOT view alice's workout detail (404)" 404 "$(code GET /api/workouts/$WID "$B")"
+check "view nonexistent workout (404)" 404 "$(code GET /api/workouts/999999 "$A")"
+check "view non-numeric workout id (404)" 404 "$(code GET /api/workouts/abc "$A")"
+
 echo
 echo "== two-user authorization summary =="
 echo "  alice: routine $RID, workout $WID  |  bob: cannot touch either"

@@ -45,6 +45,10 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`gym-tracker API listening on http://localhost:${PORT}`);
+// Bind loopback by default: nginx (or the Vite dev proxy) is the only thing that
+// talks to Express, so there is no reason for port 3000 to be reachable from the
+// LAN. Set HOST=0.0.0.0 to override (e.g. to curl the API from another device).
+const HOST = process.env.HOST || '127.0.0.1';
+app.listen(PORT, HOST, () => {
+  console.log(`gym-tracker API listening on http://${HOST}:${PORT}`);
 });

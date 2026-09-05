@@ -31,7 +31,11 @@ on first run.
 | Env var | Default | Notes |
 |---|---|---|
 | `PORT` | `3000` | Express listen port |
+| `HOST` | `127.0.0.1` | bind address — loopback only (nginx / the Vite proxy is the entry point); set `0.0.0.0` to reach `:3000` from the LAN |
+| `DB_PATH` | `server/data/app.db` | SQLite file location — point it outside the repo for deployment |
 | `SESSION_SECRET` | dev placeholder | **set a real random value in production** |
+
+See `server/.env.example`.
 
 ## Production build (frontend)
 
@@ -109,4 +113,6 @@ E2E-CHECKLIST.md
 
 ## Deploying to the phone
 
-Phase 12 (nginx config + transfer) — not built yet.
+See **`DEPLOYMENT.md`** — full Termux + nginx runbook. Artifacts in `deploy/`:
+`nginx-gym-tracker.conf` / `nginx.conf.example` (SPA fallback + `/api` proxy on
+:8080), `start.sh`, `backup.sh`, `health-check.sh`.

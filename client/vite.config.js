@@ -23,6 +23,18 @@ export default defineConfig({
       },
     },
   },
+  // `npm run preview` serves the built dist/ with the SPA fallback + the same
+  // /api proxy — a local stand-in for the nginx setup, useful for smoke-testing
+  // a production build before shipping it to the phone.
+  preview: {
+    port: 4173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    },
+  },
   build: {
     outDir: 'dist', // `npm run build` writes static files here; nginx serves them
   },

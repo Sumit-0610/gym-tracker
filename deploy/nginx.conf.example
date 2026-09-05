@@ -1,0 +1,34 @@
+# Complete minimal nginx.conf for Termux — use this as the WHOLE file if you
+# don't have an existing nginx setup you care about.
+#
+# Install to:  /data/data/com.termux/files/usr/etc/nginx/nginx.conf
+# Test:        nginx -t
+# Start:       nginx
+# Reload:      nginx -s reload
+# Stop:        nginx -s stop
+#
+# Runs entirely as the Termux user (no root). Port 8080 needs no privileges.
+
+worker_processes  1;
+error_log  /data/data/com.termux/files/usr/var/log/nginx/error.log warn;
+pid        /data/data/com.termux/files/usr/var/run/nginx.pid;
+
+events {
+    worker_connections  256;
+}
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    sendfile      on;
+    keepalive_timeout  65;
+
+    access_log /data/data/com.termux/files/usr/var/log/nginx/access.log;
+
+    # OPTIONAL — login/signup rate limit. Uncomment this line AND the
+    # `limit_req` line in the /api/ block of the server below.
+    # limit_req_zone $binary_remote_addr zone=gymauth:1m rate=10r/m;
+
+    # The Gym Tracker site.
+    include /data/data/com.termux/files/home/gym-tracker/deploy/nginx-gym-tracker.conf;
+}

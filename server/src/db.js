@@ -7,10 +7,12 @@ const { DatabaseSync } = require('node:sqlite');
 const path = require('node:path');
 const fs = require('node:fs');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
-fs.mkdirSync(DATA_DIR, { recursive: true });
+// DB_PATH lets the deployment put the database outside the code directory so a
+// `git pull` (or even a re-clone) can never touch it. Unset -> the original
+// location, server/data/app.db, so local dev needs no configuration.
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', 'data', 'app.db');
+fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
-const DB_PATH = path.join(DATA_DIR, 'app.db');
 const db = new DatabaseSync(DB_PATH);
 
 // SQLite ships with foreign-key enforcement OFF by default (a backwards-

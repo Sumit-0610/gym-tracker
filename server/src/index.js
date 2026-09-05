@@ -34,8 +34,7 @@ app.get('/', (req, res) => res.send('hello'));
 app.use('/api', require('./routes/auth'));
 app.use('/api', require('./routes/exercises'));
 app.use('/api', require('./routes/routines'));
-// Later phases:
-// app.use('/api', require('./routes/workouts'));
+app.use('/api', require('./routes/workouts'));
 
 // Central error handler. Express 4 does not catch throws from async handlers,
 // so route code passes errors here via next(err).

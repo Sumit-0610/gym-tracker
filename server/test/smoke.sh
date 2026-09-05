@@ -106,6 +106,40 @@ check "  ...first has target_sets 3" "3" "$(body | jget 'd.exercises[0].target_s
 check "  ...second has null targets"  "null" "$(body | jget 'String(d.exercises[1].target_sets)')"
 check "  ...exercise name joined in"  "true" "$(body | jget "d.exercises.every(e=>typeof e.name==='string' && e.name.length>0)")"
 
+echo "== phase 9: workout logging =="
+# --- start a workout ---
+check "start workout from routine (alice)" 201 "$(code POST /api/workouts "$A" "{\"routine_id\":$RID}")"
+WID="$(body | jget 'd.id')"
+check "  ...response has a date"     "true" "$(body | jget "typeof d.date==='string' && d.date.length>0")"
+check "start freestyle workout (no body)"  201 "$(code POST /api/workouts "$A" '{}')"
+WID_FREE="$(body | jget 'd.id')"
+check "  ...routine_id is null"      "null" "$(body | jget 'String(d.routine_id)')"
+check "start workout with bad routine_id"   400 "$(code POST /api/workouts "$A" '{"routine_id":999999}')"
+check "start workout from BOB's routine"    400 "$(code POST /api/workouts "$B" "{\"routine_id\":$RID}")"
+
+# --- log sets: validation ---
+check "log set (alice)"             201 "$(code POST /api/workouts/$WID/sets "$A" '{"exercise_id":1,"set_number":1,"reps":10,"weight":60}')"
+check "log set weight 0 (bodyweight)" 201 "$(code POST /api/workouts/$WID/sets "$A" '{"exercise_id":12,"set_number":1,"reps":8,"weight":0}')"
+check "log set missing reps"        400 "$(code POST /api/workouts/$WID/sets "$A" '{"exercise_id":1,"set_number":2,"weight":60}')"
+check "log set reps 0"              400 "$(code POST /api/workouts/$WID/sets "$A" '{"exercise_id":1,"set_number":2,"reps":0,"weight":60}')"
+check "log set negative weight"     400 "$(code POST /api/workouts/$WID/sets "$A" '{"exercise_id":1,"set_number":2,"reps":5,"weight":-5}')"
+check "log set weight as string"    400 "$(code POST /api/workouts/$WID/sets "$A" '{"exercise_id":1,"set_number":2,"reps":5,"weight":"60"}')"
+check "log set unknown exercise"    400 "$(code POST /api/workouts/$WID/sets "$A" '{"exercise_id":999999,"set_number":1,"reps":5,"weight":10}')"
+
+# --- log sets: ownership (the critical test) ---
+check "BOB cannot log set to alice's workout (404)" 404 \
+  "$(code POST /api/workouts/$WID/sets "$B" '{"exercise_id":1,"set_number":1,"reps":10,"weight":60}')"
+check "log set to nonexistent workout (404)" 404 \
+  "$(code POST /api/workouts/999999/sets "$A" '{"exercise_id":1,"set_number":1,"reps":10,"weight":60}')"
+check "log set to non-numeric workout id (404)" 404 \
+  "$(code POST /api/workouts/abc/sets "$A" '{"exercise_id":1,"set_number":1,"reps":10,"weight":60}')"
+
+echo
+echo "== two-user authorization summary =="
+echo "  alice: routine $RID, workout $WID  |  bob: cannot touch either"
+check "regression: alice still authed"   200 "$(code GET /api/me "$A")"
+check "regression: exercises still work"  200 "$(code GET /api/exercises "$A")"
+
 echo
 echo "passed: $pass   failed: $fail"
 [ "$fail" -eq 0 ]

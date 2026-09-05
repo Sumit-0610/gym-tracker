@@ -32,8 +32,8 @@ app.use(
 app.get('/', (req, res) => res.send('hello'));
 
 app.use('/api', require('./routes/auth'));
+app.use('/api', require('./routes/exercises'));
 // Later phases:
-// app.use('/api', require('./routes/exercises'));
 // app.use('/api', require('./routes/routines'));
 // app.use('/api', require('./routes/workouts'));
 

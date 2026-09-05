@@ -1,8 +1,12 @@
 node_modules/
-data/*.db
-data/*.db-journal
-data/*.db-wal
-data/*.db-shm
+
+# SQLite database + its temp files (WAL/journal). The DB is generated on first
+# run and is machine-local — never commit it.
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
 .env
 *.log
 client/dist/

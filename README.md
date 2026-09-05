@@ -50,7 +50,7 @@ See `../CLAUDE_CODE_START_HERE.md` for the full plan. Current progress:
 - [~] Phase 11 — Frontend (React + Vite)
   - [x] 11a — foundation: router, API client, auth context, design system
   - [x] 11b — auth UI: login, signup, logout, refresh-persistent session
-  - [ ] 11c — exercises + routines
+  - [x] 11c — exercises browser (search) + routines (list, create, detail, add exercise)
   - [ ] 11d — workout logging
   - [ ] 11e — history
   - [ ] 11f — polish + tests

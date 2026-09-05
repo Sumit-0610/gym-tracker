@@ -1,0 +1,29 @@
+/* Reuses the .field / .field-error classes from Input.css (both are imported on
+   the same pages). Only the select-specific bits live here. */
+
+.select-wrap {
+  position: relative;
+}
+
+.select-wrap select {
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: var(--s-2) var(--s-6) var(--s-2) var(--s-3);
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  font-size: var(--t-base);
+}
+
+.select-wrap select[aria-invalid='true'] {
+  border-color: var(--c-danger);
+}
+
+.select-arrow {
+  position: absolute;
+  right: var(--s-3);
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--c-text-dim);
+}

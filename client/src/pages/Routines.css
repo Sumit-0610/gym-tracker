@@ -1,0 +1,38 @@
+.create-routine {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.routine-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.routine-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: var(--tap-min);
+  padding: var(--s-3) var(--s-4);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  text-decoration: none;
+  color: var(--c-text);
+}
+
+.routine-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.routine-chevron {
+  flex-shrink: 0;
+  color: var(--c-text-dim);
+  font-size: var(--t-lg);
+}

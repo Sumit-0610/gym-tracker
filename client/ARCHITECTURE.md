@@ -78,6 +78,27 @@ Everything is **same-origin** in both dev (Vite `server.proxy`) and prod (nginx)
 so `sameSite: 'lax'` genuinely protects against CSRF and no CSRF token library
 is needed at this scope. Revisit only if the frontend ever becomes cross-origin.
 
+## Page conventions (established in 11c, reused in later screens)
+
+- **Server data vs derived data.** A screen holds the raw API response in state
+  (via `useApi`) and computes anything else with `useMemo` on each render
+  (e.g. `filtered = exercises + searchTerm`). Derived values are never stored in
+  their own `useState` — two copies of the same fact drift apart.
+- **Four async states, not three.** A list screen distinguishes: loading /
+  request failed / request OK but empty / request OK but the *filter* matched
+  nothing. The last two get different messages.
+- **After a mutation, re-fetch — don't patch local state.** `useApi` returns
+  `reload()`; forms call it via an `onCreated` / `onAdded` callback prop. The
+  server stays the single source of truth; no client cache.
+- **Double-submit guard is local.** Each write form keeps `const inFlight =
+  useRef(false)` and returns early while a request is running. A ref (not state)
+  because it must take effect synchronously, before React re-renders the
+  disabled button. No global concurrency machinery.
+- **Forms use `noValidate`.** We render our own validation messages (consistent
+  styling, matches the API's error copy); native constraint bubbles are
+  suppressed. `min`/`type` attributes stay as hints.
+- **`<select>` is native.** On a phone the OS picker beats anything custom.
+
 ## Dev workflow
 
 ```bash

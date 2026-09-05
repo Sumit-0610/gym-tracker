@@ -1,0 +1,39 @@
+.exercise-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.exercise-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+}
+
+.exercise-name {
+  font-weight: 600;
+  /* allow long names to wrap instead of pushing the layout wide */
+  overflow-wrap: anywhere;
+}
+
+.exercise-muscle {
+  flex-shrink: 0;
+  font-size: var(--t-sm);
+  color: var(--c-text-dim);
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  padding: 2px var(--s-2);
+}
+
+.exercises-nomatch {
+  color: var(--c-text-dim);
+  padding: var(--s-4) 0;
+}

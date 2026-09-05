@@ -2,7 +2,11 @@
 
 Self-hosted gym workout tracker (login → routines → workout logging → history),
 inspired by Hevy. Learning project — small scale (~10 users), clarity over
-scalability. **V1 is complete** (backend + frontend).
+scalability.
+
+**V1 is complete and frozen** — backend, frontend, and Termux/nginx deployment.
+See `V1-STATUS.md` for what's done and verified, `V2-BACKLOG.md` for what's next
+(not implemented).
 
 ## Stack
 
@@ -11,8 +15,8 @@ scalability. **V1 is complete** (backend + frontend).
 - **Auth:** `bcryptjs` hashing + `express-session` cookie sessions (httpOnly, sameSite=lax)
 - **Frontend:** React 19 + Vite (`client/`) — custom ~90-line router, no other
   runtime deps; see `client/ARCHITECTURE.md`
-- **Reverse proxy (on the phone, Phase 12):** nginx serves `client/dist/` and
-  proxies `/api` → Express
+- **Reverse proxy (on the phone):** nginx serves `client/dist/` and proxies
+  `/api` → Express — see `DEPLOYMENT.md`
 
 ## Requirements
 
@@ -44,7 +48,7 @@ cd client && npm run build      # -> client/dist/  (static files only, ~67 KB gz
 ```
 
 nginx serves `client/dist/` and needs `try_files $uri /index.html;` so client-side
-routes deep-link (full nginx config: Phase 12).
+routes deep-link — full config in `deploy/` (see `DEPLOYMENT.md`).
 
 ## Application flow
 

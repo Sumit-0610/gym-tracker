@@ -39,15 +39,25 @@ code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$NGINX_PORT/api/
 [ "$code" = "401" ] && ok "nginx /api/me -> 401 (proxied, not index.html)" || bad "nginx /api proxy -> $code"
 
 echo "== session round-trip through nginx =="
+# Uses one fixed throwaway account, created only if it doesn't exist yet — so
+# repeated health checks don't litter the users table. Password is not secret:
+# this account owns no real data.
 jar="$(mktemp)"
-u="health_$$"
-s=$(curl -s -o /dev/null -w '%{http_code}' -c "$jar" -X POST "http://127.0.0.1:$NGINX_PORT/api/signup" \
-      -H 'Content-Type: application/json' -d "{\"username\":\"$u\",\"password\":\"secret1\"}")
+hu="__healthcheck__"
+hp="healthcheck-pw"
+login=$(curl -s -o /dev/null -w '%{http_code}' -c "$jar" -X POST "http://127.0.0.1:$NGINX_PORT/api/login" \
+      -H 'Content-Type: application/json' -d "{\"username\":\"$hu\",\"password\":\"$hp\"}")
+if [ "$login" != "200" ]; then
+  curl -s -o /dev/null -c "$jar" -X POST "http://127.0.0.1:$NGINX_PORT/api/signup" \
+      -H 'Content-Type: application/json' -d "{\"username\":\"$hu\",\"password\":\"$hp\"}"
+  login=$(curl -s -o /dev/null -w '%{http_code}' -c "$jar" -X POST "http://127.0.0.1:$NGINX_PORT/api/login" \
+      -H 'Content-Type: application/json' -d "{\"username\":\"$hu\",\"password\":\"$hp\"}")
+fi
 me=$(curl -s -o /dev/null -w '%{http_code}' -b "$jar" "http://127.0.0.1:$NGINX_PORT/api/me")
 rm -f "$jar"
-{ [ "$s" = "201" ] && [ "$me" = "200" ]; } \
-  && ok "signup ($s) then /api/me with cookie ($me) — sessions work through nginx" \
-  || bad "session round-trip: signup=$s me=$me"
+{ [ "$login" = "200" ] && [ "$me" = "200" ]; } \
+  && ok "login ($login) then /api/me with cookie ($me) — sessions work through nginx" \
+  || bad "session round-trip: login=$login me=$me"
 
 echo
 [ "$fail" = 0 ] && echo "HEALTHY" || echo "UNHEALTHY — see FAILs above"

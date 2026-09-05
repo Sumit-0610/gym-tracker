@@ -192,4 +192,5 @@ cd client && npm run build             # → client/dist/  (static files only)
 
 nginx serves `client/dist/` and proxies `/api/` to `127.0.0.1:3000`. Because
 routing is client-side, nginx needs `try_files $uri /index.html;` so a deep link
-like `/history/4` loads the app. (Full nginx config comes in Phase 12.)
+like `/history/4` loads the app. Full config: `deploy/nginx-gym-tracker.conf`,
+runbook: `DEPLOYMENT.md`.

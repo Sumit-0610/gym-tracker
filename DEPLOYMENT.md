@@ -90,18 +90,24 @@ The repo ships two files in `deploy/`:
 | `deploy/nginx.conf.example` | the **whole** `nginx.conf` — use this if you have no nginx setup you care about |
 | `deploy/nginx-gym-tracker.conf` | just the `server { }` block — `include` it into an existing `nginx.conf` |
 
-Simplest path:
+Simplest path (the stock Termux `nginx.conf` is just a placeholder site — safe to
+replace):
 
 ```bash
-cp ~/gym-tracker/deploy/nginx.conf.example \
-   $PREFIX/etc/nginx/nginx.conf
+cp $PREFIX/etc/nginx/nginx.conf $PREFIX/etc/nginx/nginx.conf.orig   # keep a copy
+cp ~/gym-tracker/deploy/nginx.conf.example $PREFIX/etc/nginx/nginx.conf
 nginx -t                     # must say "syntax is ok" / "test is successful"
-nginx                        # start it  (already running? use: nginx -s reload)
+nginx -s reload              # if already running; otherwise: nginx
 ```
 
 `$PREFIX` is `/data/data/com.termux/files/usr`. If you cloned the repo somewhere
 other than `~/gym-tracker`, edit the `root` line in `nginx-gym-tracker.conf` to
 point at `<your repo>/client/dist`.
+
+`nginx.conf.example` deliberately sets **no** `error_log` / `pid` / `access_log`
+paths — nginx uses its compiled-in defaults, which are the ones the Termux
+package already creates. (Hard-coding them risks a path this build doesn't use;
+check yours with `nginx -V 2>&1 | tr ' ' '\n' | grep -E 'log-path|pid-path'`.)
 
 What the config does:
 - `location /api/` → proxies to `http://127.0.0.1:3000` (matched first, never falls through)

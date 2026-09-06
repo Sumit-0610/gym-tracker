@@ -1,17 +1,21 @@
 # Complete minimal nginx.conf for Termux — use this as the WHOLE file if you
 # don't have an existing nginx setup you care about.
 #
-# Install to:  /data/data/com.termux/files/usr/etc/nginx/nginx.conf
+# Install to:  $PREFIX/etc/nginx/nginx.conf   ($PREFIX = /data/data/com.termux/files/usr)
 # Test:        nginx -t
 # Start:       nginx
 # Reload:      nginx -s reload
 # Stop:        nginx -s stop
 #
 # Runs entirely as the Termux user (no root). Port 8080 needs no privileges.
+#
+# No error_log / pid / access_log paths are set here on purpose: nginx uses the
+# paths it was compiled with, which are the ones the Termux package already
+# creates. Setting them explicitly risks pointing at a directory this build
+# doesn't use (e.g. the pid path differs between builds). Check yours with:
+#   nginx -V 2>&1 | tr ' ' '\n' | grep -E 'log-path|pid-path'
 
 worker_processes  1;
-error_log  /data/data/com.termux/files/usr/var/log/nginx/error.log warn;
-pid        /data/data/com.termux/files/usr/var/run/nginx.pid;
 
 events {
     worker_connections  256;
@@ -23,12 +27,10 @@ http {
     sendfile      on;
     keepalive_timeout  65;
 
-    access_log /data/data/com.termux/files/usr/var/log/nginx/access.log;
-
     # OPTIONAL — login/signup rate limit. Uncomment this line AND the
-    # `limit_req` line in the /api/ block of the server below.
+    # `limit_req` line in the /api/ block of nginx-gym-tracker.conf.
     # limit_req_zone $binary_remote_addr zone=gymauth:1m rate=10r/m;
 
-    # The Gym Tracker site.
+    # The Gym Tracker site. Adjust the path if you cloned the repo elsewhere.
     include /data/data/com.termux/files/home/gym-tracker/deploy/nginx-gym-tracker.conf;
 }

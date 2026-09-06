@@ -1,10 +1,10 @@
 # Gym Tracker — V1 status
 
-**V1 is complete and frozen.** Future work goes in a new milestone
-(see `V2-BACKLOG.md`).
+**V1 is complete, frozen, and deployed.** It runs on the target Android/Termux
+device behind nginx and was verified end-to-end on that device on 2026-09-06
+(details below). Future work goes in a new milestone (see `V2-BACKLOG.md`).
 
-Repo: https://github.com/Sumit-0610/gym-tracker · frozen at the deployment commit
-plus this audit.
+Repo: https://github.com/Sumit-0610/gym-tracker
 
 ---
 
@@ -71,29 +71,44 @@ history (list + detail). Production build ~67 KB gzip JS.
 | `HOST=127.0.0.1` bind | confirmed |
 | git tree | clean, no runtime state committed |
 
-### On the real phone (operator-run)
-Claude Code has no access to the phone. The on-device acceptance test —
-Android browser → real nginx → node → SQLite, the 21-step flow in
-`DEPLOYMENT.md §13` including the second-user isolation check and the
-`kill node → restart → data persists` check — is run by the operator and its
-results recorded by them. This document does not claim phone results it did not
-observe.
+### On the real phone (operator-run, 2026-09-06)
 
-Operator: record the actuals here after running `DEPLOYMENT.md §13`:
+Deployed and verified on the target device by the operator, guided step by step.
+Claude Code has no phone access; the values below are the operator's actual
+observations.
 
 | | observed value |
 |---|---|
-| phone Node version | `node -v` = … (expected ≥ 22.5; Termux currently ships v26.x) |
-| `node:sqlite` on phone | works / fails |
-| nginx status | running on :8080 |
-| Express bind / port | `127.0.0.1:3000` |
-| database location | `~/gym-tracker-data/app.db` (or your `DB_PATH`) |
-| browser used | … |
-| LAN access | `http://<phone-ip>:8080` from another device: yes / no |
-| `deploy/health-check.sh` | HEALTHY / UNHEALTHY |
-| full §13 journey | pass / fail |
-| second-user isolation on device | pass / fail |
-| restart → data persists | pass / fail |
+| Termux | 0.119.0-beta.3 |
+| phone Node / npm | **v26.4.0** / 12.0.2 |
+| git / nginx | 2.55.0 / **1.31.5** |
+| `node:sqlite` on phone | **works** — `DatabaseSync, StatementSync, Session, constants, backup` |
+| Express bind / port | **`127.0.0.1:3000`** — confirmed not reachable on the LAN IP (`http://192.168.31.200:3000` → connection refused) |
+| nginx | **running on :8080**, gym-tracker config (`nginx -t` passes) |
+| database location | `/data/data/com.termux/files/home/gym-tracker-data/app.db` — 36 KB, `0600`, outside the git clone |
+| browser used | Chrome (Android) |
+| LAN access | **yes** — `http://192.168.31.200:8080` from another device on the same Wi-Fi loads and is fully usable |
+| `deploy/health-check.sh` | **HEALTHY** — every layer (node, nginx, DB, Express direct, frontend, SPA fallback, /api proxy, session round-trip through nginx) |
+| full acceptance journey (`DEPLOYMENT.md §13`) | **pass** — signup, login, refresh-persistent auth, exercises + case-insensitive search + no-match state, routine create/detail/add-exercise, routine workout, freestyle workout (no fake routine), set logging incl. weight 0 → "bodyweight", active workout recovered from history, history list + workout detail grouped by exercise, logout, login again |
+| deep links + nav | **pass** — hard-refresh on `/history/<n>` and `/routines/<n>`; browser back/forward; unknown URL → "Not found" page (not an nginx 404) |
+| second-user isolation on device | **pass** — user B: `routines` `[]`, `workouts` `[]`, `GET /api/routines/1` → 404, `GET /api/workouts/1` → 404, `POST /api/workouts/1/sets` → 404 |
+| restart → data persists | **pass** — workout count identical before/after `pkill node` + restart; sessions reset (documented MemoryStore behaviour) |
+| backup | **pass** — `deploy/backup.sh` → valid readable `app-<ts>.db` (3 users, 2 workouts) |
+
+**Deployment fixes found on-device** (deploy-only, no app code):
+- `e540ba1` — `nginx.conf.example` hard-coded `pid .../var/run/nginx.pid`; this
+  Termux build compiles `--pid-path=$PREFIX/tmp/nginx_pid`. Removed all explicit
+  log/pid paths — nginx uses its compiled defaults.
+- `9a23929` — `health-check.sh` used `pgrep -x nginx`, which never matches
+  because nginx renames its processes to `nginx: master process …`. Now matches
+  `nginx: master`.
+
+**Operational note (a real limitation of phone-as-server, not a bug):** during a
+long screen-off pause, Android killed Termux entirely (it relaunched fresh),
+even with `termux-wake-lock`. Enabling Termux → *Allow background activity* and
+*notifications* reduces this. It is reliable while the app is actively in use
+(screen on). For unattended 24/7 availability, host the backend off the phone
+(V2 — see `V2-BACKLOG.md`).
 
 ---
 
@@ -119,8 +134,20 @@ candidates that would address them.
 
 ## Next milestone
 
-**V2 only.** No speculative dates. Scope to be decided from `V2-BACKLOG.md`;
-each item is its own change with its own verification. V1 code
-(schema, API contracts, auth, frontend architecture, router, API layer, workout
-and history flows) is **frozen** — changes to any of it belong in V2, not as
-patches to V1.
+**V2 only.** No speculative dates. V1 code (schema, API contracts, auth,
+frontend architecture, router, API layer, workout and history flows) is
+**frozen** — changes to any of it belong in V2, not as patches to V1.
+
+The stated V2 goal is a version reachable from **anywhere** (not just the home
+Wi-Fi), on **any phone or laptop**. That is primarily infrastructure, not a
+rewrite:
+
+- move the backend off the phone to a small always-on host (cheap VPS / free-tier
+  PaaS) — SQLite comes along fine at this scale;
+- put a domain + HTTPS in front (Let's Encrypt / Cloudflare);
+- swap in a persistent session store and set the session cookie `secure: true`
+  (both already listed in `V2-BACKLOG.md`);
+- make the frontend an installable **PWA**; optionally wrap it with Capacitor for
+  app-store presence.
+
+See `V2-BACKLOG.md` for the itemised list.

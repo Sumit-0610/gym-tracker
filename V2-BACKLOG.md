@@ -15,10 +15,15 @@ verification. See `V1-STATUS.md` for what is deployed.
 
 ## Infra / hosting
 
-- **Custom domain** — currently on `gym-tracker-d5ha.onrender.com`. A real domain
-  needs: acquire it (free `js.org` for OSS, or a cheap `.com`), add it in Render
-  (Settings → Custom Domains), point DNS (CNAME → the onrender host, or ALIAS/A
-  for an apex). Render issues the TLS cert automatically. No code change.
+- **Custom domain** — currently on `gym-tracker-d5ha.onrender.com`.
+  - **In progress: `gym-tracker.js.org`** — added in Render (Custom Domains,
+    pending DNS). Blocked: js.org paused new subdomain requests until
+    ~mid-Sept 2026. When it reopens: PR to `js-org/js.org` adding
+    `"gym-tracker": "gym-tracker-d5ha.onrender.com"` to `cnames_active.js`
+    (alphabetical order); on merge, DNS + Render TLS are automatic.
+  - is-a.dev was tried and abandoned — their content policy ("software
+    development related") is a poor fit for a workout app.
+  - No code change either way.
 - **PWA** — web-app manifest + a service worker so the app installs to the home
   screen and launches chrome-less. Pure frontend; the React code is unchanged.
   ~half a day. First real step toward "feels like an app".

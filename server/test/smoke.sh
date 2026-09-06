@@ -160,6 +160,68 @@ check "bob CANNOT view alice's workout detail (404)" 404 "$(code GET /api/workou
 check "view nonexistent workout (404)" 404 "$(code GET /api/workouts/999999 "$A")"
 check "view non-numeric workout id (404)" 404 "$(code GET /api/workouts/abc "$A")"
 
+echo "== phase 12: workout features =="
+# --- set types ---
+check "log warmup set"              201 "$(code POST /api/workouts/$WID/sets "$A" '{"exercise_id":1,"set_number":2,"reps":5,"weight":40,"set_type":"warmup"}')"
+check "  ...response has set_type warmup" "warmup" "$(body | jget 'd.set_type')"
+check "log set without set_type"     201 "$(code POST /api/workouts/$WID/sets "$A" '{"exercise_id":1,"set_number":3,"reps":10,"weight":60}')"
+check "  ...defaults to normal"      "normal" "$(body | jget 'd.set_type')"
+check "log set invalid set_type"     400 "$(code POST /api/workouts/$WID/sets "$A" '{"exercise_id":1,"set_number":4,"reps":10,"weight":60,"set_type":"megaset"}')"
+code GET /api/workouts/$WID "$A" >/dev/null
+check "workout detail sets carry set_type" "true" \
+  "$(body | jget "d.sets.every(s=>typeof s.set_type==='string')")"
+
+# --- completion state ---
+code GET /api/workouts/$WID "$A" >/dev/null
+check "workout starts unfinished (completed_at null)" "null" "$(body | jget 'String(d.completed_at)')"
+check "finish workout"               200 "$(code POST /api/workouts/$WID/finish "$A")"
+check "  ...completed_at is set"      "true" "$(body | jget "typeof d.completed_at==='string' && d.completed_at.length>0")"
+check "finish again is idempotent"    200 "$(code POST /api/workouts/$WID/finish "$A")"
+check "finish nonexistent workout"    404 "$(code POST /api/workouts/999999/finish "$A")"
+check "finish non-numeric id"         404 "$(code POST /api/workouts/abc/finish "$A")"
+check "BOB cannot finish alice's workout" 404 "$(code POST /api/workouts/$WID/finish "$B")"
+code GET /api/workouts "$A" >/dev/null
+check "history: completed_at set on finished workout" "true" \
+  "$(body | jget "typeof d.find(w=>w.id===$WID).completed_at==='string'")"
+check "history: completed_at null on unfinished workout" "true" \
+  "$(body | jget "d.find(w=>w.id===$WID_FREE).completed_at===null")"
+
+# --- resume / current workout ---
+code GET /api/workouts/current "$A" >/dev/null
+check "current = latest unfinished workout" "$WID_FREE" "$(body | jget 'd.id')"
+check "finish the freestyle workout too" 200 "$(code POST /api/workouts/$WID_FREE/finish "$A")"
+code GET /api/workouts/current "$A" >/dev/null
+check "no unfinished workouts -> current is null" "null" "$(body | jget 'String(d)')"
+code GET /api/workouts/current "$B" >/dev/null
+check "bob has no current workout" "null" "$(body | jget 'String(d)')"
+
+# --- previous performance ---
+check "start a fresh workout"         201 "$(code POST /api/workouts "$A" '{}')"
+WID_NEW="$(body | jget 'd.id')"
+code POST /api/workouts/$WID_NEW/sets "$A" '{"exercise_id":1,"set_number":1,"reps":9,"weight":62.5}' >/dev/null
+code GET "/api/exercises/1/last-sets?exclude=$WID_NEW" "$A" >/dev/null
+check "last-sets returns the previous workout's sets" "true" \
+  "$(body | jget "d && d.workout_id===$WID && d.sets.length>0")"
+check "  ...sets have reps/weight/set_type" "true" \
+  "$(body | jget "d.sets.every(s=>typeof s.reps==='number' && typeof s.weight==='number' && typeof s.set_type==='string')")"
+check "last-sets unknown exercise -> 404" 404 "$(code GET /api/exercises/999999/last-sets "$A")"
+check "last-sets non-numeric id -> 404" 404 "$(code GET /api/exercises/abc/last-sets "$A")"
+code GET /api/exercises/5/last-sets "$A" >/dev/null
+check "last-sets for a never-done exercise -> null" "null" "$(body | jget 'String(d)')"
+code GET /api/exercises/1/last-sets "$B" >/dev/null
+check "bob's last-sets for exercise 1 -> null" "null" "$(body | jget 'String(d)')"
+code POST /api/workouts/$WID_NEW/finish "$A" >/dev/null
+
+# --- weight unit preference ---
+code GET /api/me "$A" >/dev/null
+check "me includes weight_unit (default kg)" "kg" "$(body | jget 'd.weight_unit')"
+check "set weight_unit to lb"         200 "$(code PATCH /api/me "$A" '{"weight_unit":"lb"}')"
+check "  ...response shows lb"         "lb" "$(body | jget 'd.weight_unit')"
+check "invalid weight_unit rejected"   400 "$(code PATCH /api/me "$A" '{"weight_unit":"stone"}')"
+code GET /api/me "$A" >/dev/null
+check "me now shows lb"                "lb" "$(body | jget 'd.weight_unit')"
+code PATCH /api/me "$A" '{"weight_unit":"kg"}' >/dev/null
+
 echo
 echo "== two-user authorization summary =="
 echo "  alice: routine $RID, workout $WID  |  bob: cannot touch either"

@@ -11,10 +11,14 @@ const {
   positiveInt,
   optionalPositiveInt,
   nonNegativeNumber,
+  oneOf,
 } = require('../validation');
 
 const router = express.Router();
 router.use(requireAuth);
+
+// The kinds of set a user can log. 'normal' is the default when none is given.
+const SET_TYPES = ['normal', 'warmup', 'dropset', 'failure'];
 
 // POST /api/workouts
 //   Body:    { routine_id? }   — omit it for a freestyle workout
@@ -47,7 +51,7 @@ router.post('/workouts', async (req, res, next) => {
 
     // Read the row back so the response includes the DB-generated timestamp.
     const workout = await get(
-      'SELECT id, routine_id, date FROM workouts WHERE id = ?',
+      'SELECT id, routine_id, date, completed_at FROM workouts WHERE id = ?',
       Number(info.lastInsertRowid)
     );
 
@@ -58,8 +62,9 @@ router.post('/workouts', async (req, res, next) => {
 });
 
 // POST /api/workouts/:id/sets
-//   Body:    { exercise_id, set_number, reps, weight }
-//   Returns: 201 { id, workout_id, exercise_id, set_number, reps, weight }
+//   Body:    { exercise_id, set_number, reps, weight, set_type? }
+//            set_type defaults to 'normal'; weight is in kilograms.
+//   Returns: 201 { id, workout_id, exercise_id, set_number, reps, weight, set_type }
 //            400 bad body / unknown exercise_id
 //            404 workout not found or not the caller's
 router.post('/workouts/:id/sets', async (req, res, next) => {
@@ -70,11 +75,13 @@ router.post('/workouts/:id/sets', async (req, res, next) => {
     }
 
     const { exercise_id, set_number, reps, weight } = req.body || {};
+    const set_type = (req.body && req.body.set_type) ?? 'normal';
     const err =
       positiveInt(exercise_id, 'exercise_id') ||
       positiveInt(set_number, 'set_number') ||
       positiveInt(reps, 'reps') ||
-      nonNegativeNumber(weight, 'weight'); // 0 is allowed (bodyweight exercise)
+      nonNegativeNumber(weight, 'weight') || // 0 is allowed (bodyweight exercise)
+      oneOf(set_type, 'set_type', SET_TYPES);
     if (err) return res.status(400).json({ error: err });
 
     // Ownership check, in SQL, before the INSERT. A POST to
@@ -98,13 +105,14 @@ router.post('/workouts/:id/sets', async (req, res, next) => {
     }
 
     const info = await run(
-      `INSERT INTO workout_sets (workout_id, exercise_id, set_number, reps, weight)
-       VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO workout_sets (workout_id, exercise_id, set_number, reps, weight, set_type)
+       VALUES (?, ?, ?, ?, ?, ?)`,
       workoutId,
       exercise_id,
       set_number,
       reps,
-      weight
+      weight,
+      set_type
     );
 
     res.status(201).json({
@@ -114,7 +122,47 @@ router.post('/workouts/:id/sets', async (req, res, next) => {
       set_number,
       reps,
       weight,
+      set_type,
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/workouts/:id/finish
+//   Marks a workout complete (sets completed_at). Idempotent — finishing an
+//   already-finished workout just returns it. Logging more sets afterwards is
+//   still allowed; it does not un-finish the workout.
+//   Returns: 200 { id, routine_id, date, completed_at }
+//            404 workout not found or not the caller's
+router.post('/workouts/:id/finish', async (req, res, next) => {
+  try {
+    const workoutId = parseId(req.params.id);
+    if (workoutId === null) {
+      return res.status(404).json({ error: 'workout not found' });
+    }
+
+    const workout = await get(
+      'SELECT id, completed_at FROM workouts WHERE id = ? AND user_id = ?',
+      workoutId,
+      req.userId
+    );
+    if (!workout) {
+      return res.status(404).json({ error: 'workout not found' });
+    }
+
+    if (!workout.completed_at) {
+      await run(
+        'UPDATE workouts SET completed_at = CURRENT_TIMESTAMP WHERE id = ?',
+        workoutId
+      );
+    }
+
+    const updated = await get(
+      'SELECT id, routine_id, date, completed_at FROM workouts WHERE id = ?',
+      workoutId
+    );
+    res.json(updated);
   } catch (err) {
     next(err);
   }
@@ -141,6 +189,7 @@ router.get('/workouts', async (req, res, next) => {
     const workouts = await all(
       `SELECT w.id,
               w.date,
+              w.completed_at,
               r.name AS routine_name,
               COUNT(ws.id) AS set_count
          FROM workouts w
@@ -152,6 +201,27 @@ router.get('/workouts', async (req, res, next) => {
       req.userId
     );
     res.json(workouts);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/workouts/current
+//   The caller's most recent unfinished workout (completed_at IS NULL), so a
+//   bare /workout screen can offer to resume it instead of starting fresh.
+//   Returns: 200 { id, routine_id, date } | 200 null
+//   Registered before /workouts/:id so "current" is not read as an id.
+router.get('/workouts/current', async (req, res, next) => {
+  try {
+    const workout = await get(
+      `SELECT id, routine_id, date
+         FROM workouts
+        WHERE user_id = ? AND completed_at IS NULL
+        ORDER BY date DESC, id DESC
+        LIMIT 1`,
+      req.userId
+    );
+    res.json(workout ?? null);
   } catch (err) {
     next(err);
   }
@@ -172,7 +242,7 @@ router.get('/workouts/:id', async (req, res, next) => {
     // Query 1 — authorize + metadata. `AND w.user_id = ?` is the ownership gate;
     // no row => 404 (exists-but-not-yours is indistinguishable from doesn't-exist).
     const workout = await get(
-      `SELECT w.id, w.date, w.routine_id, r.name AS routine_name
+      `SELECT w.id, w.date, w.completed_at, w.routine_id, r.name AS routine_name
          FROM workouts w
          LEFT JOIN routines r ON r.id = w.routine_id
         WHERE w.id = ? AND w.user_id = ?`,
@@ -194,7 +264,8 @@ router.get('/workouts/:id', async (req, res, next) => {
               e.muscle_group,
               ws.set_number,
               ws.reps,
-              ws.weight
+              ws.weight,
+              ws.set_type
          FROM workout_sets ws
          JOIN exercises e ON e.id = ws.exercise_id
         WHERE ws.workout_id = ?

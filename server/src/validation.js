@@ -47,10 +47,19 @@ function nonNegativeNumber(value, field) {
   return null;
 }
 
+// Value must be one of a fixed set of strings (e.g. a set_type or a unit).
+function oneOf(value, field, allowed) {
+  if (!allowed.includes(value)) {
+    return `${field} must be one of: ${allowed.join(', ')}`;
+  }
+  return null;
+}
+
 module.exports = {
   parseId,
   nonEmptyString,
   positiveInt,
   optionalPositiveInt,
   nonNegativeNumber,
+  oneOf,
 };

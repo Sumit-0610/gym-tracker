@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS users (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
   username      TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
-  created_at    TEXT DEFAULT CURRENT_TIMESTAMP
+  created_at    TEXT DEFAULT CURRENT_TIMESTAMP,
+  weight_unit   TEXT NOT NULL DEFAULT 'kg'   -- 'kg' | 'lb'; weights are stored in kg, converted for display
 );
 
 -- Shared exercise library (not per-user). Seeded on first boot.
@@ -36,10 +37,11 @@ CREATE TABLE IF NOT EXISTS routine_exercises (
 
 -- A logged workout session.
 CREATE TABLE IF NOT EXISTS workouts (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id    INTEGER NOT NULL,
-  routine_id INTEGER,  -- nullable: a freestyle workout has no routine
-  date       TEXT DEFAULT CURRENT_TIMESTAMP,
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id      INTEGER NOT NULL,
+  routine_id   INTEGER,  -- nullable: a freestyle workout has no routine
+  date         TEXT DEFAULT CURRENT_TIMESTAMP,
+  completed_at TEXT,     -- nullable: NULL = in progress, timestamp = finished
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (routine_id) REFERENCES routines(id)
 );
@@ -56,14 +58,14 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 -- The actual sets performed during a logged workout.
--- v2 will add a set_type column (warmup/normal/dropset/failure) via ALTER TABLE.
 CREATE TABLE IF NOT EXISTS workout_sets (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   workout_id  INTEGER NOT NULL,
   exercise_id INTEGER NOT NULL,
   set_number  INTEGER,
   reps        INTEGER,
-  weight      REAL,
+  weight      REAL,   -- always kilograms; the client converts for lb users
+  set_type    TEXT NOT NULL DEFAULT 'normal',  -- 'normal' | 'warmup' | 'dropset' | 'failure'
   FOREIGN KEY (workout_id) REFERENCES workouts(id),
   FOREIGN KEY (exercise_id) REFERENCES exercises(id)
 );

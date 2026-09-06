@@ -5,8 +5,11 @@ const bcrypt = require('bcryptjs');
 const { get, run } = require('../db');
 const requireAuth = require('../middleware/auth');
 const { loginLimiter, signupLimiter } = require('../middleware/rate-limit');
+const { oneOf } = require('../validation');
 
 const router = express.Router();
+
+const WEIGHT_UNITS = ['kg', 'lb'];
 
 // bcrypt "cost factor": the hash runs 2^rounds internal iterations. Each +1
 // doubles the time. 12 is a common default — a few hundred ms per hash, which
@@ -81,7 +84,29 @@ router.post('/logout', (req, res) => {
 router.get('/me', requireAuth, async (req, res, next) => {
   try {
     const user = await get(
-      'SELECT id, username, created_at FROM users WHERE id = ?',
+      'SELECT id, username, created_at, weight_unit FROM users WHERE id = ?',
+      req.userId
+    );
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/me
+//   Update the caller's preferences. Currently just the weight unit.
+//   Body:    { weight_unit: 'kg' | 'lb' }
+//   Returns: 200 { id, username, created_at, weight_unit }
+router.patch('/me', requireAuth, async (req, res, next) => {
+  try {
+    const { weight_unit } = req.body || {};
+    const err = oneOf(weight_unit, 'weight_unit', WEIGHT_UNITS);
+    if (err) return res.status(400).json({ error: err });
+
+    await run('UPDATE users SET weight_unit = ? WHERE id = ?', weight_unit, req.userId);
+
+    const user = await get(
+      'SELECT id, username, created_at, weight_unit FROM users WHERE id = ?',
       req.userId
     );
     res.json(user);

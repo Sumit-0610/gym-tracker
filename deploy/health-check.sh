@@ -18,7 +18,9 @@ bad()  { echo "  FAIL  $1"; fail=1; }
 
 echo "== processes =="
 pgrep -f 'node .*src/index.js' >/dev/null && ok "node (Express) running" || bad "node not running"
-pgrep -x nginx >/dev/null            && ok "nginx running"              || bad "nginx not running"
+# not `pgrep -x nginx`: nginx renames its processes to "nginx: master process ..."
+pgrep -f 'nginx: master' >/dev/null || pgrep nginx >/dev/null \
+  && ok "nginx running" || bad "nginx not running"
 
 echo "== database =="
 [ -f "$DB_PATH" ]  && ok "db file exists: $DB_PATH" || bad "db missing: $DB_PATH"

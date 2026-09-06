@@ -15,6 +15,8 @@ export function describeError(error) {
       return 'This item no longer exists, or you do not have access to it.';
     case 409:
       return error.message || 'That already exists.';
+    case 429:
+      return 'Too many attempts. Please wait a few minutes and try again.';
     case 500:
       return 'Something went wrong on the server. Please try again.';
     default:

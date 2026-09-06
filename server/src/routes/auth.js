@@ -4,6 +4,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const { get, run } = require('../db');
 const requireAuth = require('../middleware/auth');
+const { loginLimiter, signupLimiter } = require('../middleware/rate-limit');
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ const router = express.Router();
 // enormously expensive.
 const BCRYPT_ROUNDS = 12;
 
-router.post('/signup', async (req, res, next) => {
+router.post('/signup', signupLimiter, async (req, res, next) => {
   try {
     const { username, password } = req.body || {};
     if (!username || !password) {
@@ -44,7 +45,7 @@ router.post('/signup', async (req, res, next) => {
   }
 });
 
-router.post('/login', async (req, res, next) => {
+router.post('/login', loginLimiter, async (req, res, next) => {
   try {
     const { username, password } = req.body || {};
     if (!username || !password) {

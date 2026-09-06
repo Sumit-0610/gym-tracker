@@ -1,45 +1,58 @@
-# V2 backlog
+# Backlog
 
-Candidates for a future milestone. **Nothing here is implemented or committed to.**
-V1 is frozen (see `V1-STATUS.md`). Each item would be its own change with its own
-verification.
+Candidates for future work. Each item is its own change with its own
+verification. See `V1-STATUS.md` for what is deployed.
 
-## Data / session hardening
+## Done
 
-- **Persistent session store** — a SQLite-backed `express-session` store so a
-  backend restart no longer logs everyone out. Small, self-contained; no route
-  changes.
-- **HTTPS** — only if the app is ever exposed beyond the LAN. Requires a
-  certificate (self-signed or Let's Encrypt via a tunnel) and flipping the
-  session cookie to `secure: true` + `sameSite: 'strict'`.
-- **Login rate limiting** — the nginx `limit_req` snippet is already documented
-  (commented) in `deploy/nginx-gym-tracker.conf`; enabling it is a config change,
-  not code.
+- ~~**Persistent session store**~~ — shipped in V2 (`server/src/session-store.js`,
+  libSQL-backed). A restart no longer logs everyone out.
+- ~~**HTTPS + `secure` cookie**~~ — shipped in V2. Render terminates TLS;
+  `trust proxy` + `Secure; SameSite=Lax` cookie under `NODE_ENV=production`.
+- ~~**Login rate limiting**~~ — shipped (`server/src/middleware/rate-limit.js`,
+  `express-rate-limit`). 10 failed logins / 15 min / IP (successful logins not
+  counted); 20 signups / hour / IP.
 
-## Workout improvements
+## Infra / hosting
 
-- **Workout completion state** — a `completed_at` column + a "Finish" action, so
-  history can distinguish finished from abandoned workouts.
+- **Custom domain** — currently on `gym-tracker-d5ha.onrender.com`. A real domain
+  needs: acquire it (free `js.org` for OSS, or a cheap `.com`), add it in Render
+  (Settings → Custom Domains), point DNS (CNAME → the onrender host, or ALIAS/A
+  for an apex). Render issues the TLS cert automatically. No code change.
+- **PWA** — web-app manifest + a service worker so the app installs to the home
+  screen and launches chrome-less. Pure frontend; the React code is unchanged.
+  ~half a day. First real step toward "feels like an app".
+- **Off-Render host** — only if the free tier's 15-min spin-down (mitigated today
+  by the keep-alive ping) becomes a real annoyance. A card-free always-on host
+  does not really exist; the alternatives are a paid VPS or accepting the cold
+  start.
+
+## Workout features
+
+- **Workout completion state** — `workouts.completed_at` + a "Finish" action, so
+  history distinguishes finished from abandoned.
 - **Resume current workout** — an endpoint for "my latest unfinished workout" so
-  bare `/workout` can offer to resume instead of always showing the start screen.
+  bare `/workout` can offer to resume (needs completion state above).
 - **Previous performance** — while logging, show the last sets for this
   user + exercise (`ORDER BY date DESC LIMIT 1`).
 - **Set types** — warmup / normal / dropset / failure (`workout_sets.set_type`;
   the schema was left room for this).
-- **Rest timer** — pure frontend countdown between sets, no backend change.
+- **Rest timer** — frontend countdown between sets, no backend change.
 - **1RM estimate** — Epley formula on the workout detail / exercise view.
-- **Progress charts** — weight/volume over time per exercise (`GROUP BY` +
-  a charting lib).
+- **Progress charts** — weight/volume over time per exercise (`GROUP BY` + a
+  charting library — the first real UI dependency).
 - **Unit preference** — kg/lb per user instead of the assumed kg.
 
-## Product improvements
+## Product
 
 - **Workout / set editing and deletion** — only if a real need appears; adds
   `DELETE`/`PATCH` routes and undo semantics to think through.
 - **History pagination** — `LIMIT`/`OFFSET` on `GET /api/workouts` once a user
   has hundreds of workouts.
+- **Automated browser E2E** — Playwright against the deployment, replacing the
+  manual `E2E-CHECKLIST.md` pass.
 
 ## Explicitly out of scope (do not add without a deliberate product decision)
 
-Social features (likes/comments/following), wearable/smartwatch sync, per-exercise
-video demonstrations.
+Social features (likes / comments / following), wearable / smartwatch sync,
+per-exercise video demonstrations.

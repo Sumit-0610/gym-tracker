@@ -2,7 +2,11 @@
 
 **V1 is complete, frozen, and deployed.** It runs on the target Android/Termux
 device behind nginx and was verified end-to-end on that device on 2026-09-06
-(details below). Future work goes in a new milestone (see `V2-BACKLOG.md`).
+(details below).
+
+**V2 (cloud hosting) is now live** — same app, reachable from any network at
+`https://gym-tracker-d5ha.onrender.com`. See "Next milestone" below and
+`DEPLOYMENT-CLOUD.md`.
 
 Repo: https://github.com/Sumit-0610/gym-tracker
 
@@ -134,20 +138,35 @@ candidates that would address them.
 
 ## Next milestone
 
-**V2 only.** No speculative dates. V1 code (schema, API contracts, auth,
-frontend architecture, router, API layer, workout and history flows) is
-**frozen** — changes to any of it belong in V2, not as patches to V1.
+### V2 — cloud hosting: DONE (2026-09-06)
 
-The stated V2 goal is a version reachable from **anywhere** (not just the home
-Wi-Fi), on **any phone or laptop**. That is primarily infrastructure, not a
-rewrite:
+The V1 application logic is unchanged; V2 was an infrastructure move so the app
+is reachable from **any network** over HTTPS at no cost.
 
-- move the backend off the phone to a small always-on host (cheap VPS / free-tier
-  PaaS) — SQLite comes along fine at this scale;
-- put a domain + HTTPS in front (Let's Encrypt / Cloudflare);
-- swap in a persistent session store and set the session cookie `secure: true`
-  (both already listed in `V2-BACKLOG.md`);
-- make the frontend an installable **PWA**; optionally wrap it with Capacitor for
-  app-store presence.
+- **Host:** Render free tier (Docker web service, Oregon). Spins down after
+  ~15 min idle; a GitHub Actions `keep-alive` workflow pings `/healthz` every
+  10 min. URL: `https://gym-tracker-d5ha.onrender.com`.
+- **Database:** Turso (hosted libSQL, Oregon). `node:sqlite` → `@libsql/client`;
+  local dev/tests still use a plain file (`url: file:...`) with no account.
+- **Sessions:** persistent libSQL-backed `express-session` store (new `sessions`
+  table) — logins now survive a restart, which V1's MemoryStore did not.
+- **Frontend:** served by Express itself (`express.static` + SPA fallback) —
+  there is no nginx in the cloud deployment.
+- **HTTPS:** Render terminates TLS; `trust proxy` + `Secure` session cookie when
+  `NODE_ENV=production`; the app refuses to boot in production without a real
+  `SESSION_SECRET`.
+- **Verified against the live deployment:** `server/test/smoke.sh` 65/65
+  (full API contract + two-user authorization); signup → authenticated call →
+  write → read-back through Render's TLS; `Set-Cookie` carries
+  `HttpOnly; Secure; SameSite=Lax`.
 
-See `V2-BACKLOG.md` for the itemised list.
+Runbook: `DEPLOYMENT-CLOUD.md`. Plan/rationale: `V2-PLAN.md`. The V1 phone +
+nginx deployment (`DEPLOYMENT.md`) remains valid and documented.
+
+### Still open (see `V2-BACKLOG.md`)
+
+- Custom domain (a `*.onrender.com` URL is in use).
+- Installable **PWA** (manifest + service worker) — deliberately deferred from
+  the infra round.
+- Login rate limiting; workout-completion state; and the remaining feature
+  items.

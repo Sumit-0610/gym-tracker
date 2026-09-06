@@ -15,7 +15,7 @@ services:
     plan: free
     region: oregon            # same region as the Turso database
     branch: main
-    healthCheckPath: /
+    healthCheckPath: /healthz
     envVars:
       - key: NODE_ENV
         value: production

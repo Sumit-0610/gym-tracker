@@ -40,7 +40,7 @@ login rate limiting, workout-completion state, and every V2 *feature*.
    │  Turso  (cloud libSQL)   — the 6 tables, over the network    │
    └─────────────────────────────────────────────────────────────┘
 
-   cron-job.org  ── GET / every 10 min ──▶  keeps the container awake
+   keep-alive     ── GET /healthz every 10 min ──▶  keeps the container awake
 ```
 
 Nothing runs on hardware you own. The old phone becomes just another client (or

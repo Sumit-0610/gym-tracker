@@ -23,7 +23,7 @@ any device ──HTTPS──▶ https://gym-tracker.onrender.com
 
 Free-tier facts:
 - The instance **spins down after ~15 min idle**; the next request triggers a
-  ~30–50 s cold start. The `keep-alive` GitHub Action pings `/` every 10 min to
+  ~30–50 s cold start. The `keep-alive` GitHub Action pings `/healthz` every 10 min to
   prevent this.
 - **No persistent disk** — which is why the database is Turso, not a file.
 - ~750 instance-hours/month per Render workspace: enough for one always-on
@@ -63,7 +63,7 @@ Option B — **manual**:
    | `TURSO_DATABASE_URL` | `libsql://…turso.io` |
    | `TURSO_AUTH_TOKEN` | *(the secret token)* |
    | `SESSION_SECRET` | a long random string — `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
-4. Health check path: `/`.
+4. Health check path: `/healthz`.
 5. **Create Web Service**.
 
 First build takes a few minutes. When it's live, note the URL
@@ -77,7 +77,7 @@ First build takes a few minutes. When it's live, note the URL
    manually (**Actions → keep-alive → Run workflow**) to confirm it gets `200`.
 
 If GitHub's scheduler runs too late and cold starts still happen, replace it
-with a job on **cron-job.org** (free): `GET https://<app>/` every 5 min.
+with a job on **cron-job.org** (free): `GET https://<app>/healthz` every 5 min.
 
 ---
 

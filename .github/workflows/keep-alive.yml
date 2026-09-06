@@ -19,12 +19,12 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: GET /
+      - name: GET /healthz
         run: |
           if [ -z "${{ vars.APP_URL }}" ]; then
             echo "APP_URL variable is not set — skipping."
             exit 0
           fi
-          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 90 "${{ vars.APP_URL }}/")
-          echo "GET ${{ vars.APP_URL }}/ -> $code"
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 90 "${{ vars.APP_URL }}/healthz")
+          echo "GET ${{ vars.APP_URL }}/healthz -> $code"
           test "$code" = "200"

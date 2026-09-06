@@ -43,9 +43,10 @@ app.use(
   })
 );
 
-// Liveness probe — also what the keep-alive ping hits. Deliberately does not
-// touch the database.
-app.get('/', (req, res) => res.send('hello'));
+// Liveness probe — Render's health check and the keep-alive ping hit this.
+// A dedicated path (not `/`) so the app itself is served at the root.
+// Deliberately does not touch the database.
+app.get('/healthz', (req, res) => res.send('ok'));
 
 app.use('/api', require('./routes/auth'));
 app.use('/api', require('./routes/exercises'));

@@ -1,0 +1,14 @@
+# Keep the build context small and free of local/runtime state.
+**/node_modules
+**/dist
+**/data
+*.db
+*.db-*
+*.db-journal
+.env
+**/.env
+*.log
+.git
+.github
+*.md
+deploy/

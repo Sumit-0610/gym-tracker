@@ -41,3 +41,7 @@
 .ws-logged h2 {
   margin-bottom: var(--s-3);
 }
+
+.ws-finished {
+  color: var(--c-primary);
+}

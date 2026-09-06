@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { api } from '../api';
+import { useRef, useState } from 'react';
+import { api, ApiError } from '../api';
 import { useApi } from '../hooks/useApi';
+import { useAuth } from '../auth';
 import { useNavigate, Link } from '../router';
 import { formatDate } from '../format';
 import Card from '../components/Card';
@@ -8,12 +9,15 @@ import Button from '../components/Button';
 import Spinner from '../components/Spinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
+import RestTimer from '../components/RestTimer';
 import SetForm from './SetForm';
 import SetList from './SetList';
 import './WorkoutSession.css';
 
 export default function WorkoutSession({ id }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const unit = user?.weight_unit || 'kg';
 
   // Server state: the workout + every set logged so far (with exercise names).
   // GET /api/workouts/:id — the same endpoint history uses. Because the id is
@@ -34,6 +38,14 @@ export default function WorkoutSession({ id }) {
   // UI state: which exercise the set form is aimed at. Lifted here so the
   // chips and the dropdown control the same value.
   const [exerciseId, setExerciseId] = useState('');
+
+  // UI state: bumped after every logged set to (re)start the rest timer.
+  const [restRun, setRestRun] = useState(0);
+
+  // Finishing the workout.
+  const [finishing, setFinishing] = useState(false);
+  const [finishErr, setFinishErr] = useState(null);
+  const finishInFlight = useRef(false);
 
   // Initial load — keep the big spinner only until we first have data.
   if (workout.loading && !workout.data) {
@@ -59,12 +71,42 @@ export default function WorkoutSession({ id }) {
 
   const w = workout.data;
   const sets = w.sets;
+  const finished = w.completed_at != null;
+
+  function onSetLogged() {
+    workout.reload();
+    setRestRun((n) => n + 1);
+  }
+
+  async function finish() {
+    if (finishInFlight.current) return;
+    finishInFlight.current = true;
+    setFinishErr(null);
+    setFinishing(true);
+    try {
+      await api.finishWorkout(id);
+      navigate(`/history/${id}`);
+    } catch (err) {
+      setFinishErr(err instanceof ApiError ? err : new ApiError(0));
+    } finally {
+      finishInFlight.current = false;
+      setFinishing(false);
+    }
+  }
 
   return (
     <div className="page">
       <header className="ws-head">
         <h1>{w.routine_name || 'Freestyle workout'}</h1>
-        <p className="ws-started">Started {formatDate(w.date)}</p>
+        <p className="ws-started">
+          Started {formatDate(w.date)}
+          {finished && (
+            <>
+              {' · '}
+              <span className="ws-finished">Finished {formatDate(w.completed_at)}</span>
+            </>
+          )}
+        </p>
       </header>
 
       {routineId && routine.data && routine.data.exercises.length > 0 && (
@@ -103,10 +145,13 @@ export default function WorkoutSession({ id }) {
           exercises={library.data}
           sets={sets}
           exerciseId={exerciseId}
+          unit={unit}
           onExerciseChange={setExerciseId}
-          onLogged={workout.reload}
+          onLogged={onSetLogged}
         />
       )}
+
+      <RestTimer runId={restRun} />
 
       <section aria-labelledby="logged-heading" className="ws-logged">
         <h2 id="logged-heading">Logged sets</h2>
@@ -115,17 +160,30 @@ export default function WorkoutSession({ id }) {
             Pick an exercise above and log your first set.
           </EmptyState>
         ) : (
-          <SetList sets={sets} />
+          <SetList sets={sets} unit={unit} />
         )}
       </section>
 
-      <Button
-        variant="secondary"
-        className="btn-block"
-        onClick={() => navigate('/')}
-      >
-        Finish workout
-      </Button>
+      {finishErr && <ErrorMessage error={finishErr} />}
+
+      {finished ? (
+        <Button
+          variant="secondary"
+          className="btn-block"
+          onClick={() => navigate(`/history/${id}`)}
+        >
+          View in history
+        </Button>
+      ) : (
+        <Button
+          className="btn-block"
+          onClick={finish}
+          pending={finishing}
+          pendingLabel="Finishing…"
+        >
+          Finish workout
+        </Button>
+      )}
     </div>
   );
 }

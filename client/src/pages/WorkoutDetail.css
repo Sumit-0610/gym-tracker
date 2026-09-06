@@ -16,3 +16,19 @@
 .wd-head + section h2 {
   margin-bottom: var(--s-3);
 }
+
+.wd-status-done {
+  color: var(--c-primary);
+}
+
+.wd-status-open {
+  color: var(--c-focus);
+}
+
+.wd-resume {
+  margin-top: var(--s-4);
+}
+
+.wd-resume a {
+  color: var(--c-focus);
+}

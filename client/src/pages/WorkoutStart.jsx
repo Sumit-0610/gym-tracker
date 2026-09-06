@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { api, ApiError } from '../api';
 import { useApi } from '../hooks/useApi';
 import { useNavigate, Link } from '../router';
+import { formatDate } from '../format';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Select from '../components/Select';
@@ -15,6 +16,7 @@ import './WorkoutStart.css';
 export default function WorkoutStart() {
   const navigate = useNavigate();
   const { data: routines, loading, error } = useApi(() => api.routines(), []);
+  const current = useApi(() => api.currentWorkout(), []);
 
   const [mode, setMode] = useState('routine'); // 'routine' | 'freestyle'
   const [routineId, setRoutineId] = useState(''); // string, from <select>
@@ -58,6 +60,22 @@ export default function WorkoutStart() {
   return (
     <div className="page">
       <h1>Start a workout</h1>
+
+      {current.data && (
+        <Card className="ws-resume">
+          <p className="ws-hint">
+            You have an unfinished workout from {formatDate(current.data.date)}.
+          </p>
+          <Button
+            className="btn-block"
+            onClick={() => navigate(`/workout/${current.data.id}`)}
+          >
+            Resume it
+          </Button>
+        </Card>
+      )}
+
+      {current.data && <h2>Or start a new one</h2>}
 
       {loading && <Spinner label="Loading your routines…" />}
       {error && <ErrorMessage error={error} />}

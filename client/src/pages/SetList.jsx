@@ -1,3 +1,4 @@
+import { formatWeight, setTypeLabel } from '../format';
 import './SetList.css';
 
 // Group the flat set list (server order = log order, oldest first) by exercise,
@@ -21,11 +22,7 @@ function groupByExercise(sets) {
   return order.map((id) => map.get(id));
 }
 
-function weightLabel(w) {
-  return w === 0 ? 'bodyweight' : `${w} kg`;
-}
-
-export default function SetList({ sets }) {
+export default function SetList({ sets, unit = 'kg' }) {
   const groups = groupByExercise(sets);
 
   return (
@@ -44,9 +41,14 @@ export default function SetList({ sets }) {
           <ol className="set-rows">
             {g.rows.map((s) => (
               <li key={s.id} className="set-row">
-                <span className="set-row-n">Set {s.set_number}</span>
+                <span className="set-row-n">
+                  Set {s.set_number}
+                  {setTypeLabel(s.set_type) && (
+                    <span className="set-row-type"> · {setTypeLabel(s.set_type)}</span>
+                  )}
+                </span>
                 <span className="set-row-detail">
-                  {s.reps} reps × {weightLabel(s.weight)}
+                  {s.reps} reps × {formatWeight(s.weight, unit)}
                 </span>
               </li>
             ))}

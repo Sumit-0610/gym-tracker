@@ -57,3 +57,7 @@
 .set-row-detail {
   font-variant-numeric: tabular-nums;
 }
+
+.set-row-type {
+  color: var(--c-focus);
+}

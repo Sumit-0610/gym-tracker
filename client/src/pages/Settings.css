@@ -1,0 +1,41 @@
+.settings-account {
+  margin: 0;
+}
+
+.settings-group {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.settings-group legend {
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: var(--s-2);
+}
+
+.settings-hint {
+  margin: 0 0 var(--s-3);
+  color: var(--c-text-dim);
+  font-size: var(--t-sm);
+}
+
+.settings-option {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--tap-min);
+  cursor: pointer;
+}
+
+.settings-option input {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.settings-saved {
+  margin: var(--s-3) 0 0;
+  color: var(--c-primary);
+  font-size: var(--t-sm);
+}

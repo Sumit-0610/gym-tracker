@@ -25,3 +25,15 @@
   font-size: var(--t-lg);
   text-align: center;
 }
+
+.set-form-previous {
+  font-size: var(--t-sm);
+  color: var(--c-text-dim);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.set-form-previous-label {
+  color: var(--c-text);
+  font-weight: 600;
+}

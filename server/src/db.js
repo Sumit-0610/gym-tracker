@@ -49,12 +49,33 @@ const run = async (sql, ...args) => {
   return { lastInsertRowid: r.lastInsertRowid, rowsAffected: r.rowsAffected };
 };
 
+// Columns added after the original schema shipped. `schema.sql` already carries
+// them for a fresh database; this brings an existing one up to date. Each is a
+// no-op once the column exists. SQLite/libSQL has no "ADD COLUMN IF NOT EXISTS",
+// so we check PRAGMA table_info first. (Table/column names here are constants,
+// never user input.)
+const MIGRATIONS = [
+  ['workouts', 'completed_at', 'TEXT'],
+  ['workout_sets', 'set_type', "TEXT NOT NULL DEFAULT 'normal'"],
+  ['users', 'weight_unit', "TEXT NOT NULL DEFAULT 'kg'"],
+];
+
+async function migrate() {
+  for (const [table, column, definition] of MIGRATIONS) {
+    const info = await db.execute(`PRAGMA table_info(${table})`);
+    if (info.rows.some((r) => r.name === column)) continue;
+    await db.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    console.log(`migrated: added ${table}.${column}`);
+  }
+}
+
 async function init() {
   const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
   // executeMultiple runs the whole schema.sql script (multiple statements,
   // SQL comments) in one call. Every statement is CREATE TABLE IF NOT EXISTS,
   // so this is safe on every boot.
   await db.executeMultiple(schema);
+  await migrate();
   // libSQL enforces FOREIGN KEY constraints by default (unlike bare SQLite,
   // which needed `PRAGMA foreign_keys = ON` per connection), so there is
   // nothing to switch on here.

@@ -73,7 +73,48 @@ Use **two accounts** — call them **A** and **B**.
 
 - [ ] Start a workout, log 2–3 sets
 - [ ] Hard refresh `/workout/:id` → workout + all logged sets reconstructed
-- [ ] Refresh bare `/workout` (no id) → start screen (known limitation, not "resume")
+- [ ] Refresh bare `/workout` (no id) → start screen, plus a "Resume" card if a
+      workout is unfinished
+
+## Completion & resume
+
+- [ ] Log a set, tap "Finish workout" → lands on `/history/:id`, header shows
+      "Finished <date>", button is now "View in history"
+- [ ] History list: an unfinished workout shows an "In progress" badge; a
+      finished one does not
+- [ ] `/history/:id` of an unfinished workout: meta shows "In progress" + a
+      "Resume this workout" link that returns to `/workout/:id`
+- [ ] Dashboard and `/workout` show "You have an unfinished workout … Resume"
+      only while one exists; both gone once every workout is finished
+- [ ] Finishing an already-finished workout again is harmless (still 200)
+
+## Set types
+
+- [ ] Set-type picker defaults to "Normal"; choosing warm-up / drop set /
+      failure and logging shows the label in the logged-sets list
+- [ ] The chosen type sticks for the next set (fast repeat)
+
+## Previous performance
+
+- [ ] Pick an exercise you logged in an earlier workout → "Last time (<date>): …"
+      line appears with that workout's sets
+- [ ] Pick an exercise never logged → no "Last time" line
+- [ ] The line excludes the current workout's own sets
+
+## Rest timer
+
+- [ ] Idle: shows the saved duration (default 2:00)
+- [ ] After logging a set: counts down from the duration; "Skip" appears
+- [ ] −15s / +15s change the duration; the change persists across a refresh
+- [ ] Reaches 0 → shows "done" (and vibrates on a phone that supports it)
+
+## Weight unit  (`/settings`)
+
+- [ ] Toggle kg ↔ lb → "Saved."; `GET /api/me` reflects it
+- [ ] Set form label reads "Weight (kg)" / "Weight (lb)" to match
+- [ ] A weight entered as lb shows back as the same lb value (no visible drift)
+- [ ] Switching the unit re-renders existing history/detail weights converted
+- [ ] "bodyweight" (weight 0) shows in either unit
 
 ## History  (`/history`, `/history/:id`)
 

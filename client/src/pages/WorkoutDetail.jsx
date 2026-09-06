@@ -1,5 +1,6 @@
 import { api } from '../api';
 import { useApi } from '../hooks/useApi';
+import { useAuth } from '../auth';
 import { useNavigate, Link } from '../router';
 import { formatDate } from '../format';
 import Button from '../components/Button';
@@ -12,6 +13,8 @@ import './WorkoutDetail.css';
 // `id` is the route param from "/history/:id" — always a string.
 export default function WorkoutDetail({ id }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const unit = user?.weight_unit || 'kg';
 
   // Everything on this page is rebuilt from this one GET. Nothing depends on
   // earlier React state, so a hard refresh behaves exactly like navigating here.
@@ -38,6 +41,7 @@ export default function WorkoutDetail({ id }) {
 
   // routine_id is null for a freestyle workout.
   const isFreestyle = data.routine_id == null;
+  const finished = data.completed_at != null;
 
   return (
     <div className="page">
@@ -49,6 +53,14 @@ export default function WorkoutDetail({ id }) {
         <h1>{data.routine_name || 'Freestyle workout'}</h1>
         <p className="wd-meta">
           {isFreestyle ? 'Freestyle' : 'Routine'} · {formatDate(data.date)}
+          {' · '}
+          {finished ? (
+            <span className="wd-status wd-status-done">
+              Finished {formatDate(data.completed_at)}
+            </span>
+          ) : (
+            <span className="wd-status wd-status-open">In progress</span>
+          )}
         </p>
       </header>
 
@@ -67,9 +79,15 @@ export default function WorkoutDetail({ id }) {
           // SetList derives the grouped-by-exercise view from the flat sets
           // array on every render — it is never stored as state. Same component
           // the active workout screen uses; the API's set shape is identical.
-          <SetList sets={data.sets} />
+          <SetList sets={data.sets} unit={unit} />
         )}
       </section>
+
+      {!finished && (
+        <p className="wd-resume">
+          <Link to={`/workout/${data.id}`}>Resume this workout ›</Link>
+        </p>
+      )}
     </div>
   );
 }

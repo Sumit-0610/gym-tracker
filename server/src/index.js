@@ -4,9 +4,6 @@ const express = require('express');
 const session = require('express-session');
 const { init } = require('./db');
 
-// Create tables and seed the exercise library before serving any requests.
-init();
-
 const app = express();
 
 // Parse JSON request bodies into req.body.
@@ -45,10 +42,22 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-// Bind loopback by default: nginx (or the Vite dev proxy) is the only thing that
-// talks to Express, so there is no reason for port 3000 to be reachable from the
-// LAN. Set HOST=0.0.0.0 to override (e.g. to curl the API from another device).
+// Bind loopback by default so a local `npm start` is not exposed on the LAN.
+// The cloud host sets HOST=0.0.0.0 (its router must reach the process) and
+// injects PORT.
 const HOST = process.env.HOST || '127.0.0.1';
-app.listen(PORT, HOST, () => {
-  console.log(`gym-tracker API listening on http://${HOST}:${PORT}`);
-});
+
+// The database client is async, so schema creation + seeding must finish before
+// the first request is served. Start listening only after init() resolves; if
+// it rejects (database unreachable / misconfigured) fail loudly instead of
+// serving a broken app.
+init()
+  .then(() => {
+    app.listen(PORT, HOST, () => {
+      console.log(`gym-tracker API listening on http://${HOST}:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Failed to initialise the database:', err);
+    process.exit(1);
+  });

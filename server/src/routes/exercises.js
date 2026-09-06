@@ -4,7 +4,7 @@
 // per-user data — so there is no ownership check here, only authentication.
 
 const express = require('express');
-const { db } = require('../db');
+const { all } = require('../db');
 const requireAuth = require('../middleware/auth');
 
 const router = express.Router();
@@ -23,16 +23,17 @@ router.use(requireAuth);
 //     but every seeded row has one.
 //   - No parameters, so nothing to parameterize — there is no user input in
 //     this query at all.
-router.get('/exercises', (req, res) => {
-  const exercises = db
-    .prepare(
+router.get('/exercises', async (req, res, next) => {
+  try {
+    const exercises = await all(
       `SELECT id, name, muscle_group
          FROM exercises
         ORDER BY muscle_group, name`
-    )
-    .all();
-
-  res.json(exercises);
+    );
+    res.json(exercises);
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;

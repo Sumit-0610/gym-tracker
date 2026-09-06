@@ -2,7 +2,7 @@
 
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const { db } = require('../db');
+const { get, run } = require('../db');
 const requireAuth = require('../middleware/auth');
 
 const router = express.Router();
@@ -27,9 +27,11 @@ router.post('/signup', async (req, res, next) => {
     // random salt baked in, so identical passwords still get different hashes.
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-    const result = db
-      .prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)')
-      .run(username, passwordHash);
+    const result = await run(
+      'INSERT INTO users (username, password_hash) VALUES (?, ?)',
+      username,
+      passwordHash
+    );
 
     const id = Number(result.lastInsertRowid);
     req.session.userId = id; // log them in immediately
@@ -49,9 +51,7 @@ router.post('/login', async (req, res, next) => {
       return res.status(400).json({ error: 'username and password are required' });
     }
 
-    const user = db
-      .prepare('SELECT * FROM users WHERE username = ?')
-      .get(username);
+    const user = await get('SELECT * FROM users WHERE username = ?', username);
 
     // One generic message whether the username is unknown or the password is
     // wrong — don't leak which usernames exist.
@@ -77,11 +77,16 @@ router.post('/logout', (req, res) => {
 });
 
 // Protected: used by the frontend on load to check for an existing session.
-router.get('/me', requireAuth, (req, res) => {
-  const user = db
-    .prepare('SELECT id, username, created_at FROM users WHERE id = ?')
-    .get(req.userId);
-  res.json(user);
+router.get('/me', requireAuth, async (req, res, next) => {
+  try {
+    const user = await get(
+      'SELECT id, username, created_at FROM users WHERE id = ?',
+      req.userId
+    );
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;

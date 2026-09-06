@@ -44,6 +44,17 @@ CREATE TABLE IF NOT EXISTS workouts (
   FOREIGN KEY (routine_id) REFERENCES routines(id)
 );
 
+-- express-session store (V2 — see src/session-store.js). Sessions used to live
+-- in memory; a redeploy-heavy host needs them to survive a restart.
+--   sid    = session id (from the signed cookie)
+--   sess   = the session object, JSON-encoded
+--   expire = absolute expiry, unix-epoch milliseconds
+CREATE TABLE IF NOT EXISTS sessions (
+  sid    TEXT PRIMARY KEY,
+  sess   TEXT NOT NULL,
+  expire INTEGER NOT NULL
+);
+
 -- The actual sets performed during a logged workout.
 -- v2 will add a set_type column (warmup/normal/dropset/failure) via ALTER TABLE.
 CREATE TABLE IF NOT EXISTS workout_sets (

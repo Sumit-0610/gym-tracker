@@ -26,15 +26,19 @@ const EXERCISES = [
   ['Plank', 'Core'],
 ];
 
-module.exports = function seed(db) {
-  const { count } = db.prepare('SELECT COUNT(*) AS count FROM exercises').get();
-  if (count > 0) return;
+module.exports = async function seed(db) {
+  const res = await db.execute('SELECT COUNT(*) AS count FROM exercises');
+  if (res.rows[0].count > 0) return;
 
-  const insert = db.prepare(
-    'INSERT INTO exercises (name, muscle_group) VALUES (?, ?)'
+  // db.batch sends every INSERT in a single round trip and wraps them in one
+  // transaction ('write' = all-or-nothing) — quicker and safer than 21
+  // separate calls to a remote database on first boot.
+  await db.batch(
+    EXERCISES.map(([name, muscle_group]) => ({
+      sql: 'INSERT INTO exercises (name, muscle_group) VALUES (?, ?)',
+      args: [name, muscle_group],
+    })),
+    'write'
   );
-  for (const [name, muscleGroup] of EXERCISES) {
-    insert.run(name, muscleGroup);
-  }
   console.log(`Seeded ${EXERCISES.length} exercises`);
 };

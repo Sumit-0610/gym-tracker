@@ -40,3 +40,15 @@
   font-size: var(--t-sm);
   color: var(--c-text-dim);
 }
+
+.history-badge {
+  display: inline-block;
+  margin-left: var(--s-2);
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  vertical-align: middle;
+  background: var(--c-surface-2);
+  color: var(--c-focus);
+}

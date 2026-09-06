@@ -72,8 +72,18 @@ export const api = {
     request('POST', '/api/login', { username, password }),
   logout: () => request('POST', '/api/logout'),
 
+  // preferences
+  updatePreferences: (prefs) => request('PATCH', '/api/me', prefs),
+
   // exercises
   exercises: () => request('GET', '/api/exercises'),
+  // the caller's sets for this exercise from their most recent other workout
+  lastSets: (exerciseId, excludeWorkoutId) =>
+    request(
+      'GET',
+      `/api/exercises/${exerciseId}/last-sets` +
+        (excludeWorkoutId ? `?exclude=${excludeWorkoutId}` : '')
+    ),
 
   // routines
   routines: () => request('GET', '/api/routines'),
@@ -87,6 +97,9 @@ export const api = {
   workout: (id) => request('GET', `/api/workouts/${id}`),
   startWorkout: (routineId) =>
     request('POST', '/api/workouts', routineId ? { routine_id: routineId } : {}),
+  currentWorkout: () => request('GET', '/api/workouts/current'),
   logSet: (workoutId, payload) =>
     request('POST', `/api/workouts/${workoutId}/sets`, payload),
+  finishWorkout: (workoutId) =>
+    request('POST', `/api/workouts/${workoutId}/finish`),
 };

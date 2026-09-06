@@ -82,6 +82,14 @@ export function AuthProvider({ children }) {
     [navigate]
   );
 
+  // Update a preference (e.g. weight unit) and refresh the local user object
+  // from the server's response — same pattern as login/signup.
+  const updatePreferences = useCallback(async (prefs) => {
+    const u = await api.updatePreferences(prefs);
+    setUser(u);
+    return u;
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await api.logout();
@@ -94,7 +102,9 @@ export function AuthProvider({ children }) {
   }, [navigate]);
 
   return (
-    <AuthContext.Provider value={{ user, status, login, signup, logout }}>
+    <AuthContext.Provider
+      value={{ user, status, login, signup, logout, updatePreferences }}
+    >
       {children}
     </AuthContext.Provider>
   );

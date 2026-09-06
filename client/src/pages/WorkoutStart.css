@@ -39,3 +39,10 @@
   height: 20px;
   flex-shrink: 0;
 }
+
+.ws-resume {
+  border-color: var(--c-primary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}

@@ -24,6 +24,46 @@ export function describeError(error) {
   }
 }
 
+// --- weight units -----------------------------------------------------------
+//
+// Weights are ALWAYS stored in kilograms (workout_sets.weight). A user whose
+// preference is 'lb' sees and types pounds; we convert at the edges — display
+// with formatWeight, input with toKg. 0 is "bodyweight" in either unit.
+//
+// 1 kg = 2.2046226218 lb (exact-enough). Rounding display to 1 decimal makes
+// the round-trip lossless to the eye: type "135" lb -> store 61.235 kg ->
+// show "135 lb".
+
+const LB_PER_KG = 2.2046226218;
+const round1 = (n) => Math.round(n * 10) / 10;
+
+// kg (from the API) -> a display string in the user's unit.
+export function formatWeight(kg, unit = 'kg') {
+  if (kg === 0) return 'bodyweight';
+  return unit === 'lb' ? `${round1(kg * LB_PER_KG)} lb` : `${round1(kg)} kg`;
+}
+
+// a number the user typed in their unit -> kg, for sending to the API.
+export function toKg(value, unit = 'kg') {
+  const n = Number(value);
+  return unit === 'lb' ? n / LB_PER_KG : n;
+}
+
+// kg -> a number in the user's unit, for pre-filling an input.
+export function fromKg(kg, unit = 'kg') {
+  return unit === 'lb' ? round1(kg * LB_PER_KG) : round1(kg);
+}
+
+// 'warmup' -> 'Warm-up', etc. 'normal' has no label (it's the default).
+const SET_TYPE_LABELS = {
+  warmup: 'Warm-up',
+  dropset: 'Drop set',
+  failure: 'To failure',
+};
+export function setTypeLabel(type) {
+  return SET_TYPE_LABELS[type] || '';
+}
+
 // The backend stores workout dates as SQLite CURRENT_TIMESTAMP: a UTC string
 // "YYYY-MM-DD HH:MM:SS" with no timezone marker. We append 'Z' so the browser
 // parses it as UTC, then render it in the viewer's local timezone via

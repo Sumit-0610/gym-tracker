@@ -1,0 +1,67 @@
+.rest-timer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  padding: var(--s-3) var(--s-4);
+  margin: var(--s-3) 0;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+}
+
+.rest-timer-running {
+  border-color: var(--c-primary);
+}
+
+.rest-timer-done {
+  border-color: var(--c-focus);
+}
+
+.rest-timer-main {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+}
+
+.rest-timer-label {
+  color: var(--c-text-dim);
+  font-size: var(--t-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rest-timer-clock {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-lg);
+  font-weight: 600;
+}
+
+.rest-timer-done .rest-timer-clock {
+  color: var(--c-focus);
+}
+
+.rest-timer-controls {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.rest-timer-controls button {
+  min-height: var(--tap-min);
+  padding: 0 var(--s-3);
+  background: var(--c-surface-2);
+  color: var(--c-text);
+  border: none;
+  border-radius: var(--r-sm);
+  font-size: var(--t-sm);
+  cursor: pointer;
+}
+
+.rest-timer-controls button:active {
+  background: var(--c-border);
+}
+
+.rest-timer-skip {
+  font-weight: 600;
+}

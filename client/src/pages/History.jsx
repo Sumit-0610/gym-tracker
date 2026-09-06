@@ -46,6 +46,9 @@ export default function History() {
                 <span className="history-top">
                   <span className="history-name">
                     {w.routine_name || 'Freestyle'}
+                    {w.completed_at == null && (
+                      <span className="history-badge">In progress</span>
+                    )}
                   </span>
                   <span className="history-count">
                     {w.set_count} {w.set_count === 1 ? 'set' : 'sets'}

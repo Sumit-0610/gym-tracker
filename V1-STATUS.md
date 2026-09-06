@@ -155,6 +155,9 @@ is reachable from **any network** over HTTPS at no cost.
 - **HTTPS:** Render terminates TLS; `trust proxy` + `Secure` session cookie when
   `NODE_ENV=production`; the app refuses to boot in production without a real
   `SESSION_SECRET`.
+- **Auth rate limiting:** `express-rate-limit` on `/api/login` (10 failed
+  attempts / 15 min / IP; successful logins not counted) and `/api/signup`
+  (20 / hour / IP). Returns `429`. Verified on the live deployment.
 - **Verified against the live deployment:** `server/test/smoke.sh` 65/65
   (full API contract + two-user authorization); signup → authenticated call →
   write → read-back through Render's TLS; `Set-Cookie` carries

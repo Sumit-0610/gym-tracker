@@ -166,10 +166,26 @@ is reachable from **any network** over HTTPS at no cost.
 Runbook: `DEPLOYMENT-CLOUD.md`. Plan/rationale: `V2-PLAN.md`. The V1 phone +
 nginx deployment (`DEPLOYMENT.md`) remains valid and documented.
 
+### V2 — workout features (2026-09-06)
+
+Built on the cloud deployment; verified with `smoke.sh` (96/96) and an
+end-to-end mobile-viewport browser pass.
+
+- **Workout completion** — `completed_at`, `POST /api/workouts/:id/finish`;
+  history/detail distinguish finished from in-progress.
+- **Resume** — `GET /api/workouts/current`; Dashboard and `/workout` offer to
+  resume the latest unfinished workout.
+- **Set types** — normal / warm-up / drop set / to failure.
+- **Previous performance** — "last time you did this exercise" while logging.
+- **Rest timer** — between-sets countdown (frontend only).
+- **kg / lb preference** — `/settings` toggle; weights stored in kg, converted
+  for display and input.
+- Schema changes land via idempotent `ALTER TABLE` migrations on boot — no
+  data loss on the live database.
+
 ### Still open (see `V2-BACKLOG.md`)
 
-- Custom domain (a `*.onrender.com` URL is in use).
-- Installable **PWA** (manifest + service worker) — deliberately deferred from
-  the infra round.
-- Login rate limiting; workout-completion state; and the remaining feature
-  items.
+- Custom domain — `gym-tracker.js.org` is pre-configured in Render, waiting on
+  js.org to reopen subdomain requests (~mid-Sept 2026).
+- Installable **PWA** (manifest + service worker).
+- 1RM estimate, progress charts, editing/deletion, history pagination.

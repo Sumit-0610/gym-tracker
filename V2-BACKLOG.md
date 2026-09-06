@@ -12,6 +12,22 @@ verification. See `V1-STATUS.md` for what is deployed.
 - ~~**Login rate limiting**~~ — shipped (`server/src/middleware/rate-limit.js`,
   `express-rate-limit`). 10 failed logins / 15 min / IP (successful logins not
   counted); 20 signups / hour / IP.
+- ~~**Workout completion state**~~ — `workouts.completed_at`, `POST
+  /api/workouts/:id/finish` (idempotent), history/detail show finished vs
+  in-progress.
+- ~~**Resume current workout**~~ — `GET /api/workouts/current`; Dashboard and
+  `/workout` offer to resume the latest unfinished workout.
+- ~~**Previous performance**~~ — `GET /api/exercises/:id/last-sets`; SetForm
+  shows "Last time (<date>): …" for the chosen exercise.
+- ~~**Set types**~~ — `workout_sets.set_type` (normal/warmup/dropset/failure),
+  picker in SetForm, labelled in SetList.
+- ~~**Rest timer**~~ — `RestTimer` component, auto-starts after each set,
+  ±15s / Skip, duration in localStorage.
+- ~~**Unit preference (kg/lb)**~~ — `users.weight_unit`, `PATCH /api/me`, new
+  `/settings` screen. Weights stored in kg, converted at the edges
+  (`format.js`).
+- Idempotent `ALTER TABLE` migrations run on boot (`db.js`), so the schema
+  columns above land on the existing database without data loss.
 
 ## Infra / hosting
 
@@ -32,21 +48,11 @@ verification. See `V1-STATUS.md` for what is deployed.
   does not really exist; the alternatives are a paid VPS or accepting the cold
   start.
 
-## Workout features
+## Workout features (remaining)
 
-- **Workout completion state** — `workouts.completed_at` + a "Finish" action, so
-  history distinguishes finished from abandoned.
-- **Resume current workout** — an endpoint for "my latest unfinished workout" so
-  bare `/workout` can offer to resume (needs completion state above).
-- **Previous performance** — while logging, show the last sets for this
-  user + exercise (`ORDER BY date DESC LIMIT 1`).
-- **Set types** — warmup / normal / dropset / failure (`workout_sets.set_type`;
-  the schema was left room for this).
-- **Rest timer** — frontend countdown between sets, no backend change.
 - **1RM estimate** — Epley formula on the workout detail / exercise view.
 - **Progress charts** — weight/volume over time per exercise (`GROUP BY` + a
   charting library — the first real UI dependency).
-- **Unit preference** — kg/lb per user instead of the assumed kg.
 
 ## Product
 

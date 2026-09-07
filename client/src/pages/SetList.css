@@ -61,3 +61,63 @@
 .set-row-type {
   color: var(--c-focus);
 }
+
+/* --- edit / delete controls --- */
+.set-row {
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+.set-row-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-left: auto;
+}
+
+.set-row-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--c-text-dim);
+  font-size: var(--t-sm);
+  padding: var(--s-1) var(--s-2);
+  min-height: var(--tap-min);
+  cursor: pointer;
+}
+
+.set-row-btn:hover {
+  color: var(--c-text);
+}
+
+.set-row-btn-danger {
+  color: var(--c-danger);
+}
+
+.set-row-confirm {
+  font-size: var(--t-sm);
+  color: var(--c-text-dim);
+}
+
+.set-row-editing {
+  flex-direction: column;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-3) 0;
+}
+
+.set-edit-fields {
+  display: flex;
+  gap: var(--s-3);
+}
+
+.set-edit-fields .field {
+  flex: 1;
+  min-width: 0;
+}
+
+.set-row-editing .set-row-actions {
+  margin-left: 0;
+  justify-content: flex-end;
+}

@@ -180,6 +180,10 @@ end-to-end mobile-viewport browser pass.
 - **Rest timer** — between-sets countdown (frontend only).
 - **kg / lb preference** — `/settings` toggle; weights stored in kg, converted
   for display and input.
+- **Edit / delete** — edit a set (reps / weight / type) or delete it (remaining
+  sets renumber); reopen a finished workout; delete a workout and its sets
+  (one transaction).
+- **History pagination** — `?limit=&offset=`; "Load more" button.
 - Schema changes land via idempotent `ALTER TABLE` migrations on boot — no
   data loss on the live database.
 
@@ -188,4 +192,4 @@ end-to-end mobile-viewport browser pass.
 - Custom domain — `gym-tracker.js.org` is pre-configured in Render, waiting on
   js.org to reopen subdomain requests (~mid-Sept 2026).
 - Installable **PWA** (manifest + service worker).
-- 1RM estimate, progress charts, editing/deletion, history pagination.
+- 1RM estimate, progress charts, automated browser E2E.

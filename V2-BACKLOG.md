@@ -28,6 +28,13 @@ verification. See `V1-STATUS.md` for what is deployed.
   (`format.js`).
 - Idempotent `ALTER TABLE` migrations run on boot (`db.js`), so the schema
   columns above land on the existing database without data loss.
+- ~~**Edit / delete workouts & sets**~~ — `PATCH`/`DELETE
+  /api/workouts/:id/sets/:setId` (delete renumbers the remaining sets),
+  `POST /api/workouts/:id/reopen`, `DELETE /api/workouts/:id` (cascade via a
+  transaction). Inline edit + two-tap delete in `SetList`; reopen / delete on
+  `WorkoutDetail`. `db.js` gained a `tx()` helper.
+- ~~**History pagination**~~ — `GET /api/workouts?limit=&offset=` (bare-array
+  response unchanged); History screen has a "Load more" button.
 
 ## Infra / hosting
 
@@ -54,12 +61,8 @@ verification. See `V1-STATUS.md` for what is deployed.
 - **Progress charts** — weight/volume over time per exercise (`GROUP BY` + a
   charting library — the first real UI dependency).
 
-## Product
+## Product (remaining)
 
-- **Workout / set editing and deletion** — only if a real need appears; adds
-  `DELETE`/`PATCH` routes and undo semantics to think through.
-- **History pagination** — `LIMIT`/`OFFSET` on `GET /api/workouts` once a user
-  has hundreds of workouts.
 - **Automated browser E2E** — Playwright against the deployment, replacing the
   manual `E2E-CHECKLIST.md` pass.
 

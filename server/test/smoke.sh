@@ -222,6 +222,74 @@ code GET /api/me "$A" >/dev/null
 check "me now shows lb"                "lb" "$(body | jget 'd.weight_unit')"
 code PATCH /api/me "$A" '{"weight_unit":"kg"}' >/dev/null
 
+echo "== phase 13: edit / delete / pagination =="
+# fresh workout, 3 sets of one exercise
+check "start workout for edit tests"   201 "$(code POST /api/workouts "$A" '{}')"
+WID_ED="$(body | jget 'd.id')"
+code POST /api/workouts/$WID_ED/sets "$A" '{"exercise_id":1,"set_number":1,"reps":10,"weight":60}' >/dev/null
+S1="$(body | jget 'd.id')"
+code POST /api/workouts/$WID_ED/sets "$A" '{"exercise_id":1,"set_number":2,"reps":9,"weight":60}' >/dev/null
+S2="$(body | jget 'd.id')"
+code POST /api/workouts/$WID_ED/sets "$A" '{"exercise_id":1,"set_number":3,"reps":8,"weight":60}' >/dev/null
+S3="$(body | jget 'd.id')"
+
+# --- edit a set ---
+check "edit set reps + weight"          200 "$(code PATCH /api/workouts/$WID_ED/sets/$S1 "$A" '{"reps":12,"weight":65}')"
+code GET /api/workouts/$WID_ED "$A" >/dev/null
+check "  ...reps updated"               "12" "$(body | jget "d.sets.find(s=>s.id===$S1).reps")"
+check "  ...weight updated"             "65" "$(body | jget "d.sets.find(s=>s.id===$S1).weight")"
+check "edit set type only"              200 "$(code PATCH /api/workouts/$WID_ED/sets/$S1 "$A" '{"set_type":"failure"}')"
+check "edit set with no fields -> 400"  400 "$(code PATCH /api/workouts/$WID_ED/sets/$S1 "$A" '{}')"
+check "edit set invalid reps -> 400"    400 "$(code PATCH /api/workouts/$WID_ED/sets/$S1 "$A" '{"reps":0}')"
+check "edit set invalid type -> 400"    400 "$(code PATCH /api/workouts/$WID_ED/sets/$S1 "$A" '{"set_type":"nope"}')"
+check "BOB cannot edit alice's set"     404 "$(code PATCH /api/workouts/$WID_ED/sets/$S1 "$B" '{"reps":5}')"
+check "edit nonexistent set -> 404"     404 "$(code PATCH /api/workouts/$WID_ED/sets/999999 "$A" '{"reps":5}')"
+check "edit set, wrong workout id -> 404" 404 "$(code PATCH /api/workouts/999999/sets/$S1 "$A" '{"reps":5}')"
+
+# --- delete a set + renumber ---
+check "delete middle set (S2)"          200 "$(code DELETE /api/workouts/$WID_ED/sets/$S2 "$A")"
+code GET /api/workouts/$WID_ED "$A" >/dev/null
+check "  ...2 sets remain for the exercise" "2" "$(body | jget "d.sets.filter(s=>s.exercise_id===1).length")"
+check "  ...renumbered contiguously to 1,2" "true" \
+  "$(body | jget "JSON.stringify(d.sets.filter(s=>s.exercise_id===1).map(s=>s.set_number))==='[1,2]'")"
+check "BOB cannot delete alice's set"   404 "$(code DELETE /api/workouts/$WID_ED/sets/$S3 "$B")"
+check "delete nonexistent set -> 404"   404 "$(code DELETE /api/workouts/$WID_ED/sets/999999 "$A")"
+# the next logged set must not collide with the renumbered ones
+code POST /api/workouts/$WID_ED/sets "$A" '{"exercise_id":1,"set_number":3,"reps":7,"weight":60}' >/dev/null
+code GET /api/workouts/$WID_ED "$A" >/dev/null
+check "  ...next set continues at 3 (no collision)" "true" \
+  "$(body | jget "JSON.stringify(d.sets.filter(s=>s.exercise_id===1).map(s=>s.set_number))==='[1,2,3]'")"
+
+# --- reopen a finished workout ---
+code POST /api/workouts/$WID_ED/finish "$A" >/dev/null
+check "  ...workout is finished"        "true" "$(body | jget 'd.completed_at !== null')"
+check "reopen finished workout"         200 "$(code POST /api/workouts/$WID_ED/reopen "$A")"
+check "  ...completed_at cleared"       "null" "$(body | jget 'String(d.completed_at)')"
+check "BOB cannot reopen alice's workout" 404 "$(code POST /api/workouts/$WID_ED/reopen "$B")"
+check "reopen nonexistent workout -> 404" 404 "$(code POST /api/workouts/999999/reopen "$A")"
+
+# --- delete a workout (cascade) ---
+check "BOB cannot delete alice's workout" 404 "$(code DELETE /api/workouts/$WID_ED "$B")"
+check "delete workout"                  200 "$(code DELETE /api/workouts/$WID_ED "$A")"
+check "  ...workout is now 404"         404 "$(code GET /api/workouts/$WID_ED "$A")"
+code GET /api/exercises/1/last-sets "$A" >/dev/null
+check "  ...no sets orphaned from it"   "true" "$(body | jget "d === null || d.workout_id !== $WID_ED")"
+check "delete nonexistent workout -> 404" 404 "$(code DELETE /api/workouts/999999 "$A")"
+
+# --- pagination ---
+code GET "/api/workouts?limit=2" "$A" >/dev/null
+check "pagination: limit=2 returns 2"   "2" "$(body | jget 'd.length')"
+PAGE0="$(body | jget 'd[0].id')"
+code GET "/api/workouts?limit=2&offset=2" "$A" >/dev/null
+check "pagination: offset=2 returns a later page" "true" \
+  "$(body | jget "d.length>=1 && d[0].id !== $PAGE0")"
+code GET "/api/workouts?limit=2&offset=999" "$A" >/dev/null
+check "pagination: huge offset -> []"   "0" "$(body | jget 'd.length')"
+code GET "/api/workouts?limit=999" "$A" >/dev/null
+check "pagination: limit clamps to <=100" "true" "$(body | jget 'd.length <= 100')"
+code GET "/api/workouts?limit=abc" "$A" >/dev/null
+check "pagination: bad limit falls back" "true" "$(body | jget 'Array.isArray(d) && d.length >= 1')"
+
 echo
 echo "== two-user authorization summary =="
 echo "  alice: routine $RID, workout $WID  |  bob: cannot touch either"

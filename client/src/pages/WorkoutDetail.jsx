@@ -1,4 +1,5 @@
-import { api } from '../api';
+import { useRef, useState } from 'react';
+import { api, ApiError } from '../api';
 import { useApi } from '../hooks/useApi';
 import { useAuth } from '../auth';
 import { useNavigate, Link } from '../router';
@@ -19,6 +20,12 @@ export default function WorkoutDetail({ id }) {
   // Everything on this page is rebuilt from this one GET. Nothing depends on
   // earlier React state, so a hard refresh behaves exactly like navigating here.
   const { data, loading, error, reload } = useApi(() => api.workout(id), [id]);
+
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [actionErr, setActionErr] = useState(null);
+  const [reopening, setReopening] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const inFlight = useRef(false);
 
   if (loading && !data) return <Spinner full label="Loading workout…" />;
 
@@ -42,6 +49,43 @@ export default function WorkoutDetail({ id }) {
   // routine_id is null for a freestyle workout.
   const isFreestyle = data.routine_id == null;
   const finished = data.completed_at != null;
+
+  const editSet = (setId, patch) =>
+    api.editSet(id, setId, patch).then(() => reload());
+  const deleteSet = (setId) =>
+    api.deleteSet(id, setId).then(() => reload());
+
+  async function reopen() {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setActionErr(null);
+    setReopening(true);
+    try {
+      await api.reopenWorkout(id);
+      reload();
+    } catch (err) {
+      setActionErr(err instanceof ApiError ? err : new ApiError(0));
+    } finally {
+      inFlight.current = false;
+      setReopening(false);
+    }
+  }
+
+  async function removeWorkout() {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setActionErr(null);
+    setDeleting(true);
+    try {
+      await api.deleteWorkout(id);
+      navigate('/history');
+    } catch (err) {
+      setActionErr(err instanceof ApiError ? err : new ApiError(0));
+      inFlight.current = false;
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  }
 
   return (
     <div className="page">
@@ -79,15 +123,62 @@ export default function WorkoutDetail({ id }) {
           // SetList derives the grouped-by-exercise view from the flat sets
           // array on every render — it is never stored as state. Same component
           // the active workout screen uses; the API's set shape is identical.
-          <SetList sets={data.sets} unit={unit} />
+          <SetList
+            sets={data.sets}
+            unit={unit}
+            onEditSet={editSet}
+            onDeleteSet={deleteSet}
+          />
         )}
       </section>
 
-      {!finished && (
-        <p className="wd-resume">
-          <Link to={`/workout/${data.id}`}>Resume this workout ›</Link>
-        </p>
-      )}
+      {actionErr && <ErrorMessage error={actionErr} />}
+
+      <div className="wd-actions">
+        {!finished && (
+          <Button
+            variant="secondary"
+            onClick={() => navigate(`/workout/${data.id}`)}
+          >
+            Resume workout
+          </Button>
+        )}
+        {finished && (
+          <Button
+            variant="secondary"
+            onClick={reopen}
+            pending={reopening}
+            pendingLabel="Reopening…"
+          >
+            Reopen
+          </Button>
+        )}
+
+        {!confirmDelete ? (
+          <Button variant="danger" onClick={() => setConfirmDelete(true)}>
+            Delete workout
+          </Button>
+        ) : (
+          <span className="wd-confirm">
+            <span>Delete this workout and its sets?</span>
+            <Button
+              variant="secondary"
+              onClick={() => setConfirmDelete(false)}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={removeWorkout}
+              pending={deleting}
+              pendingLabel="Deleting…"
+            >
+              Delete
+            </Button>
+          </span>
+        )}
+      </div>
     </div>
   );
 }

@@ -78,6 +78,11 @@ export default function WorkoutSession({ id }) {
     setRestRun((n) => n + 1);
   }
 
+  const editSet = (setId, patch) =>
+    api.editSet(id, setId, patch).then(() => workout.reload());
+  const deleteSet = (setId) =>
+    api.deleteSet(id, setId).then(() => workout.reload());
+
   async function finish() {
     if (finishInFlight.current) return;
     finishInFlight.current = true;
@@ -160,7 +165,12 @@ export default function WorkoutSession({ id }) {
             Pick an exercise above and log your first set.
           </EmptyState>
         ) : (
-          <SetList sets={sets} unit={unit} />
+          <SetList
+            sets={sets}
+            unit={unit}
+            onEditSet={editSet}
+            onDeleteSet={deleteSet}
+          />
         )}
       </section>
 

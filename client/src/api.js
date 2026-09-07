@@ -93,13 +93,22 @@ export const api = {
     request('POST', `/api/routines/${routineId}/exercises`, payload),
 
   // workouts
-  workouts: () => request('GET', '/api/workouts'),
+  workouts: ({ limit = 20, offset = 0 } = {}) =>
+    request('GET', `/api/workouts?limit=${limit}&offset=${offset}`),
   workout: (id) => request('GET', `/api/workouts/${id}`),
   startWorkout: (routineId) =>
     request('POST', '/api/workouts', routineId ? { routine_id: routineId } : {}),
   currentWorkout: () => request('GET', '/api/workouts/current'),
   logSet: (workoutId, payload) =>
     request('POST', `/api/workouts/${workoutId}/sets`, payload),
+  editSet: (workoutId, setId, patch) =>
+    request('PATCH', `/api/workouts/${workoutId}/sets/${setId}`, patch),
+  deleteSet: (workoutId, setId) =>
+    request('DELETE', `/api/workouts/${workoutId}/sets/${setId}`),
   finishWorkout: (workoutId) =>
     request('POST', `/api/workouts/${workoutId}/finish`),
+  reopenWorkout: (workoutId) =>
+    request('POST', `/api/workouts/${workoutId}/reopen`),
+  deleteWorkout: (workoutId) =>
+    request('DELETE', `/api/workouts/${workoutId}`),
 };

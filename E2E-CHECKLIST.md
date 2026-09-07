@@ -116,6 +116,32 @@ Use **two accounts** — call them **A** and **B**.
 - [ ] Switching the unit re-renders existing history/detail weights converted
 - [ ] "bodyweight" (weight 0) shows in either unit
 
+## Edit / delete sets  (active workout + history detail)
+
+- [ ] "Edit" on a set → inline form prefilled with its reps / weight / type
+- [ ] Save with a changed value → the row updates; other rows untouched
+- [ ] Invalid reps / weight in the edit form → inline error, no save
+- [ ] "Delete" → "Delete this set? No / Yes"; "No" cancels
+- [ ] "Yes" removes the set; the remaining sets for that exercise renumber to 1..n
+- [ ] After a delete, logging another set of that exercise continues the
+      numbering with no collision
+- [ ] Edits/deletes work on a finished workout in history too
+
+## Reopen / delete workout  (`/history/:id`)
+
+- [ ] Finished workout: "Reopen" → status flips to "In progress", "Resume
+      workout" appears, it shows up again under `/api/workouts/current`
+- [ ] "Delete workout" → "Delete this workout and its sets? Cancel / Delete"
+- [ ] "Delete" → lands on `/history`, the workout is gone, its sets are gone
+      (a later `last-sets` for those exercises never points at it)
+
+## History pagination
+
+- [ ] With ≤ 20 workouts: no "Load more"
+- [ ] With > 20: first 20 shown, "Load more" appends the next page
+- [ ] "Load more" disappears once a short (< 20) page comes back
+- [ ] Order stays newest-first across pages (no client sort)
+
 ## History  (`/history`, `/history/:id`)
 
 - [ ] Empty history → "No workouts yet" + "Start a workout"

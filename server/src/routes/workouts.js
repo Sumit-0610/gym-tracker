@@ -4,7 +4,7 @@
 // the session, and every query filters on user_id in SQL.
 
 const express = require('express');
-const { get, all, run } = require('../db');
+const { get, all, run, tx } = require('../db');
 const requireAuth = require('../middleware/auth');
 const {
   parseId,
@@ -168,12 +168,197 @@ router.post('/workouts/:id/finish', async (req, res, next) => {
   }
 });
 
+// POST /api/workouts/:id/reopen
+//   Clears completed_at — undoes a "Finish" done by mistake. Idempotent.
+//   Returns: 200 { id, routine_id, date, completed_at }  (completed_at now null)
+//            404 workout not found or not the caller's
+router.post('/workouts/:id/reopen', async (req, res, next) => {
+  try {
+    const workoutId = parseId(req.params.id);
+    if (workoutId === null) {
+      return res.status(404).json({ error: 'workout not found' });
+    }
+
+    const workout = await get(
+      'SELECT id FROM workouts WHERE id = ? AND user_id = ?',
+      workoutId,
+      req.userId
+    );
+    if (!workout) {
+      return res.status(404).json({ error: 'workout not found' });
+    }
+
+    await run(
+      'UPDATE workouts SET completed_at = NULL WHERE id = ?',
+      workoutId
+    );
+
+    const updated = await get(
+      'SELECT id, routine_id, date, completed_at FROM workouts WHERE id = ?',
+      workoutId
+    );
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/workouts/:id/sets/:setId
+//   Body:    any of { reps, weight, set_type } — at least one.
+//            The exercise a set belongs to cannot be changed (delete + re-add).
+//   Returns: 200 { id, workout_id, exercise_id, set_number, reps, weight, set_type }
+//            400 nothing to update / a field is invalid
+//            404 the set doesn't exist, or its workout isn't the caller's
+router.patch('/workouts/:id/sets/:setId', async (req, res, next) => {
+  try {
+    const workoutId = parseId(req.params.id);
+    const setId = parseId(req.params.setId);
+    if (workoutId === null || setId === null) {
+      return res.status(404).json({ error: 'set not found' });
+    }
+
+    const { reps, weight, set_type } = req.body || {};
+    const updates = [];
+    const args = [];
+
+    if (reps !== undefined) {
+      const err = positiveInt(reps, 'reps');
+      if (err) return res.status(400).json({ error: err });
+      updates.push('reps = ?');
+      args.push(reps);
+    }
+    if (weight !== undefined) {
+      const err = nonNegativeNumber(weight, 'weight');
+      if (err) return res.status(400).json({ error: err });
+      updates.push('weight = ?');
+      args.push(weight);
+    }
+    if (set_type !== undefined) {
+      const err = oneOf(set_type, 'set_type', SET_TYPES);
+      if (err) return res.status(400).json({ error: err });
+      updates.push('set_type = ?');
+      args.push(set_type);
+    }
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'no fields to update' });
+    }
+
+    // Ownership: the set's workout must be the caller's, and the :id in the path
+    // must be that workout. One query proves all of it.
+    const owned = await get(
+      `SELECT ws.id
+         FROM workout_sets ws
+         JOIN workouts w ON w.id = ws.workout_id
+        WHERE ws.id = ? AND ws.workout_id = ? AND w.user_id = ?`,
+      setId,
+      workoutId,
+      req.userId
+    );
+    if (!owned) {
+      return res.status(404).json({ error: 'set not found' });
+    }
+
+    args.push(setId);
+    // The column names in `updates` are literals from this file, never input.
+    await run(`UPDATE workout_sets SET ${updates.join(', ')} WHERE id = ?`, ...args);
+
+    const updated = await get(
+      `SELECT id, workout_id, exercise_id, set_number, reps, weight, set_type
+         FROM workout_sets WHERE id = ?`,
+      setId
+    );
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/workouts/:id/sets/:setId
+//   Removes one set, then closes the gap: the remaining sets for that exercise
+//   in that workout are renumbered so set_number stays 1..n (the client derives
+//   "next set number" from the count, so a gap would cause a collision).
+//   Returns: 200 { ok: true }
+//            404 the set doesn't exist, or its workout isn't the caller's
+router.delete('/workouts/:id/sets/:setId', async (req, res, next) => {
+  try {
+    const workoutId = parseId(req.params.id);
+    const setId = parseId(req.params.setId);
+    if (workoutId === null || setId === null) {
+      return res.status(404).json({ error: 'set not found' });
+    }
+
+    const set = await get(
+      `SELECT ws.id, ws.exercise_id, ws.set_number
+         FROM workout_sets ws
+         JOIN workouts w ON w.id = ws.workout_id
+        WHERE ws.id = ? AND ws.workout_id = ? AND w.user_id = ?`,
+      setId,
+      workoutId,
+      req.userId
+    );
+    if (!set) {
+      return res.status(404).json({ error: 'set not found' });
+    }
+
+    await tx([
+      ['DELETE FROM workout_sets WHERE id = ?', setId],
+      [
+        `UPDATE workout_sets SET set_number = set_number - 1
+          WHERE workout_id = ? AND exercise_id = ? AND set_number > ?`,
+        workoutId,
+        set.exercise_id,
+        set.set_number,
+      ],
+    ]);
+
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/workouts/:id
+//   Removes a workout and all of its sets, as one transaction.
+//   Returns: 200 { ok: true }
+//            404 workout not found or not the caller's
+router.delete('/workouts/:id', async (req, res, next) => {
+  try {
+    const workoutId = parseId(req.params.id);
+    if (workoutId === null) {
+      return res.status(404).json({ error: 'workout not found' });
+    }
+
+    const workout = await get(
+      'SELECT id FROM workouts WHERE id = ? AND user_id = ?',
+      workoutId,
+      req.userId
+    );
+    if (!workout) {
+      return res.status(404).json({ error: 'workout not found' });
+    }
+
+    // Sets first (they reference the workout), then the workout — atomically,
+    // so a failure can't leave orphaned sets. There is no ON DELETE CASCADE on
+    // the foreign key, so the order matters and the transaction guarantees it.
+    await tx([
+      ['DELETE FROM workout_sets WHERE workout_id = ?', workoutId],
+      ['DELETE FROM workouts WHERE id = ?', workoutId],
+    ]);
+
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Phase 10 — history
 // ---------------------------------------------------------------------------
 
-// GET /api/workouts
-//   Returns: 200 [{ id, date, routine_name, set_count }]  newest first
+// GET /api/workouts?limit=&offset=
+//   Returns: 200 [{ id, date, completed_at, routine_name, set_count }] newest first
+//   limit  1..100  (default 20; out-of-range values are clamped, not rejected)
+//   offset >= 0     (default 0)
 //
 // One query, not "list workouts then fetch sets for each" (that would be 1 + N
 // queries). The joins + GROUP BY do it in a single round trip:
@@ -184,8 +369,21 @@ router.post('/workouts/:id/finish', async (req, res, next) => {
 //   - GROUP BY w.id: the sets join produces one row per set; grouping collapses
 //     them back to one row per workout. Selecting w.date / r.name alongside the
 //     aggregate is well-defined here because we group by the workouts primary key.
+//   LIMIT/OFFSET page the result. The response shape is unchanged (a bare
+//   array); the client asks for the next page when it received a full one.
+const PAGE_DEFAULT = 20;
+const PAGE_MAX = 100;
+
 router.get('/workouts', async (req, res, next) => {
   try {
+    const rawLimit = Number(req.query.limit);
+    const rawOffset = Number(req.query.offset);
+    const limit = Number.isFinite(rawLimit)
+      ? Math.min(PAGE_MAX, Math.max(1, Math.trunc(rawLimit)))
+      : PAGE_DEFAULT;
+    const offset =
+      Number.isFinite(rawOffset) && rawOffset > 0 ? Math.trunc(rawOffset) : 0;
+
     const workouts = await all(
       `SELECT w.id,
               w.date,
@@ -197,8 +395,11 @@ router.get('/workouts', async (req, res, next) => {
          LEFT JOIN workout_sets ws ON ws.workout_id = w.id
         WHERE w.user_id = ?
         GROUP BY w.id
-        ORDER BY w.date DESC, w.id DESC`,
-      req.userId
+        ORDER BY w.date DESC, w.id DESC
+        LIMIT ? OFFSET ?`,
+      req.userId,
+      limit,
+      offset
     );
     res.json(workouts);
   } catch (err) {

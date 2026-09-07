@@ -49,6 +49,16 @@ const run = async (sql, ...args) => {
   return { lastInsertRowid: r.lastInsertRowid, rowsAffected: r.rowsAffected };
 };
 
+// Run several writes as one all-or-nothing transaction. Pass an array of
+//   [sql, ...args]
+// tuples; if any statement fails, none are applied. Used where a single logical
+// change spans more than one table (e.g. deleting a workout and its sets).
+const tx = (statements) =>
+  db.batch(
+    statements.map(([sql, ...args]) => ({ sql, args })),
+    'write'
+  );
+
 // Columns added after the original schema shipped. `schema.sql` already carries
 // them for a fresh database; this brings an existing one up to date. Each is a
 // no-op once the column exists. SQLite/libSQL has no "ADD COLUMN IF NOT EXISTS",
@@ -82,4 +92,4 @@ async function init() {
   await require('./seed')(db);
 }
 
-module.exports = { db, init, get, all, run };
+module.exports = { db, init, get, all, run, tx };

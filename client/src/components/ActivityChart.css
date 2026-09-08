@@ -1,0 +1,70 @@
+.activity-chart {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: var(--s-4);
+}
+
+.activity-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--s-3);
+}
+
+.activity-chart-total {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.activity-chart-total-sub {
+  font-weight: 400;
+  font-size: var(--t-sm);
+  color: var(--c-text-dim);
+}
+
+.activity-chart-toggle {
+  display: flex;
+  gap: var(--s-1);
+  background: var(--c-bg);
+  border-radius: 999px;
+  padding: 2px;
+}
+
+.activity-chart-toggle button {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--c-text-dim);
+  font-size: var(--t-sm);
+  padding: var(--s-1) var(--s-3);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.activity-chart-toggle button.is-active {
+  background: var(--c-primary);
+  color: #05210f;
+  font-weight: 600;
+}
+
+.activity-chart-svg {
+  display: block;
+  width: 100%;
+  height: 120px;
+}
+
+.activity-chart-bar {
+  fill: var(--c-primary);
+}
+
+.activity-chart-xlabels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--s-1);
+  font-size: 0.72rem;
+  color: var(--c-text-dim);
+}

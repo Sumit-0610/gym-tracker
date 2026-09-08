@@ -45,6 +45,14 @@ verification. See `V1-STATUS.md` for what is deployed.
 - ~~**Finish celebration**~~ — 🎉 overlay with set count + volume after a workout.
 - ~~**Icon edit/delete**~~ — pencil / trash with hover + a11y labels; delete asks
   "are you sure?".
+- ~~**Home page (Hevy-style)**~~ — profile header (workouts + streak, no
+  followers/following), weekly `ActivityChart` (volume/reps/sets), a dashboard
+  tile grid. `GET /api/stats` gained `workout_count` + `week_streak`;
+  `GET /api/stats/weekly`.
+- ~~**Calendar**~~ — `/calendar`, `GET /api/stats/calendar`; last 3 months,
+  training days marked with the workout label.
+- ~~**Bodyweight log**~~ — `/measures`, `measurements` table + routes; add
+  (upsert by day), sparkline, deletable history.
 
 ## Infra / hosting
 

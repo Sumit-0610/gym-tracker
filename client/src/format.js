@@ -68,6 +68,21 @@ export function formatDuration(s) {
   return `${m}:${String(s % 60).padStart(2, '0')}`;
 }
 
+// A 'YYYY-MM-DD' date -> "Mon 1 Sep 2026", no time. For rows that are a day,
+// not a moment (bodyweight log, calendar).
+export function formatDay(raw) {
+  if (!raw) return '';
+  const d = new Date(String(raw).slice(0, 10) + 'T00:00:00Z');
+  if (Number.isNaN(d.getTime())) return String(raw);
+  return d.toLocaleDateString(undefined, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
 // 'warmup' -> 'Warm-up', etc. 'normal' has no label (it's the default).
 const SET_TYPE_LABELS = {
   warmup: 'Warm-up',

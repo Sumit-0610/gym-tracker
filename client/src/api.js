@@ -77,6 +77,14 @@ export const api = {
 
   // stats
   stats: () => request('GET', '/api/stats'),
+  weeklyStats: (weeks = 12) => request('GET', `/api/stats/weekly?weeks=${weeks}`),
+  calendar: (days = 120) => request('GET', `/api/stats/calendar?days=${days}`),
+
+  // measurements (bodyweight)
+  measurements: () => request('GET', '/api/measurements'),
+  logMeasurement: (weightKg, date) =>
+    request('POST', '/api/measurements', date ? { weight: weightKg, date } : { weight: weightKg }),
+  deleteMeasurement: (id) => request('DELETE', `/api/measurements/${id}`),
 
   // exercises
   exercises: () => request('GET', '/api/exercises'),

@@ -239,9 +239,43 @@ check "stats: 7-day <= 30-day <= 365-day <= all-time" "true" \
 check "stats: workout counts present" "true" \
   "$(body | jget "d.workouts.all_time >= 1")"
 check "stats unauthenticated -> 401"   401 "$(code GET /api/stats "$TMP/anon.jar")"
+check "stats: workout_count + week_streak present" "true" \
+  "$(code GET /api/stats "$A" >/dev/null; body | jget "typeof d.workout_count==='number' && d.workout_count>=1 && typeof d.week_streak==='number' && d.week_streak>=1")"
 code GET /api/stats "$B" >/dev/null
 check "bob's stats are all zero"        "true" \
-  "$(body | jget "d.volume.all_time === 0 && d.workouts.all_time === 0 && d.total_sets === 0")"
+  "$(body | jget "d.volume.all_time === 0 && d.workouts.all_time === 0 && d.total_sets === 0 && d.workout_count === 0 && d.week_streak === 0")"
+
+# --- weekly activity + calendar ---
+code GET "/api/stats/weekly?weeks=12" "$A" >/dev/null
+check "weekly: 12 buckets, oldest first" "true" \
+  "$(body | jget "Array.isArray(d) && d.length===12 && d[0].week_start < d[11].week_start")"
+check "weekly: this week has volume + a workout" "true" \
+  "$(body | jget "d[11].volume > 0 && d[11].workouts >= 1 && d[11].sets >= 1")"
+code GET "/api/stats/weekly?weeks=999" "$A" >/dev/null
+check "weekly: weeks clamps to 52"     "52" "$(body | jget 'd.length')"
+code GET /api/stats/calendar "$A" >/dev/null
+check "calendar: entries have date/count/label" "true" \
+  "$(body | jget "Array.isArray(d) && d.length>=1 && d.every(e=>/^\\d{4}-\\d{2}-\\d{2}$/.test(e.date) && typeof e.count==='number' && typeof e.label==='string')")"
+code GET /api/stats/calendar "$B" >/dev/null
+check "bob's calendar is empty"        "0" "$(body | jget 'd.length')"
+
+# --- measurements (bodyweight log) ---
+code GET /api/measurements "$A" >/dev/null
+check "measurements start empty"       "0" "$(body | jget 'd.length')"
+check "log a bodyweight"               201 "$(code POST /api/measurements "$A" '{"weight":82.5,"date":"2026-09-01"}')"
+check "  ...response has date + weight" "true" "$(body | jget "d.date==='2026-09-01' && d.weight===82.5")"
+check "re-logging the same date upserts" 201 "$(code POST /api/measurements "$A" '{"weight":83,"date":"2026-09-01"}')"
+code GET /api/measurements "$A" >/dev/null
+check "  ...still one row, updated weight" "true" "$(body | jget "d.length===1 && d[0].weight===83")"
+MID="$(body | jget 'd[0].id')"
+check "log without a date defaults today" 201 "$(code POST /api/measurements "$A" '{"weight":83.2}')"
+check "reject non-positive weight"     400 "$(code POST /api/measurements "$A" '{"weight":0}')"
+check "reject bad date"                400 "$(code POST /api/measurements "$A" '{"weight":80,"date":"01-09-2026"}')"
+check "BOB cannot delete alice's measurement" 404 "$(code DELETE /api/measurements/$MID "$B")"
+check "delete a measurement"           200 "$(code DELETE /api/measurements/$MID "$A")"
+check "delete nonexistent -> 404"      404 "$(code DELETE /api/measurements/999999 "$A")"
+code GET /api/measurements "$B" >/dev/null
+check "bob's measurements are empty"   "0" "$(body | jget 'd.length')"
 
 echo "== phase 13: edit / delete / pagination =="
 # fresh workout, 3 sets of one exercise

@@ -47,6 +47,17 @@ CREATE TABLE IF NOT EXISTS workouts (
   FOREIGN KEY (routine_id) REFERENCES routines(id)
 );
 
+-- Bodyweight log (V2). One row per day per user (upserted).
+--   weight = kilograms; the client converts for lb users.
+CREATE TABLE IF NOT EXISTS measurements (
+  id      INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  date    TEXT NOT NULL,   -- 'YYYY-MM-DD'
+  weight  REAL NOT NULL,
+  UNIQUE (user_id, date),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 -- express-session store (V2 — see src/session-store.js). Sessions used to live
 -- in memory; a redeploy-heavy host needs them to survive a restart.
 --   sid    = session id (from the signed cookie)

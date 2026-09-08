@@ -54,6 +54,20 @@ export function fromKg(kg, unit = 'kg') {
   return unit === 'lb' ? round1(kg * LB_PER_KG) : round1(kg);
 }
 
+// A volume (total kg moved = Σ reps×weight) -> a grouped display string in the
+// user's unit, e.g. "12,480 kg". Rounded to a whole number — decimals are noise
+// at this scale.
+export function formatVolume(kg, unit = 'kg') {
+  const n = unit === 'lb' ? kg * LB_PER_KG : kg;
+  return `${Math.round(n).toLocaleString()} ${unit}`;
+}
+
+// Seconds -> "m:ss".
+export function formatDuration(s) {
+  const m = Math.floor(s / 60);
+  return `${m}:${String(s % 60).padStart(2, '0')}`;
+}
+
 // 'warmup' -> 'Warm-up', etc. 'normal' has no label (it's the default).
 const SET_TYPE_LABELS = {
   warmup: 'Warm-up',

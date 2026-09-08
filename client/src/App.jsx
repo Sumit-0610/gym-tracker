@@ -16,6 +16,7 @@ import Workout from './pages/Workout';
 import History from './pages/History';
 import WorkoutDetail from './pages/WorkoutDetail';
 import Settings from './pages/Settings';
+import Stats from './pages/Stats';
 
 // The whole route table in one readable list.
 //   public: true  -> reachable when logged out (login / signup)
@@ -32,6 +33,7 @@ const ROUTES = [
   { path: '/history', component: History },
   { path: '/history/:id', component: WorkoutDetail },
   { path: '/settings', component: Settings },
+  { path: '/stats', component: Stats },
 ];
 
 function NotFound() {

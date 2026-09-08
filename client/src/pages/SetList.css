@@ -33,6 +33,17 @@
   color: var(--c-text-dim);
 }
 
+.set-group-volume {
+  margin-left: auto;
+  font-size: var(--t-sm);
+  color: var(--c-text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.set-row-volume {
+  color: var(--c-text-dim);
+}
+
 .set-rows {
   list-style: none;
   padding: 0;
@@ -95,7 +106,32 @@
   color: var(--c-danger);
 }
 
+/* icon-only edit / delete — the label shows as a native tooltip on hover */
+.set-row-icon {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--c-text-dim);
+  padding: var(--s-2);
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.set-row-icon:hover {
+  color: var(--c-text);
+}
+
+.set-row-icon-danger:hover {
+  color: var(--c-danger);
+}
+
 .set-row-confirm {
+  flex-wrap: wrap;
   font-size: var(--t-sm);
   color: var(--c-text-dim);
 }

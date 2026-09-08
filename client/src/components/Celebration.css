@@ -1,0 +1,93 @@
+.celebrate {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-4);
+  background: rgba(4, 10, 20, 0.72);
+  animation: celebrate-fade 0.2s ease;
+}
+
+@keyframes celebrate-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.celebrate-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: var(--s-6) var(--s-5) var(--s-5);
+  animation: celebrate-pop 0.3s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+@keyframes celebrate-pop {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+}
+
+.celebrate-emoji {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.celebrate-card h2 {
+  margin: var(--s-3) 0 var(--s-2);
+}
+
+.celebrate-stats {
+  margin: 0 0 var(--s-5);
+  color: var(--c-text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* falling emoji */
+.celebrate-confetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.celebrate-confetti span {
+  position: absolute;
+  top: -10%;
+  left: calc(var(--i) * 12% + 4%);
+  font-size: 1.6rem;
+  animation: celebrate-fall 2.4s linear infinite;
+  animation-delay: calc(var(--i) * -0.35s);
+}
+
+@keyframes celebrate-fall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(320deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebrate,
+  .celebrate-card {
+    animation: none;
+  }
+  .celebrate-confetti {
+    display: none;
+  }
+}

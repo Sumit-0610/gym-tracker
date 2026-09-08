@@ -1,0 +1,72 @@
+.cal-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+  font-size: var(--t-sm);
+  color: var(--c-text-dim);
+  margin-bottom: var(--s-4);
+}
+
+.cal-month {
+  margin-bottom: var(--s-5);
+}
+
+.cal-month h2 {
+  font-size: var(--t-base);
+  margin: 0 0 var(--s-2);
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.cal-wd {
+  text-align: center;
+  font-size: 0.68rem;
+  color: var(--c-text-dim);
+  padding-bottom: var(--s-1);
+}
+
+.cal-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border-radius: var(--r-sm);
+  background: var(--c-surface);
+  font-size: var(--t-sm);
+  overflow: hidden;
+}
+
+.cal-cell-empty {
+  background: transparent;
+}
+
+.cal-cell-active {
+  background: var(--c-primary);
+  color: #05210f;
+  font-weight: 600;
+}
+
+.cal-cell-today {
+  outline: 2px solid var(--c-focus);
+  outline-offset: -2px;
+}
+
+.cal-day {
+  line-height: 1;
+}
+
+.cal-label {
+  font-size: 0.56rem;
+  font-weight: 500;
+  max-width: 100%;
+  padding: 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

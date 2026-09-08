@@ -34,7 +34,7 @@ export default function WorkoutSession({ id }) {
   const routineId = workout.data?.routine_id ?? null;
   const routine = useApi(
     () => (routineId ? api.routine(routineId) : Promise.resolve(null)),
-    [routineId]
+    [routineId],
   );
 
   // UI state: which exercise the set form is aimed at. Lifted here so the
@@ -113,13 +113,17 @@ export default function WorkoutSession({ id }) {
           {volumeKg > 0 && (
             <>
               {' · '}
-              <span className="ws-volume">{formatVolume(volumeKg, unit)} lifted</span>
+              <span className="ws-volume">
+                {formatVolume(volumeKg, unit)} lifted
+              </span>
             </>
           )}
           {finished && (
             <>
               {' · '}
-              <span className="ws-finished">Finished {formatDate(w.completed_at)}</span>
+              <span className="ws-finished">
+                Finished {formatDate(w.completed_at)}
+              </span>
             </>
           )}
         </p>
@@ -134,7 +138,9 @@ export default function WorkoutSession({ id }) {
                 key={`${e.id}-${i}`}
                 type="button"
                 className={
-                  Number(exerciseId) === e.id ? 'ws-chip ws-chip-active' : 'ws-chip'
+                  Number(exerciseId) === e.id
+                    ? 'ws-chip ws-chip-active'
+                    : 'ws-chip'
                 }
                 onClick={() => setExerciseId(String(e.id))}
               >

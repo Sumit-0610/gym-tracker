@@ -11,27 +11,8 @@ import Button from '../components/Button';
 import Select from '../components/Select';
 import Input from '../components/Input';
 import ErrorMessage from '../components/ErrorMessage';
+import { groupByExercise } from './setGrouping';
 import './SetList.css';
-
-// Group the flat set list (server order = log order, oldest first) by exercise,
-// keeping each exercise in the order it first appeared in the workout.
-function groupByExercise(sets) {
-  const order = [];
-  const map = new Map();
-  for (const s of sets) {
-    if (!map.has(s.exercise_id)) {
-      map.set(s.exercise_id, {
-        exercise_id: s.exercise_id,
-        name: s.exercise_name,
-        muscle_group: s.muscle_group,
-        rows: [],
-      });
-      order.push(s.exercise_id);
-    }
-    map.get(s.exercise_id).rows.push(s);
-  }
-  return order.map((id) => map.get(id));
-}
 
 const SET_TYPES = [
   ['normal', 'Normal'],
@@ -41,7 +22,13 @@ const SET_TYPES = [
 ];
 
 const PencilIcon = () => (
-  <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" focusable="false">
+  <svg
+    viewBox="0 0 16 16"
+    width="15"
+    height="15"
+    aria-hidden="true"
+    focusable="false"
+  >
     <path
       fill="currentColor"
       d="M11.5 1.5a1.7 1.7 0 0 1 2.4 2.4l-.9.9-2.4-2.4.9-.9ZM9.3 3.7l2.4 2.4-6.6 6.6-2.9.6.6-2.9 6.5-6.7Z"
@@ -49,7 +36,13 @@ const PencilIcon = () => (
   </svg>
 );
 const TrashIcon = () => (
-  <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" focusable="false">
+  <svg
+    viewBox="0 0 16 16"
+    width="15"
+    height="15"
+    aria-hidden="true"
+    focusable="false"
+  >
     <path
       fill="currentColor"
       d="M6 2h4l.5 1H14v2H2V3h3.5L6 2Zm-2.5 4h9l-.7 8.1a1 1 0 0 1-1 .9H5.2a1 1 0 0 1-1-.9L3.5 6Z"
@@ -149,7 +142,11 @@ function SetRow({ set: s, unit, onEdit, onDelete }) {
         </Select>
         {error && <ErrorMessage error={error} />}
         <div className="set-row-actions">
-          <Button variant="secondary" onClick={() => setMode('view')} disabled={busy}>
+          <Button
+            variant="secondary"
+            onClick={() => setMode('view')}
+            disabled={busy}
+          >
             Cancel
           </Button>
           <Button onClick={save} pending={busy} pendingLabel="Saving…">
@@ -171,7 +168,10 @@ function SetRow({ set: s, unit, onEdit, onDelete }) {
       <span className="set-row-detail">
         {s.reps} reps × {formatWeight(s.weight, unit)}
         {volumeKg > 0 && (
-          <span className="set-row-volume"> · {formatVolume(volumeKg, unit)}</span>
+          <span className="set-row-volume">
+            {' '}
+            · {formatVolume(volumeKg, unit)}
+          </span>
         )}
       </span>
 

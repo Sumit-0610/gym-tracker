@@ -9,7 +9,11 @@
 import { useCallback, useEffect, useState } from 'react';
 
 export function useApi(fetcher, deps = []) {
-  const [state, setState] = useState({ data: null, error: null, loading: true });
+  const [state, setState] = useState({
+    data: null,
+    error: null,
+    loading: true,
+  });
   const [nonce, setNonce] = useState(0);
 
   const reload = useCallback(() => setNonce((n) => n + 1), []);

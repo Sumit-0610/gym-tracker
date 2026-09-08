@@ -21,10 +21,14 @@ router.post('/signup', signupLimiter, async (req, res, next) => {
   try {
     const { username, password } = req.body || {};
     if (!username || !password) {
-      return res.status(400).json({ error: 'username and password are required' });
+      return res
+        .status(400)
+        .json({ error: 'username and password are required' });
     }
     if (password.length < 6) {
-      return res.status(400).json({ error: 'password must be at least 6 characters' });
+      return res
+        .status(400)
+        .json({ error: 'password must be at least 6 characters' });
     }
 
     // Never store the raw password. bcrypt.hash produces a one-way hash with a
@@ -34,7 +38,7 @@ router.post('/signup', signupLimiter, async (req, res, next) => {
     const result = await run(
       'INSERT INTO users (username, password_hash) VALUES (?, ?)',
       username,
-      passwordHash
+      passwordHash,
     );
 
     const id = Number(result.lastInsertRowid);
@@ -52,7 +56,9 @@ router.post('/login', loginLimiter, async (req, res, next) => {
   try {
     const { username, password } = req.body || {};
     if (!username || !password) {
-      return res.status(400).json({ error: 'username and password are required' });
+      return res
+        .status(400)
+        .json({ error: 'username and password are required' });
     }
 
     const user = await get('SELECT * FROM users WHERE username = ?', username);
@@ -89,7 +95,7 @@ router.get('/me', requireAuth, async (req, res, next) => {
   try {
     const user = await get(
       `SELECT ${ME_COLUMNS} FROM users WHERE id = ?`,
-      req.userId
+      req.userId,
     );
     res.json(user);
   } catch (err) {
@@ -116,9 +122,9 @@ router.patch('/me', requireAuth, async (req, res, next) => {
     if (body.rest_seconds !== undefined) {
       const n = body.rest_seconds;
       if (!Number.isInteger(n) || n < REST_MIN || n > REST_MAX) {
-        return res
-          .status(400)
-          .json({ error: `rest_seconds must be an integer ${REST_MIN}-${REST_MAX}` });
+        return res.status(400).json({
+          error: `rest_seconds must be an integer ${REST_MIN}-${REST_MAX}`,
+        });
       }
       updates.push('rest_seconds = ?');
       args.push(n);
@@ -132,7 +138,7 @@ router.patch('/me', requireAuth, async (req, res, next) => {
 
     const user = await get(
       `SELECT ${ME_COLUMNS} FROM users WHERE id = ?`,
-      req.userId
+      req.userId,
     );
     res.json(user);
   } catch (err) {

@@ -32,7 +32,12 @@ export default function Celebration({ setCount, volumeLabel, onDone }) {
   }, [onDone]);
 
   return (
-    <div className="celebrate" role="dialog" aria-modal="true" aria-label="Workout complete">
+    <div
+      className="celebrate"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Workout complete"
+    >
       {/* a handful of falling emoji — pure CSS, decorative */}
       <div className="celebrate-confetti" aria-hidden="true">
         {['🎉', '💪', '🏋️', '🔥', '⭐', '🎊', '✨', '💥'].map((e, i) => (

@@ -77,13 +77,18 @@ export const api = {
 
   // stats
   stats: () => request('GET', '/api/stats'),
-  weeklyStats: (weeks = 12) => request('GET', `/api/stats/weekly?weeks=${weeks}`),
+  weeklyStats: (weeks = 12) =>
+    request('GET', `/api/stats/weekly?weeks=${weeks}`),
   calendar: (days = 120) => request('GET', `/api/stats/calendar?days=${days}`),
 
   // measurements (bodyweight)
   measurements: () => request('GET', '/api/measurements'),
   logMeasurement: (weightKg, date) =>
-    request('POST', '/api/measurements', date ? { weight: weightKg, date } : { weight: weightKg }),
+    request(
+      'POST',
+      '/api/measurements',
+      date ? { weight: weightKg, date } : { weight: weightKg },
+    ),
   deleteMeasurement: (id) => request('DELETE', `/api/measurements/${id}`),
 
   // exercises
@@ -93,7 +98,7 @@ export const api = {
     request(
       'GET',
       `/api/exercises/${exerciseId}/last-sets` +
-        (excludeWorkoutId ? `?exclude=${excludeWorkoutId}` : '')
+        (excludeWorkoutId ? `?exclude=${excludeWorkoutId}` : ''),
     ),
 
   // routines
@@ -108,7 +113,11 @@ export const api = {
     request('GET', `/api/workouts?limit=${limit}&offset=${offset}`),
   workout: (id) => request('GET', `/api/workouts/${id}`),
   startWorkout: (routineId) =>
-    request('POST', '/api/workouts', routineId ? { routine_id: routineId } : {}),
+    request(
+      'POST',
+      '/api/workouts',
+      routineId ? { routine_id: routineId } : {},
+    ),
   currentWorkout: () => request('GET', '/api/workouts/current'),
   logSet: (workoutId, payload) =>
     request('POST', `/api/workouts/${workoutId}/sets`, payload),
@@ -120,6 +129,5 @@ export const api = {
     request('POST', `/api/workouts/${workoutId}/finish`),
   reopenWorkout: (workoutId) =>
     request('POST', `/api/workouts/${workoutId}/reopen`),
-  deleteWorkout: (workoutId) =>
-    request('DELETE', `/api/workouts/${workoutId}`),
+  deleteWorkout: (workoutId) => request('DELETE', `/api/workouts/${workoutId}`),
 };

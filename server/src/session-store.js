@@ -29,15 +29,23 @@ class LibsqlStore extends Store {
     super();
     // Sweep expired rows hourly. unref() so this timer never keeps the process
     // alive on its own (important on a scale-to-zero host).
-    this._sweep = setInterval(() => {
-      run('DELETE FROM sessions WHERE expire < ?', Date.now()).catch(() => {});
-    }, 1000 * 60 * 60);
+    this._sweep = setInterval(
+      () => {
+        run('DELETE FROM sessions WHERE expire < ?', Date.now()).catch(
+          () => {},
+        );
+      },
+      1000 * 60 * 60,
+    );
     this._sweep.unref();
   }
 
   async get(sid, cb) {
     try {
-      const row = await get('SELECT sess, expire FROM sessions WHERE sid = ?', sid);
+      const row = await get(
+        'SELECT sess, expire FROM sessions WHERE sid = ?',
+        sid,
+      );
       if (!row) return cb(null, null);
       if (row.expire < Date.now()) {
         await run('DELETE FROM sessions WHERE sid = ?', sid);
@@ -56,7 +64,7 @@ class LibsqlStore extends Store {
          ON CONFLICT(sid) DO UPDATE SET sess = excluded.sess, expire = excluded.expire`,
         sid,
         JSON.stringify(sess),
-        expiryOf(sess)
+        expiryOf(sess),
       );
       cb && cb(null);
     } catch (err) {
@@ -68,7 +76,11 @@ class LibsqlStore extends Store {
   // Pushes the expiry forward so active sessions don't lapse.
   async touch(sid, sess, cb) {
     try {
-      await run('UPDATE sessions SET expire = ? WHERE sid = ?', expiryOf(sess), sid);
+      await run(
+        'UPDATE sessions SET expire = ? WHERE sid = ?',
+        expiryOf(sess),
+        sid,
+      );
       cb && cb(null);
     } catch (err) {
       cb && cb(err);

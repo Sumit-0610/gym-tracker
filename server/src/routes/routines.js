@@ -35,10 +35,12 @@ router.post('/routines', async (req, res, next) => {
     const info = await run(
       'INSERT INTO routines (user_id, name) VALUES (?, ?)',
       req.userId,
-      name.trim()
+      name.trim(),
     );
 
-    res.status(201).json({ id: Number(info.lastInsertRowid), name: name.trim() });
+    res
+      .status(201)
+      .json({ id: Number(info.lastInsertRowid), name: name.trim() });
   } catch (err) {
     next(err);
   }
@@ -52,7 +54,7 @@ router.get('/routines', async (req, res, next) => {
     // that returns a row this query didn't select.
     const routines = await all(
       'SELECT id, name FROM routines WHERE user_id = ? ORDER BY name',
-      req.userId
+      req.userId,
     );
     res.json(routines);
   } catch (err) {
@@ -77,7 +79,7 @@ router.get('/routines/:id', async (req, res, next) => {
     const routine = await get(
       'SELECT id, name FROM routines WHERE id = ? AND user_id = ?',
       routineId,
-      req.userId
+      req.userId,
     );
     if (!routine) {
       return res.status(404).json({ error: 'routine not found' });
@@ -98,7 +100,7 @@ router.get('/routines/:id', async (req, res, next) => {
          JOIN exercises e ON e.id = re.exercise_id
         WHERE re.routine_id = ?
         ORDER BY re.id`,
-      routineId
+      routineId,
     );
 
     res.json({ ...routine, exercises });
@@ -130,7 +132,7 @@ router.post('/routines/:id/exercises', async (req, res, next) => {
     const routine = await get(
       'SELECT id FROM routines WHERE id = ? AND user_id = ?',
       routineId,
-      req.userId
+      req.userId,
     );
     if (!routine) {
       return res.status(404).json({ error: 'routine not found' });
@@ -138,7 +140,10 @@ router.post('/routines/:id/exercises', async (req, res, next) => {
 
     // The exercise must be a real library row. The INSERT's foreign key would
     // reject a bad id anyway, but as a 500; this turns it into a clear 400.
-    const exercise = await get('SELECT id FROM exercises WHERE id = ?', exercise_id);
+    const exercise = await get(
+      'SELECT id FROM exercises WHERE id = ?',
+      exercise_id,
+    );
     if (!exercise) {
       return res.status(400).json({ error: 'exercise_id does not exist' });
     }
@@ -153,7 +158,7 @@ router.post('/routines/:id/exercises', async (req, res, next) => {
       routineId,
       exercise_id,
       target_sets ?? null,
-      target_reps ?? null
+      target_reps ?? null,
     );
 
     res.status(201).json({

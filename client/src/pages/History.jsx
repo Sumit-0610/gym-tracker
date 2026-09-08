@@ -73,7 +73,9 @@ export default function History() {
         <EmptyState title="No workouts yet">
           Your logged workouts will show up here.
           <div>
-            <Button onClick={() => navigate('/workout')}>Start a workout</Button>
+            <Button onClick={() => navigate('/workout')}>
+              Start a workout
+            </Button>
           </div>
         </EmptyState>
       )}

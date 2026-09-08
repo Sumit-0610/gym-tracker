@@ -19,7 +19,9 @@ export default function Select({ label, error, children, ...rest }) {
         >
           {children}
         </select>
-        <span className="select-arrow" aria-hidden="true">▾</span>
+        <span className="select-arrow" aria-hidden="true">
+          ▾
+        </span>
       </div>
       {error && (
         <span id={errId} className="field-error">

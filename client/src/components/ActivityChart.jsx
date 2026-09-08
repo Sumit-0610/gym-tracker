@@ -43,9 +43,14 @@ export default function ActivityChart({ weeks, unit = 'kg' }) {
     <div className="activity-chart">
       <div className="activity-chart-head">
         <span className="activity-chart-total">
-          {fmt(total)} <span className="activity-chart-total-sub">last {n} weeks</span>
+          {fmt(total)}{' '}
+          <span className="activity-chart-total-sub">last {n} weeks</span>
         </span>
-        <div className="activity-chart-toggle" role="tablist" aria-label="Metric">
+        <div
+          className="activity-chart-toggle"
+          role="tablist"
+          aria-label="Metric"
+        >
           {METRICS.map(([key, label]) => (
             <button
               key={key}

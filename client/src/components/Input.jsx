@@ -17,7 +17,9 @@ export default function Input({ label, error, hint, ...rest }) {
       <input
         id={id}
         aria-invalid={error ? true : undefined}
-        aria-describedby={[hintId, errId].filter(Boolean).join(' ') || undefined}
+        aria-describedby={
+          [hintId, errId].filter(Boolean).join(' ') || undefined
+        }
         {...rest}
       />
       {hint && (

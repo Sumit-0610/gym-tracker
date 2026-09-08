@@ -41,5 +41,7 @@
 
 /* Screens add this class so their content isn't hidden behind the fixed bar. */
 .with-nav {
-  padding-bottom: calc(var(--tap-min) + var(--s-5) + env(safe-area-inset-bottom));
+  padding-bottom: calc(
+    var(--tap-min) + var(--s-5) + env(safe-area-inset-bottom)
+  );
 }

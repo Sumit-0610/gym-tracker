@@ -15,6 +15,17 @@ BASE="${BASE:-http://localhost:3000}"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
+# Wait for the server to be reachable (it seeds ~68 exercises + runs migrations
+# on boot, so it is not instant). Fail fast rather than run against nothing.
+for _ in $(seq 1 60); do
+  curl -sf "$BASE/healthz" >/dev/null 2>&1 && break
+  sleep 0.5
+done
+if ! curl -sf "$BASE/healthz" >/dev/null 2>&1; then
+  echo "FAIL server not reachable at $BASE after 30s"
+  exit 1
+fi
+
 pass=0
 fail=0
 check() { # check "label" expected actual

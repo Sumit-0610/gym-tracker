@@ -17,7 +17,12 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font: 15px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        font:
+          15px/1.4 system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          sans-serif;
         color: #64748b;
       }
       #boot .spin {
@@ -39,7 +44,9 @@
   <body>
     <!-- React mounts the whole app into this one element. Everything you see is
          built by JavaScript at runtime — the server sends an almost-empty page. -->
-    <div id="root"><div id="boot"><span class="spin"></span>Loading Gym Tracker…</div></div>
+    <div id="root">
+      <div id="boot"><span class="spin"></span>Loading Gym Tracker…</div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

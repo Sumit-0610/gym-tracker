@@ -21,7 +21,9 @@ export default function Nav() {
         // "/" is only active on exactly "/"; other tabs stay active on their
         // sub-routes too (/routines/3 keeps the Routines tab lit).
         const active =
-          t.to === '/' ? path === '/' : path === t.to || path.startsWith(`${t.to}/`);
+          t.to === '/'
+            ? path === '/'
+            : path === t.to || path.startsWith(`${t.to}/`);
         return (
           <Link
             key={t.to}

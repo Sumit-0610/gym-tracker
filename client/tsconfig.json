@@ -1,0 +1,31 @@
+{
+  // Type-checking only — no TypeScript files, no build change. `npm run
+  // typecheck` runs `tsc --noEmit`.
+  //
+  // Scoped to the logic modules (data conversion, the API layer, pure
+  // helpers, hooks). The JSX component/page files are not checked yet —
+  // they take untyped props and would need per-component @typedef work;
+  // that is a follow-up. Vitest covers the pure functions' behaviour.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/format.js",
+    "src/api.js",
+    "src/pages/setGrouping.js",
+    "src/hooks/useApi.js",
+    "src/*.test.js",
+    "src/pages/*.test.js"
+  ]
+}

@@ -36,7 +36,7 @@ router.post('/workouts', async (req, res, next) => {
       const routine = await get(
         'SELECT id FROM routines WHERE id = ? AND user_id = ?',
         routine_id,
-        req.userId
+        req.userId,
       );
       if (!routine) {
         return res.status(400).json({ error: 'routine_id does not exist' });
@@ -46,13 +46,13 @@ router.post('/workouts', async (req, res, next) => {
     const info = await run(
       'INSERT INTO workouts (user_id, routine_id) VALUES (?, ?)',
       req.userId,
-      routine_id ?? null
+      routine_id ?? null,
     );
 
     // Read the row back so the response includes the DB-generated timestamp.
     const workout = await get(
       'SELECT id, routine_id, date, completed_at FROM workouts WHERE id = ?',
-      Number(info.lastInsertRowid)
+      Number(info.lastInsertRowid),
     );
 
     res.status(201).json(workout);
@@ -90,7 +90,7 @@ router.post('/workouts/:id/sets', async (req, res, next) => {
     const workout = await get(
       'SELECT id FROM workouts WHERE id = ? AND user_id = ?',
       workoutId,
-      req.userId
+      req.userId,
     );
     if (!workout) {
       return res.status(404).json({ error: 'workout not found' });
@@ -99,7 +99,10 @@ router.post('/workouts/:id/sets', async (req, res, next) => {
     // The exercise must be a real library row (the FK would reject a bad id as a
     // 500 otherwise). Note we deliberately do NOT require the exercise to be part
     // of the workout's routine — adding an off-plan exercise mid-session is normal.
-    const exercise = await get('SELECT id FROM exercises WHERE id = ?', exercise_id);
+    const exercise = await get(
+      'SELECT id FROM exercises WHERE id = ?',
+      exercise_id,
+    );
     if (!exercise) {
       return res.status(400).json({ error: 'exercise_id does not exist' });
     }
@@ -112,7 +115,7 @@ router.post('/workouts/:id/sets', async (req, res, next) => {
       set_number,
       reps,
       weight,
-      set_type
+      set_type,
     );
 
     res.status(201).json({
@@ -145,7 +148,7 @@ router.post('/workouts/:id/finish', async (req, res, next) => {
     const workout = await get(
       'SELECT id, completed_at FROM workouts WHERE id = ? AND user_id = ?',
       workoutId,
-      req.userId
+      req.userId,
     );
     if (!workout) {
       return res.status(404).json({ error: 'workout not found' });
@@ -154,13 +157,13 @@ router.post('/workouts/:id/finish', async (req, res, next) => {
     if (!workout.completed_at) {
       await run(
         'UPDATE workouts SET completed_at = CURRENT_TIMESTAMP WHERE id = ?',
-        workoutId
+        workoutId,
       );
     }
 
     const updated = await get(
       'SELECT id, routine_id, date, completed_at FROM workouts WHERE id = ?',
-      workoutId
+      workoutId,
     );
     res.json(updated);
   } catch (err) {
@@ -182,7 +185,7 @@ router.post('/workouts/:id/reopen', async (req, res, next) => {
     const workout = await get(
       'SELECT id FROM workouts WHERE id = ? AND user_id = ?',
       workoutId,
-      req.userId
+      req.userId,
     );
     if (!workout) {
       return res.status(404).json({ error: 'workout not found' });
@@ -190,12 +193,12 @@ router.post('/workouts/:id/reopen', async (req, res, next) => {
 
     await run(
       'UPDATE workouts SET completed_at = NULL WHERE id = ?',
-      workoutId
+      workoutId,
     );
 
     const updated = await get(
       'SELECT id, routine_id, date, completed_at FROM workouts WHERE id = ?',
-      workoutId
+      workoutId,
     );
     res.json(updated);
   } catch (err) {
@@ -252,7 +255,7 @@ router.patch('/workouts/:id/sets/:setId', async (req, res, next) => {
         WHERE ws.id = ? AND ws.workout_id = ? AND w.user_id = ?`,
       setId,
       workoutId,
-      req.userId
+      req.userId,
     );
     if (!owned) {
       return res.status(404).json({ error: 'set not found' });
@@ -260,12 +263,15 @@ router.patch('/workouts/:id/sets/:setId', async (req, res, next) => {
 
     args.push(setId);
     // The column names in `updates` are literals from this file, never input.
-    await run(`UPDATE workout_sets SET ${updates.join(', ')} WHERE id = ?`, ...args);
+    await run(
+      `UPDATE workout_sets SET ${updates.join(', ')} WHERE id = ?`,
+      ...args,
+    );
 
     const updated = await get(
       `SELECT id, workout_id, exercise_id, set_number, reps, weight, set_type
          FROM workout_sets WHERE id = ?`,
-      setId
+      setId,
     );
     res.json(updated);
   } catch (err) {
@@ -294,7 +300,7 @@ router.delete('/workouts/:id/sets/:setId', async (req, res, next) => {
         WHERE ws.id = ? AND ws.workout_id = ? AND w.user_id = ?`,
       setId,
       workoutId,
-      req.userId
+      req.userId,
     );
     if (!set) {
       return res.status(404).json({ error: 'set not found' });
@@ -331,7 +337,7 @@ router.delete('/workouts/:id', async (req, res, next) => {
     const workout = await get(
       'SELECT id FROM workouts WHERE id = ? AND user_id = ?',
       workoutId,
-      req.userId
+      req.userId,
     );
     if (!workout) {
       return res.status(404).json({ error: 'workout not found' });
@@ -399,7 +405,7 @@ router.get('/workouts', async (req, res, next) => {
         LIMIT ? OFFSET ?`,
       req.userId,
       limit,
-      offset
+      offset,
     );
     res.json(workouts);
   } catch (err) {
@@ -420,7 +426,7 @@ router.get('/workouts/current', async (req, res, next) => {
         WHERE user_id = ? AND completed_at IS NULL
         ORDER BY date DESC, id DESC
         LIMIT 1`,
-      req.userId
+      req.userId,
     );
     res.json(workout ?? null);
   } catch (err) {
@@ -448,7 +454,7 @@ router.get('/workouts/:id', async (req, res, next) => {
          LEFT JOIN routines r ON r.id = w.routine_id
         WHERE w.id = ? AND w.user_id = ?`,
       workoutId,
-      req.userId
+      req.userId,
     );
     if (!workout) {
       return res.status(404).json({ error: 'workout not found' });
@@ -471,7 +477,7 @@ router.get('/workouts/:id', async (req, res, next) => {
          JOIN exercises e ON e.id = ws.exercise_id
         WHERE ws.workout_id = ?
         ORDER BY ws.id`,
-      workoutId
+      workoutId,
     );
 
     res.json({ ...workout, sets });

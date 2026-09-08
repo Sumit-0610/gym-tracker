@@ -25,11 +25,23 @@ function Sparkline({ points, unit }) {
   const hi = Math.max(...ys);
   const span = hi - lo || 1;
   const y = (v) => H - 4 - ((v - lo) / span) * (H - 8);
-  const d = xs.map((x, i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y(ys[i]).toFixed(1)}`).join(' ');
+  const d = xs
+    .map((x, i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y(ys[i]).toFixed(1)}`)
+    .join(' ');
   return (
-    <svg className="measures-spark" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
+    <svg
+      className="measures-spark"
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
       <path d={d} fill="none" stroke="var(--c-primary)" strokeWidth="2" />
-      <circle cx={xs[xs.length - 1]} cy={y(ys[ys.length - 1])} r="3" fill="var(--c-primary)" />
+      <circle
+        cx={xs[xs.length - 1]}
+        cy={y(ys[ys.length - 1])}
+        r="3"
+        fill="var(--c-primary)"
+      />
     </svg>
   );
 }
@@ -73,7 +85,9 @@ export default function Measures() {
 
   return (
     <div className="page">
-      <p><Link to="/">‹ Home</Link></p>
+      <p>
+        <Link to="/">‹ Home</Link>
+      </p>
       <h1>Measures</h1>
       <p className="measures-sub">Bodyweight log. One entry per day.</p>
 
@@ -97,7 +111,12 @@ export default function Measures() {
           />
         </div>
         {error && <ErrorMessage error={error} />}
-        <Button type="submit" pending={saving} pendingLabel="Saving…" className="btn-block">
+        <Button
+          type="submit"
+          pending={saving}
+          pendingLabel="Saving…"
+          className="btn-block"
+        >
           Log weight
         </Button>
       </Card>

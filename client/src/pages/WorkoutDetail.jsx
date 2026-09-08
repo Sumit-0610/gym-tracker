@@ -53,8 +53,7 @@ export default function WorkoutDetail({ id }) {
 
   const editSet = (setId, patch) =>
     api.editSet(id, setId, patch).then(() => reload());
-  const deleteSet = (setId) =>
-    api.deleteSet(id, setId).then(() => reload());
+  const deleteSet = (setId) => api.deleteSet(id, setId).then(() => reload());
 
   async function reopen() {
     if (inFlight.current) return;

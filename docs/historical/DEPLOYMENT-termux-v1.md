@@ -1,4 +1,13 @@
-# Deploying Gym Tracker on an Android phone (Termux + nginx)
+# Deploying Gym Tracker on an Android phone (Termux + nginx) — HISTORICAL
+
+> **Superseded.** This was the V1 deployment. The app now runs on Render + Turso
+> — see **`DEPLOYMENT-CLOUD.md`**. This runbook **no longer works**: the V2 code
+> uses `@libsql/client`, whose native binding has no Android/Bionic build, so
+> `npm ci` fails on Termux. Kept for reference and because the same nginx / SPA
+> concepts still apply. The scripts and configs are in
+> `docs/historical/deploy-termux-v1/`.
+
+---
 
 This is the runbook for putting the finished V1 app on the phone. Claude Code
 does **not** run on the phone — you run these commands yourself in Termux.

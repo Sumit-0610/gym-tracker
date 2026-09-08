@@ -80,10 +80,20 @@ verification. See `V1-STATUS.md` for what is deployed.
   `/stats` numbers are point-in-time totals; this is the graph). Needs a
   charting library — the first real UI dependency.
 
-## Product (remaining)
+## Engineering (remaining)
 
 - **Automated browser E2E** — Playwright against the deployment, replacing the
   manual `E2E-CHECKLIST.md` pass.
+- **Widen `checkJs`** — `tsc --noEmit` currently type-checks only the client
+  logic modules (`format.js`, `api.js`, hooks, `setGrouping.js`); the JSX
+  component/page files take untyped props. Add per-component JSDoc `@typedef`
+  and include them.
+- **CI on Windows** — CI runs Ubuntu only; `smoke.sh` and the `node --test`
+  glob have Windows quirks worked around locally. A Windows job would catch
+  regressions there.
+
+## Product (remaining)
+
 - **Per-user timezone** — today all date bucketing (calendar day, week, streak,
   "last N days") uses one server timezone (`TZ=Asia/Kolkata`); correct only
   because every user is in that zone. To support other zones: add

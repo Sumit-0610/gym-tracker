@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Reproducible end-to-end API test. Requires: bash, curl, node (all present in Termux).
+# Reproducible end-to-end API test. Requires: bash, curl, node.
 #
 # Usage:
 #   1. In one terminal:  cd server && npm start

@@ -1,5 +1,5 @@
 <div class="titlepage">
-  <div class="t">Gym Tracker&nbsp;V1<br>Complete Technical&nbsp;Guide</div>
+  <div class="t">Gym Tracker&nbsp;V1<br>Technical&nbsp;Guide</div>
   <div class="rule"></div>
   <div class="s">A first-principles walkthrough of a full-stack web application<br>— from the browser down to SQLite</div>
   <div class="meta">
@@ -10,6 +10,21 @@
     Generated from the actual source tree — the code is authoritative
   </div>
 </div>
+
+## Historical note
+
+This guide documents **V1** of Gym Tracker, frozen at commit `0d2eb73`
+(2026-09-06): Express 4 + `node:sqlite`, deployed on an Android phone behind
+nginx. Since then the app has moved to **Render + Turso (libSQL)** and gained a
+large set of V2 features — persistent sessions, rate limiting, workout
+completion/resume, set editing, kg/lb, training-volume stats, a home dashboard,
+a calendar, a bodyweight log. Those are **not** covered here. For the current
+state see `V1-STATUS.md` and `V2-BACKLOG.md`; for the current deployment see
+`DEPLOYMENT-CLOUD.md`.
+
+Everything below is still an accurate and useful walkthrough of the V1
+architecture and the reasoning behind it — the core (auth, ownership-in-SQL,
+the React state model, the custom router) is unchanged.
 
 ## How to read this guide
 

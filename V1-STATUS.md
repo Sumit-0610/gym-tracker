@@ -1,12 +1,14 @@
-# Gym Tracker — V1 status
+# Gym Tracker — project status
 
-**V1 is complete, frozen, and deployed.** It runs on the target Android/Termux
-device behind nginx and was verified end-to-end on that device on 2026-09-06
-(details below).
-
-**V2 (cloud hosting) is now live** — same app, reachable from any network at
-`https://gym-tracker-d5ha.onrender.com`. See "Next milestone" below and
+**Current:** the app is live on **Render + Turso** at
+`https://gym-tracker-d5ha.onrender.com`, with the full V2 feature set (see
+"V2 — workout features" and "V2 — Hevy-style home" below). Deploy runbook:
 `DEPLOYMENT-CLOUD.md`.
+
+**History:** V1 (Express 4 + `node:sqlite`, deployed on an Android phone behind
+nginx) was completed, frozen, and verified end-to-end on that device on
+2026-09-06. Those sections are kept below as a record; that deployment is
+superseded (`docs/historical/`).
 
 Repo: https://github.com/Sumit-0610/gym-tracker
 

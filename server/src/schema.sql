@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
   username      TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   created_at    TEXT DEFAULT CURRENT_TIMESTAMP,
-  weight_unit   TEXT NOT NULL DEFAULT 'kg'   -- 'kg' | 'lb'; weights are stored in kg, converted for display
+  weight_unit   TEXT NOT NULL DEFAULT 'kg',  -- 'kg' | 'lb'; weights are stored in kg, converted for display
+  rest_seconds  INTEGER NOT NULL DEFAULT 120 -- default rest-timer length, 15..600
 );
 
 -- Shared exercise library (not per-user). Seeded on first boot.

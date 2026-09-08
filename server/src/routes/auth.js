@@ -80,11 +80,15 @@ router.post('/logout', (req, res) => {
   });
 });
 
+const ME_COLUMNS = 'id, username, created_at, weight_unit, rest_seconds';
+const REST_MIN = 15;
+const REST_MAX = 600;
+
 // Protected: used by the frontend on load to check for an existing session.
 router.get('/me', requireAuth, async (req, res, next) => {
   try {
     const user = await get(
-      'SELECT id, username, created_at, weight_unit FROM users WHERE id = ?',
+      `SELECT ${ME_COLUMNS} FROM users WHERE id = ?`,
       req.userId
     );
     res.json(user);
@@ -94,19 +98,40 @@ router.get('/me', requireAuth, async (req, res, next) => {
 });
 
 // PATCH /api/me
-//   Update the caller's preferences. Currently just the weight unit.
-//   Body:    { weight_unit: 'kg' | 'lb' }
-//   Returns: 200 { id, username, created_at, weight_unit }
+//   Update the caller's preferences. Any of:
+//     { weight_unit: 'kg' | 'lb', rest_seconds: 15..600 }
+//   Returns: 200 { id, username, created_at, weight_unit, rest_seconds }
 router.patch('/me', requireAuth, async (req, res, next) => {
   try {
-    const { weight_unit } = req.body || {};
-    const err = oneOf(weight_unit, 'weight_unit', WEIGHT_UNITS);
-    if (err) return res.status(400).json({ error: err });
+    const body = req.body || {};
+    const updates = [];
+    const args = [];
 
-    await run('UPDATE users SET weight_unit = ? WHERE id = ?', weight_unit, req.userId);
+    if (body.weight_unit !== undefined) {
+      const err = oneOf(body.weight_unit, 'weight_unit', WEIGHT_UNITS);
+      if (err) return res.status(400).json({ error: err });
+      updates.push('weight_unit = ?');
+      args.push(body.weight_unit);
+    }
+    if (body.rest_seconds !== undefined) {
+      const n = body.rest_seconds;
+      if (!Number.isInteger(n) || n < REST_MIN || n > REST_MAX) {
+        return res
+          .status(400)
+          .json({ error: `rest_seconds must be an integer ${REST_MIN}-${REST_MAX}` });
+      }
+      updates.push('rest_seconds = ?');
+      args.push(n);
+    }
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'no preferences to update' });
+    }
+
+    args.push(req.userId);
+    await run(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, ...args);
 
     const user = await get(
-      'SELECT id, username, created_at, weight_unit FROM users WHERE id = ?',
+      `SELECT ${ME_COLUMNS} FROM users WHERE id = ?`,
       req.userId
     );
     res.json(user);

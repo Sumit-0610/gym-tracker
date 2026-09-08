@@ -52,6 +52,7 @@ app.use('/api', require('./routes/auth'));
 app.use('/api', require('./routes/exercises'));
 app.use('/api', require('./routes/routines'));
 app.use('/api', require('./routes/workouts'));
+app.use('/api', require('./routes/stats'));
 
 // Serve the built frontend and provide the SPA fallback — the job nginx did in
 // the V1 phone deployment. In local API-only dev `client/dist` may not exist,

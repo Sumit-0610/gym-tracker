@@ -35,7 +35,9 @@ export default function WorkoutStart() {
     if (effectiveMode === 'routine') {
       const n = Number(routineId);
       if (!Number.isInteger(n) || n <= 0) {
-        setStartErr(new ApiError(400, 'Choose a routine, or switch to freestyle.'));
+        setStartErr(
+          new ApiError(400, 'Choose a routine, or switch to freestyle.'),
+        );
         return;
       }
       routineArg = n;
@@ -84,9 +86,8 @@ export default function WorkoutStart() {
         <Card className="workout-start">
           {noRoutines ? (
             <p className="ws-hint">
-              You have no routines yet.{' '}
-              <Link to="/routines">Create one</Link> to follow a plan, or start a
-              freestyle workout now.
+              You have no routines yet. <Link to="/routines">Create one</Link>{' '}
+              to follow a plan, or start a freestyle workout now.
             </p>
           ) : (
             <fieldset className="ws-modes">

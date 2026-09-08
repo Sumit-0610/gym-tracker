@@ -149,7 +149,8 @@ export default function RoutineDetail({ id }) {
                   )}
                   {(ex.target_sets != null || ex.target_reps != null) && (
                     <span className="re-target">
-                      {ex.target_sets ?? '–'} sets × {ex.target_reps ?? '–'} reps
+                      {ex.target_sets ?? '–'} sets × {ex.target_reps ?? '–'}{' '}
+                      reps
                     </span>
                   )}
                 </li>

@@ -9,10 +9,12 @@ import './Exercises.css';
 
 export default function Exercises() {
   // SERVER STATE — the exercise library, fetched once when the page mounts.
-  const { data: exercises, error, loading, reload } = useApi(
-    () => api.exercises(),
-    []
-  );
+  const {
+    data: exercises,
+    error,
+    loading,
+    reload,
+  } = useApi(() => api.exercises(), []);
 
   // UI STATE — the search term. Local and ephemeral; the server knows nothing
   // about it.
@@ -28,7 +30,7 @@ export default function Exercises() {
     return exercises.filter(
       (e) =>
         e.name.toLowerCase().includes(q) ||
-        (e.muscle_group && e.muscle_group.toLowerCase().includes(q))
+        (e.muscle_group && e.muscle_group.toLowerCase().includes(q)),
     );
   }, [exercises, search]);
 

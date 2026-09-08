@@ -23,7 +23,8 @@ let url;
 if (remoteUrl) {
   url = remoteUrl;
 } else {
-  const localPath = process.env.DB_PATH || path.join(__dirname, '..', 'data', 'app.db');
+  const localPath =
+    process.env.DB_PATH || path.join(__dirname, '..', 'data', 'app.db');
   fs.mkdirSync(path.dirname(localPath), { recursive: true });
   url = 'file:' + localPath;
 }
@@ -42,8 +43,16 @@ const db = createClient({
 //
 // A result set exposes { rows, rowsAffected, lastInsertRowid }. `rows[0]` is
 // undefined when nothing matched — same as node:sqlite's .get().
+//
+// The rows are dynamically shaped by each query's SELECT list, so the helpers
+// are typed loosely (`any`) rather than fighting libSQL's `Value` union at
+// every call site.
+
+/** @param {string} sql @param {...any} args @returns {Promise<any>} one row, or undefined */
 const get = async (sql, ...args) => (await db.execute({ sql, args })).rows[0];
+/** @param {string} sql @param {...any} args @returns {Promise<any[]>} all rows */
 const all = async (sql, ...args) => (await db.execute({ sql, args })).rows;
+/** @param {string} sql @param {...any} args @returns {Promise<{lastInsertRowid: bigint|undefined, rowsAffected: number}>} */
 const run = async (sql, ...args) => {
   const r = await db.execute({ sql, args });
   return { lastInsertRowid: r.lastInsertRowid, rowsAffected: r.rowsAffected };
@@ -56,7 +65,7 @@ const run = async (sql, ...args) => {
 const tx = (statements) =>
   db.batch(
     statements.map(([sql, ...args]) => ({ sql, args })),
-    'write'
+    'write',
   );
 
 // Columns added after the original schema shipped. `schema.sql` already carries

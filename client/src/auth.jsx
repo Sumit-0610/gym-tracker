@@ -68,7 +68,7 @@ export function AuthProvider({ children }) {
       setStatus('authenticated');
       navigate('/', { replace: true });
     },
-    [navigate]
+    [navigate],
   );
 
   const signup = useCallback(
@@ -79,7 +79,7 @@ export function AuthProvider({ children }) {
       setStatus('authenticated');
       navigate('/', { replace: true });
     },
-    [navigate]
+    [navigate],
   );
 
   // Update a preference (e.g. weight unit) and refresh the local user object

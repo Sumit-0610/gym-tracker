@@ -34,35 +34,60 @@ export function describeError(error) {
 // the round-trip lossless to the eye: type "135" lb -> store 61.235 kg ->
 // show "135 lb".
 
+/** @typedef {'kg' | 'lb'} Unit */
+
 const LB_PER_KG = 2.2046226218;
+/** @param {number} n */
 const round1 = (n) => Math.round(n * 10) / 10;
 
-// kg (from the API) -> a display string in the user's unit.
+/**
+ * kg (from the API) -> a display string in the user's unit. 0 -> "bodyweight".
+ * @param {number} kg
+ * @param {Unit} [unit]
+ * @returns {string}
+ */
 export function formatWeight(kg, unit = 'kg') {
   if (kg === 0) return 'bodyweight';
   return unit === 'lb' ? `${round1(kg * LB_PER_KG)} lb` : `${round1(kg)} kg`;
 }
 
-// a number the user typed in their unit -> kg, for sending to the API.
+/**
+ * A number the user typed in their unit -> kg, for sending to the API.
+ * @param {number | string} value
+ * @param {Unit} [unit]
+ * @returns {number}
+ */
 export function toKg(value, unit = 'kg') {
   const n = Number(value);
   return unit === 'lb' ? n / LB_PER_KG : n;
 }
 
-// kg -> a number in the user's unit, for pre-filling an input.
+/**
+ * kg -> a number in the user's unit (1 dp), for pre-filling an input.
+ * @param {number} kg
+ * @param {Unit} [unit]
+ * @returns {number}
+ */
 export function fromKg(kg, unit = 'kg') {
   return unit === 'lb' ? round1(kg * LB_PER_KG) : round1(kg);
 }
 
-// A volume (total kg moved = Σ reps×weight) -> a grouped display string in the
-// user's unit, e.g. "12,480 kg". Rounded to a whole number — decimals are noise
-// at this scale.
+/**
+ * A volume (total kg moved) -> a grouped whole-number string, e.g. "12,480 kg".
+ * @param {number} kg
+ * @param {Unit} [unit]
+ * @returns {string}
+ */
 export function formatVolume(kg, unit = 'kg') {
   const n = unit === 'lb' ? kg * LB_PER_KG : kg;
   return `${Math.round(n).toLocaleString()} ${unit}`;
 }
 
-// Seconds -> "m:ss".
+/**
+ * Seconds -> "m:ss".
+ * @param {number} s
+ * @returns {string}
+ */
 export function formatDuration(s) {
   const m = Math.floor(s / 60);
   return `${m}:${String(s % 60).padStart(2, '0')}`;

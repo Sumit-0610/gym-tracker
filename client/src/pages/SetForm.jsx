@@ -54,7 +54,7 @@ export default function SetForm({
   // when the exercise changes; the current workout is excluded.
   const previous = useApi(
     () => (id ? api.lastSets(id, workoutId) : Promise.resolve(null)),
-    [id, workoutId]
+    [id, workoutId],
   );
 
   // DERIVED, not state: the next set number for the chosen exercise in THIS
@@ -84,7 +84,10 @@ export default function SetForm({
     const wt = validWeight(weight);
     if (wt === null) {
       setError(
-        new ApiError(400, `Weight must be 0 or more (${unit}; decimals like 42.5 are fine).`)
+        new ApiError(
+          400,
+          `Weight must be 0 or more (${unit}; decimals like 42.5 are fine).`,
+        ),
       );
       return;
     }
@@ -132,7 +135,9 @@ export default function SetForm({
             .map(
               (s) =>
                 `${s.reps} × ${formatWeight(s.weight, unit)}` +
-                (setTypeLabel(s.set_type) ? ` (${setTypeLabel(s.set_type)})` : '')
+                (setTypeLabel(s.set_type)
+                  ? ` (${setTypeLabel(s.set_type)})`
+                  : ''),
             )
             .join(' · ')}
         </p>

@@ -32,7 +32,9 @@ export default function Calendar() {
   if (cal.error) {
     return (
       <div className="page">
-        <p><Link to="/">‹ Home</Link></p>
+        <p>
+          <Link to="/">‹ Home</Link>
+        </p>
         <h1>Calendar</h1>
         <ErrorMessage error={cal.error} onRetry={cal.reload} />
       </div>
@@ -56,15 +58,17 @@ export default function Calendar() {
 
   return (
     <div className="page">
-      <p><Link to="/">‹ Home</Link></p>
+      <p>
+        <Link to="/">‹ Home</Link>
+      </p>
       <h1>Calendar</h1>
 
       {(s?.week_streak > 0 || totalDays > 0) && (
         <div className="cal-summary">
-          {s?.week_streak > 0 && (
-            <span>🔥 {s.week_streak}-week streak</span>
-          )}
-          <span>{totalDays} training {totalDays === 1 ? 'day' : 'days'} logged</span>
+          {s?.week_streak > 0 && <span>🔥 {s.week_streak}-week streak</span>}
+          <span>
+            {totalDays} training {totalDays === 1 ? 'day' : 'days'} logged
+          </span>
         </div>
       )}
 
@@ -76,16 +80,21 @@ export default function Calendar() {
 
       {months.map(([y, m]) => {
         const cells = monthGrid(y, m, byDate, todayIso);
-        const label = new Date(Date.UTC(y, m, 1)).toLocaleDateString(undefined, {
-          month: 'long',
-          year: 'numeric',
-        });
+        const label = new Date(Date.UTC(y, m, 1)).toLocaleDateString(
+          undefined,
+          {
+            month: 'long',
+            year: 'numeric',
+          },
+        );
         return (
           <section key={`${y}-${m}`} className="cal-month">
             <h2>{label}</h2>
             <div className="cal-grid">
               {WD.map((w) => (
-                <div key={w} className="cal-wd">{w}</div>
+                <div key={w} className="cal-wd">
+                  {w}
+                </div>
               ))}
               {cells.map((c, i) =>
                 c === null ? (
@@ -98,14 +107,18 @@ export default function Calendar() {
                       (c.entry ? ' cal-cell-active' : '') +
                       (c.today ? ' cal-cell-today' : '')
                     }
-                    title={c.entry ? `${c.entry.label}${c.entry.count > 1 ? ` ×${c.entry.count}` : ''}` : undefined}
+                    title={
+                      c.entry
+                        ? `${c.entry.label}${c.entry.count > 1 ? ` ×${c.entry.count}` : ''}`
+                        : undefined
+                    }
                   >
                     <span className="cal-day">{c.d}</span>
                     {c.entry && (
                       <span className="cal-label">{c.entry.label}</span>
                     )}
                   </div>
-                )
+                ),
               )}
             </div>
           </section>

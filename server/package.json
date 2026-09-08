@@ -9,7 +9,14 @@
   },
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "dev": "node --watch src/index.js",
+    "test": "node --test \"test/unit/**/*.test.js\"",
+    "test:smoke": "bash test/smoke.sh",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.js\" \"test/**/*.js\" \"*.js\"",
+    "format:check": "prettier --check \"src/**/*.js\" \"test/**/*.js\" \"*.js\"",
+    "check": "npm run lint && npm run typecheck && npm run format:check && npm test"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
@@ -18,5 +25,14 @@
     "express-rate-limit": "^8.7.0",
     "express-session": "^1.18.1",
     "helmet": "^8.3.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@types/node": "^26.5.0",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2"
   }
 }

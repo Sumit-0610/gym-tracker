@@ -68,10 +68,12 @@ function CreateRoutineForm({ onCreated }) {
 }
 
 export default function Routines() {
-  const { data: routines, error, loading, reload } = useApi(
-    () => api.routines(),
-    []
-  );
+  const {
+    data: routines,
+    error,
+    loading,
+    reload,
+  } = useApi(() => api.routines(), []);
 
   return (
     <div className="page">

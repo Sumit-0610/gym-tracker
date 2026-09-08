@@ -41,7 +41,10 @@ export default function RestTimer({ runId, defaultSeconds = 120 }) {
   useEffect(() => {
     if (!running) return;
     const id = setInterval(() => {
-      const left = Math.max(0, Math.round((endRef.current - Date.now()) / 1000));
+      const left = Math.max(
+        0,
+        Math.round((endRef.current - Date.now()) / 1000),
+      );
       setRemaining(left);
       if (left <= 0) {
         setRunning(false);
@@ -56,7 +59,10 @@ export default function RestTimer({ runId, defaultSeconds = 120 }) {
       // Move the finish line on the running countdown. Read the live remaining
       // from endRef (always current) rather than the `remaining` state, which
       // only updates every 250 ms — so two quick taps both count.
-      const liveLeft = Math.max(0, Math.round((endRef.current - Date.now()) / 1000));
+      const liveLeft = Math.max(
+        0,
+        Math.round((endRef.current - Date.now()) / 1000),
+      );
       const next = clamp(liveLeft + delta);
       endRef.current = Date.now() + next * 1000;
       setRemaining(next);

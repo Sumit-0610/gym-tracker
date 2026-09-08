@@ -109,7 +109,7 @@ module.exports = async function seed(db) {
       sql: 'INSERT INTO exercises (name, muscle_group) VALUES (?, ?)',
       args: [name, muscle_group],
     })),
-    'write'
+    'write',
   );
   console.log(`Seeded ${missing.length} exercise(s)`);
 };

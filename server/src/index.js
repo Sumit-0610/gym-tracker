@@ -4,7 +4,8 @@ const path = require('node:path');
 const fs = require('node:fs');
 const express = require('express');
 const session = require('express-session');
-const helmet = require('helmet');
+/** helmet's CJS entry is the middleware factory; its ESM-shaped types confuse checkJs. */
+const helmet = /** @type {any} */ (require('helmet'));
 const { init } = require('./db');
 const LibsqlStore = require('./session-store');
 
@@ -12,7 +13,8 @@ const PRODUCTION = process.env.NODE_ENV === 'production';
 
 // The session secret signs the session-id cookie so it cannot be forged. In
 // production it MUST be provided — refuse to boot with the throwaway dev value.
-const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-only-secret-change-me';
+const SESSION_SECRET =
+  process.env.SESSION_SECRET || 'dev-only-secret-change-me';
 if (PRODUCTION && SESSION_SECRET === 'dev-only-secret-change-me') {
   console.error('SESSION_SECRET must be set in production.');
   process.exit(1);
@@ -48,7 +50,7 @@ app.use(
       secure: PRODUCTION, // HTTPS-only in production; false for local http dev
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     },
-  })
+  }),
 );
 
 // Liveness probe — Render's health check and the keep-alive ping hit this.
@@ -85,8 +87,8 @@ if (fs.existsSync(clientDist)) {
 }
 
 // Central error handler. Express 4 does not catch throws from async handlers,
-// so route code passes errors here via next(err).
-// eslint-disable-next-line no-unused-vars
+// so route code passes errors here via next(err). The 4-arg signature is what
+// marks this as an error handler; `next` is unused but required.
 app.use((err, req, res, next) => {
   // express.json() rejects malformed / oversized bodies before any route runs.
   if (err && err.type === 'entity.too.large') {
@@ -97,7 +99,7 @@ app.use((err, req, res, next) => {
   }
   console.error(
     `[error] ${req.method} ${req.originalUrl} — ${err && err.message}`,
-    err && err.stack ? `\n${err.stack}` : ''
+    err && err.stack ? `\n${err.stack}` : '',
   );
   res.status(500).json({ error: 'internal server error' });
 });

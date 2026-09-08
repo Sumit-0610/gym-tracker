@@ -99,8 +99,8 @@ export default function Settings() {
         <fieldset className="settings-group">
           <legend>Rest timer</legend>
           <p className="settings-hint">
-            How long the between-sets timer counts down by default. You can still
-            nudge it mid-set during a workout.
+            How long the between-sets timer counts down by default. You can
+            still nudge it mid-set during a workout.
           </p>
           <div className="settings-stepper">
             <Button

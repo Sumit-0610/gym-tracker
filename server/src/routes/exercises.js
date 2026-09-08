@@ -29,7 +29,7 @@ router.get('/exercises', async (req, res, next) => {
     const exercises = await all(
       `SELECT id, name, muscle_group
          FROM exercises
-        ORDER BY muscle_group, name`
+        ORDER BY muscle_group, name`,
     );
     res.json(exercises);
   } catch (err) {
@@ -50,13 +50,17 @@ router.get('/exercises/:id/last-sets', async (req, res, next) => {
       return res.status(404).json({ error: 'exercise not found' });
     }
 
-    const exclude = req.query.exclude === undefined ? undefined : Number(req.query.exclude);
+    const exclude =
+      req.query.exclude === undefined ? undefined : Number(req.query.exclude);
     const err = optionalPositiveInt(exclude, 'exclude');
     if (err) return res.status(400).json({ error: err });
 
     // The exercise must be a real library row (keeps the response meaningful;
     // an unknown id could otherwise 200-null forever).
-    const exercise = await get('SELECT id FROM exercises WHERE id = ?', exerciseId);
+    const exercise = await get(
+      'SELECT id FROM exercises WHERE id = ?',
+      exerciseId,
+    );
     if (!exercise) {
       return res.status(404).json({ error: 'exercise not found' });
     }
@@ -72,7 +76,7 @@ router.get('/exercises/:id/last-sets', async (req, res, next) => {
         LIMIT 1`,
       req.userId,
       exerciseId,
-      exclude ?? -1
+      exclude ?? -1,
     );
     if (!prev) return res.json(null);
 
@@ -83,7 +87,7 @@ router.get('/exercises/:id/last-sets', async (req, res, next) => {
         WHERE workout_id = ? AND exercise_id = ?
         ORDER BY set_number, id`,
       prev.id,
-      exerciseId
+      exerciseId,
     );
 
     res.json({ workout_id: prev.id, date: prev.date, sets });

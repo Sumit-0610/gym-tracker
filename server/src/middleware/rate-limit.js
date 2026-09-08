@@ -8,7 +8,8 @@
 // in X-Forwarded-For. index.js sets `trust proxy` in production so
 // express-rate-limit reads it correctly; in local dev it keys on 127.0.0.1.
 
-const rateLimit = require('express-rate-limit');
+/** CJS default is the factory; the ESM-shaped types don't expose it to checkJs. */
+const rateLimit = /** @type {any} */ (require('express-rate-limit'));
 
 const tooMany = (req, res) =>
   res.status(429).json({

@@ -10,12 +10,32 @@ import ActivityChart from '../components/ActivityChart';
 import './Dashboard.css';
 
 const TILES = [
-  ['/stats', 'Statistics', 'M3 13h3v6H3v-6Zm5-6h3v12H8V7Zm5 3h3v9h-3v-9Zm5-6h3v15h-3V4Z'],
-  ['/exercises', 'Exercises', 'M5 9h1V7H4v2H2v2h2v2h2v-2h1V9Zm14 0h-1V7h2v2h2v2h-2v2h-2v-2h-1V9Zm-9 1h6v2H10v-2Z'],
+  [
+    '/stats',
+    'Statistics',
+    'M3 13h3v6H3v-6Zm5-6h3v12H8V7Zm5 3h3v9h-3v-9Zm5-6h3v15h-3V4Z',
+  ],
+  [
+    '/exercises',
+    'Exercises',
+    'M5 9h1V7H4v2H2v2h2v2h2v-2h1V9Zm14 0h-1V7h2v2h2v2h-2v2h-2v-2h-1V9Zm-9 1h6v2H10v-2Z',
+  ],
   ['/routines', 'Routines', 'M4 5h16v2H4V5Zm0 6h16v2H4v-2Zm0 6h10v2H4v-2Z'],
-  ['/history', 'History', 'M13 3a9 9 0 1 0 8.5 12h-2.1A7 7 0 1 1 13 5v5l4 2 .8-1.6L14 8.6V3h-1Z'],
-  ['/calendar', 'Calendar', 'M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7ZM5 9h14v10H5V9Z'],
-  ['/measures', 'Measures', 'M12 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm-1 9h2l3 4v7h-2v-6l-2-2-2 2v6H8v-7l3-4Z'],
+  [
+    '/history',
+    'History',
+    'M13 3a9 9 0 1 0 8.5 12h-2.1A7 7 0 1 1 13 5v5l4 2 .8-1.6L14 8.6V3h-1Z',
+  ],
+  [
+    '/calendar',
+    'Calendar',
+    'M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7ZM5 9h14v10H5V9Z',
+  ],
+  [
+    '/measures',
+    'Measures',
+    'M12 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm-1 9h2l3 4v7h-2v-6l-2-2-2 2v6H8v-7l3-4Z',
+  ],
 ];
 
 export default function Dashboard() {
@@ -41,7 +61,9 @@ export default function Dashboard() {
               {s.week_streak > 0 && (
                 <>
                   {' · '}
-                  <span className="dash-streak">🔥 {s.week_streak}-week streak</span>
+                  <span className="dash-streak">
+                    🔥 {s.week_streak}-week streak
+                  </span>
                 </>
               )}
             </p>
@@ -59,7 +81,9 @@ export default function Dashboard() {
 
       {current.data && (
         <Card>
-          <p>You have an unfinished workout from {formatDate(current.data.date)}.</p>
+          <p>
+            You have an unfinished workout from {formatDate(current.data.date)}.
+          </p>
           <Button
             className="btn-block"
             onClick={() => navigate(`/workout/${current.data.id}`)}

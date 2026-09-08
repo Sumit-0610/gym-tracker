@@ -11,6 +11,7 @@ import Button from '../components/Button';
 import Select from '../components/Select';
 import Input from '../components/Input';
 import ErrorMessage from '../components/ErrorMessage';
+import { Icon } from '../components/icons';
 import { groupByExercise } from './setGrouping';
 import './SetList.css';
 
@@ -20,35 +21,6 @@ const SET_TYPES = [
   ['dropset', 'Drop set'],
   ['failure', 'To failure'],
 ];
-
-const PencilIcon = () => (
-  <svg
-    viewBox="0 0 16 16"
-    width="15"
-    height="15"
-    aria-hidden="true"
-    focusable="false"
-  >
-    <path
-      fill="currentColor"
-      d="M11.5 1.5a1.7 1.7 0 0 1 2.4 2.4l-.9.9-2.4-2.4.9-.9ZM9.3 3.7l2.4 2.4-6.6 6.6-2.9.6.6-2.9 6.5-6.7Z"
-    />
-  </svg>
-);
-const TrashIcon = () => (
-  <svg
-    viewBox="0 0 16 16"
-    width="15"
-    height="15"
-    aria-hidden="true"
-    focusable="false"
-  >
-    <path
-      fill="currentColor"
-      d="M6 2h4l.5 1H14v2H2V3h3.5L6 2Zm-2.5 4h9l-.7 8.1a1 1 0 0 1-1 .9H5.2a1 1 0 0 1-1-.9L3.5 6Z"
-    />
-  </svg>
-);
 
 // One set. Read-only unless onEdit / onDelete are supplied, in which case it
 // grows an inline edit form and a two-step "are you sure?" delete. Each row
@@ -184,7 +156,7 @@ function SetRow({ set: s, unit, onEdit, onDelete }) {
             title="Edit"
             aria-label={`Edit set ${s.set_number}`}
           >
-            <PencilIcon />
+            <Icon.Pencil />
           </button>
           <button
             type="button"
@@ -193,7 +165,7 @@ function SetRow({ set: s, unit, onEdit, onDelete }) {
             title="Delete"
             aria-label={`Delete set ${s.set_number}`}
           >
-            <TrashIcon />
+            <Icon.Trash />
           </button>
         </span>
       )}

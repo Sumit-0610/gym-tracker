@@ -39,3 +39,59 @@ export function useApi(fetcher, deps = []) {
 
   return { ...state, reload };
 }
+
+// A paginated list: loads page 0 on mount / when `deps` change, then
+// `loadMore()` appends the next page. `fetchPage(offset)` returns a promise of
+// an array; a page shorter than `pageSize` means there is no more.
+//
+//   const { items, loading, hasMore, loadMore, reload } =
+//     usePaginatedApi((offset) => api.workouts({ limit: 20, offset }), 20);
+export function usePaginatedApi(fetchPage, pageSize, deps = []) {
+  const [items, setItems] = useState(/** @type {any[] | null} */ (null));
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [nonce, setNonce] = useState(0);
+
+  const reload = useCallback(() => setNonce((n) => n + 1), []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    fetchPage(0)
+      .then((rows) => {
+        if (cancelled) return;
+        setItems(rows);
+        setHasMore(rows.length === pageSize);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err);
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [...deps, nonce]);
+
+  const loadMore = useCallback(async () => {
+    setLoadingMore(true);
+    setError(null);
+    try {
+      const rows = await fetchPage(items?.length ?? 0);
+      setItems((cur) => [...(cur ?? []), ...rows]);
+      setHasMore(rows.length === pageSize);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoadingMore(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, pageSize]);
+
+  return { items, error, loading, loadingMore, hasMore, loadMore, reload };
+}

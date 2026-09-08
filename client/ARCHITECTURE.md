@@ -1,12 +1,14 @@
 # Frontend architecture
 
 React + Vite, deliberately minimal. This file records *why*, so the decisions
-don't get silently reverted later.
+don't get silently reverted later. It was written for V1 (deployed on a phone
+behind nginx); the app now runs on Render with Express serving the built files
+directly. The *reasoning* below still holds — only the "Production build" and
+"Known limitations" sections have been updated.
 
 ## Why React (not vanilla JS)
 
-Evaluated against this project's goals (a learning project; ~10 users; runs on a
-phone via nginx):
+Evaluated against this project's goals (a learning project; ~10 users):
 
 - **"Component architecture" is an explicit learning goal.** You can't really
   learn it in vanilla — you learn its absence. React teaches it directly.
@@ -16,9 +18,9 @@ phone via nginx):
 - **The workout-logging screen is genuinely stateful** (a growing set list, a
   resetting form, buttons disabling mid-request). This is where vanilla hurts
   most and React helps most.
-- **Build cost is not a phone cost.** `npm run build` runs on the dev machine and
-  emits static files in `dist/`. nginx serves those. The phone runs zero
-  frontend tooling.
+- **Build cost is not a runtime cost.** `npm run build` emits static files to
+  `dist/`; the server just serves them. The build runs in CI / the Docker build,
+  never on the host at request time.
 
 ## What we deliberately DON'T use
 
@@ -68,15 +70,16 @@ sensitive is stored client-side. `localStorage` is not used for auth at all.
 ```
 event → (optional) frontend validation for UX
       → api.something() → fetch(path, {credentials:'same-origin'})
-      → Vite proxy (dev) / nginx (prod) → Express :3000
+      → Vite proxy (dev) / Express serves this app itself (prod)
       → requireAuth (session cookie) → parameterized, ownership-filtered SQL
       → JSON → ApiError? (branch on .status, never on message text)
       → setState → re-render → DOM
 ```
 
-Everything is **same-origin** in both dev (Vite `server.proxy`) and prod (nginx),
-so `sameSite: 'lax'` genuinely protects against CSRF and no CSRF token library
-is needed at this scope. Revisit only if the frontend ever becomes cross-origin.
+Everything is **same-origin** in both dev (Vite `server.proxy` → `:3000`) and
+prod (one Express process serves `client/dist` and the API), so `sameSite: 'lax'`
+genuinely protects against CSRF and no CSRF token library is needed at this
+scope. Revisit only if the frontend ever becomes cross-origin.
 
 ## Page conventions (established in 11c, reused in later screens)
 
@@ -167,12 +170,21 @@ re-fetch freely (it's a query — idempotent, no side effect), unlike set loggin
 - **Unknown routes** render inside the normal shell (with the nav bar when
   logged in) and link home with `<Link>`, not a full page reload.
 
-## Known limitations (carried into V1)
+## Known limitations
 
-MemoryStore sessions (restart = logout) · no resume-last-workout endpoint · no
-explicit workout completion state · weight assumed kg · dates stored UTC / shown
-local, no per-user tz · no history pagination · no automated browser E2E
-framework (`E2E-CHECKLIST.md` is the manual pass).
+Most V1 limitations were resolved in V2 (persistent sessions, resume + finish,
+kg/lb, history pagination, timezone-correct bucketing). What's left:
+
+- **No per-user timezone** — all date bucketing (calendar day, week, streak)
+  uses one server timezone (`TZ=Asia/Kolkata`), correct only because every user
+  is in that zone. See `../V2-BACKLOG.md`.
+- **No automated browser E2E** — `../E2E-CHECKLIST.md` is the manual pass;
+  `server/test/smoke.sh` locks the API contract; vitest covers the pure UI logic.
+- **`checkJs` scope** — `tsc --noEmit` currently type-checks the logic modules
+  (`format.js`, `api.js`, hooks, `setGrouping.js`), not the JSX
+  component/page files. Widening that is a follow-up.
+- **No code-splitting** — the custom router has no lazy-route support, so every
+  screen's JS loads on first paint (~73 KB gzip total). Fine at this size.
 
 ## Dev workflow
 
@@ -184,13 +196,14 @@ cd server && npm start                 # http://localhost:3000
 cd client && npm run dev               # http://localhost:5173  (proxies /api → :3000)
 ```
 
-## Production build
+## Production build & serving
 
 ```bash
 cd client && npm run build             # → client/dist/  (static files only)
 ```
 
-nginx serves `client/dist/` and proxies `/api/` to `127.0.0.1:3000`. Because
-routing is client-side, nginx needs `try_files $uri /index.html;` so a deep link
-like `/history/4` loads the app. Full config: `deploy/nginx-gym-tracker.conf`,
-runbook: `DEPLOYMENT.md`.
+`server/src/index.js` serves `client/dist/` with `express.static` and, because
+routing is client-side, falls back to `index.html` for any non-`/api` path so a
+deep link like `/history/4` loads the app. Same origin as the API — no proxy,
+no CORS. The Dockerfile builds `dist/` in one stage and copies it into the
+server image. Runbook: `../DEPLOYMENT-CLOUD.md`.

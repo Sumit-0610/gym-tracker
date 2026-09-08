@@ -1,7 +1,8 @@
 # Gym Tracker — manual E2E checklist
 
 Reproducible browser checklist for the frontend. Pair it with the backend's
-`server/test/smoke.sh` (65 automated checks). No framework — a human runs this.
+`server/test/smoke.sh` (161 automated checks) and the vitest unit tests. No
+browser-automation framework — a human runs this.
 
 ## Setup
 
@@ -28,7 +29,7 @@ Use **two accounts** — call them **A** and **B**.
 
 ## Exercises  (`/exercises`)
 
-- [ ] Loading spinner, then 21 exercises
+- [ ] Loading spinner, then the exercise library (~68 exercises)
 - [ ] Search "squat" and "SQUAT" → same result (case-insensitive)
 - [ ] Search a muscle ("chest") → matches by muscle group
 - [ ] Search "zzzq" → "No exercises match …" (distinct from an empty library)

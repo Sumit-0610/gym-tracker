@@ -174,6 +174,33 @@ Use **two accounts** — call them **A** and **B**.
       "Edit set N" / "Delete set N"
 - [ ] Delete → "Delete this set — are you sure?" with Cancel / Delete
 
+## Home page
+
+- [ ] Header: username, "N workouts", "🔥 N-week streak" (streak hidden at 0)
+- [ ] No followers / following anywhere
+- [ ] Resume card only when a workout is unfinished; otherwise just "Start a
+      workout"
+- [ ] Activity chart: Volume / Reps / Sets toggle changes the total + bars;
+      hidden entirely when nothing is logged
+- [ ] Tile grid → Statistics / Exercises / Routines / History / Calendar /
+      Measures; gear → Settings
+- [ ] New account: "0 workouts", no streak, no chart, tiles still work
+
+## Calendar  (`/calendar`)
+
+- [ ] Last 3 months as Monday-start grids
+- [ ] Training days are filled and show the workout label; today is outlined
+- [ ] Header shows the streak + "N training days logged"
+- [ ] No workouts → "No workouts yet"
+
+## Measures  (`/measures`)
+
+- [ ] Log a weight (in your unit) + date → appears in the list, newest first
+- [ ] Re-logging the same date replaces that day's entry (no duplicate)
+- [ ] Weights show in kg or lb per the setting; sparkline appears at ≥ 2 points
+- [ ] Delete (✕) removes an entry
+- [ ] Empty → "Nothing logged yet"
+
 ## History  (`/history`, `/history/:id`)
 
 - [ ] Empty history → "No workouts yet" + "Start a workout"

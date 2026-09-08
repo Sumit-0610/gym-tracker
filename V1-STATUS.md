@@ -190,8 +190,14 @@ end-to-end mobile-viewport browser pass.
   in-workout −15/+15 adjust the live countdown.
 - **Exercise library** grown 21 → ~68; `seed.js` tops up by name on boot.
 - **Finish celebration** — 🎉 overlay with the workout's set count + volume.
-- Schema changes land via idempotent `ALTER TABLE` migrations on boot — no
-  data loss on the live database.
+- **Home page** — profile-style: workout count, week streak, weekly activity
+  chart (volume/reps/sets), dashboard tile grid. No social features.
+- **Calendar** (`/calendar`) — training days over the last 3 months.
+- **Bodyweight log** (`/measures`) — `measurements` table; add / sparkline /
+  history.
+- Schema changes land via idempotent `ALTER TABLE` migrations on boot (plus
+  new tables via `CREATE TABLE IF NOT EXISTS`) — no data loss on the live
+  database.
 
 ### Still open (see `V2-BACKLOG.md`)
 

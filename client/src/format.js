@@ -68,6 +68,14 @@ export function formatDuration(s) {
   return `${m}:${String(s % 60).padStart(2, '0')}`;
 }
 
+// Today's date as 'YYYY-MM-DD' in the *device's* timezone. Not
+// `new Date().toISOString()` — that is UTC and rolls over ~5.5h early for an
+// IST user, so a workout / weight logged after local midnight lands on the
+// wrong day. en-CA formats as ISO.
+export function todayLocal() {
+  return new Date().toLocaleDateString('en-CA');
+}
+
 // A 'YYYY-MM-DD' date -> "Mon 1 Sep 2026", no time. For rows that are a day,
 // not a moment (bodyweight log, calendar).
 export function formatDay(raw) {

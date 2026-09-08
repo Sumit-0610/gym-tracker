@@ -2,6 +2,12 @@
 //
 // "Volume" = total weight moved = SUM(reps * weight) over sets, in kilograms
 // (the client converts for lb users). Bodyweight sets (weight 0) contribute 0.
+//
+// Dates: workout timestamps are stored UTC. All *bucketing* here (which day,
+// which week, "last N days", the streak) is done in the SERVER'S local time via
+// SQLite's 'localtime' modifier and JS Date (which both read the TZ env var).
+// The deployment sets TZ=Asia/Kolkata and all users are in that zone — see the
+// "Timezone" note in V1-STATUS.md. Per-user timezones would be the next step.
 
 const express = require('express');
 const { get, all } = require('../db');
@@ -10,14 +16,21 @@ const requireAuth = require('../middleware/auth');
 const router = express.Router();
 router.use(requireAuth);
 
-// Monday of the week containing `d` (a Date), at 00:00 UTC.
-function weekStart(d) {
-  const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-  const dow = (x.getUTCDay() + 6) % 7; // 0 = Monday
-  x.setUTCDate(x.getUTCDate() - dow);
-  return x;
+// 'YYYY-MM-DD' -> the Monday of that week, as 'YYYY-MM-DD'.
+function weekStartOf(ymd) {
+  const d = new Date(ymd + 'T00:00:00Z');
+  const mondayOffset = (d.getUTCDay() + 6) % 7; // 0 = Monday
+  d.setUTCDate(d.getUTCDate() - mondayOffset);
+  return d.toISOString().slice(0, 10);
 }
-const ymd = (d) => d.toISOString().slice(0, 10);
+// 'YYYY-MM-DD' + N whole days (N may be negative), as 'YYYY-MM-DD'.
+function addDays(ymd, n) {
+  const d = new Date(ymd + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+// Today, in the server's timezone. en-CA formats as ISO 'YYYY-MM-DD'.
+const localToday = () => new Date().toLocaleDateString('en-CA');
 
 // GET /api/stats
 //   Volume + workout counts over the last 7 / 30 / 365 days and all time,
@@ -27,13 +40,13 @@ router.get('/stats', async (req, res, next) => {
   try {
     const row = await get(
       `SELECT
-         COALESCE(SUM(CASE WHEN w.date >= date('now','-7 days')   THEN ws.reps * ws.weight END), 0) AS vol_7,
-         COALESCE(SUM(CASE WHEN w.date >= date('now','-30 days')  THEN ws.reps * ws.weight END), 0) AS vol_30,
-         COALESCE(SUM(CASE WHEN w.date >= date('now','-365 days') THEN ws.reps * ws.weight END), 0) AS vol_365,
+         COALESCE(SUM(CASE WHEN date(w.date,'localtime') >= date('now','localtime','-7 days')   THEN ws.reps * ws.weight END), 0) AS vol_7,
+         COALESCE(SUM(CASE WHEN date(w.date,'localtime') >= date('now','localtime','-30 days')  THEN ws.reps * ws.weight END), 0) AS vol_30,
+         COALESCE(SUM(CASE WHEN date(w.date,'localtime') >= date('now','localtime','-365 days') THEN ws.reps * ws.weight END), 0) AS vol_365,
          COALESCE(SUM(ws.reps * ws.weight), 0) AS vol_all,
-         COUNT(DISTINCT CASE WHEN w.date >= date('now','-7 days')   THEN w.id END) AS wk_7,
-         COUNT(DISTINCT CASE WHEN w.date >= date('now','-30 days')  THEN w.id END) AS wk_30,
-         COUNT(DISTINCT CASE WHEN w.date >= date('now','-365 days') THEN w.id END) AS wk_365,
+         COUNT(DISTINCT CASE WHEN date(w.date,'localtime') >= date('now','localtime','-7 days')   THEN w.id END) AS wk_7,
+         COUNT(DISTINCT CASE WHEN date(w.date,'localtime') >= date('now','localtime','-30 days')  THEN w.id END) AS wk_30,
+         COUNT(DISTINCT CASE WHEN date(w.date,'localtime') >= date('now','localtime','-365 days') THEN w.id END) AS wk_365,
          COUNT(DISTINCT w.id) AS wk_all,
          COUNT(ws.id) AS total_sets
        FROM workouts w
@@ -42,10 +55,10 @@ router.get('/stats', async (req, res, next) => {
       req.userId
     );
 
-    // Total workouts (including ones with no sets) and the set of weeks that
-    // have a workout, for the streak.
+    // Total workouts (including ones with no sets) and the set of local weeks
+    // that contain a workout, for the streak.
     const days = await all(
-      `SELECT date(w.date) AS day, COUNT(*) AS n
+      `SELECT date(w.date,'localtime') AS day, COUNT(*) AS n
          FROM workouts w
         WHERE w.user_id = ?
         GROUP BY day`,
@@ -53,12 +66,12 @@ router.get('/stats', async (req, res, next) => {
     );
     const workoutCount = days.reduce((t, d) => t + d.n, 0);
 
-    const weeksWithWorkout = new Set(days.map((d) => ymd(weekStart(new Date(d.day + 'T00:00:00Z')))));
+    const weeksWithWorkout = new Set(days.map((d) => weekStartOf(d.day)));
     let streak = 0;
-    let cursor = weekStart(new Date());
-    while (weeksWithWorkout.has(ymd(cursor))) {
+    let cursor = weekStartOf(localToday());
+    while (weeksWithWorkout.has(cursor)) {
       streak += 1;
-      cursor.setUTCDate(cursor.getUTCDate() - 7);
+      cursor = addDays(cursor, -7);
     }
 
     res.json({
@@ -89,29 +102,29 @@ router.get('/stats', async (req, res, next) => {
 router.get('/stats/weekly', async (req, res, next) => {
   try {
     const weeks = Math.min(52, Math.max(4, Math.trunc(Number(req.query.weeks)) || 12));
-    const firstMonday = weekStart(new Date());
-    firstMonday.setUTCDate(firstMonday.getUTCDate() - 7 * (weeks - 1));
+    const firstMonday = addDays(weekStartOf(localToday()), -7 * (weeks - 1));
 
     // Empty buckets first, keyed by Monday date.
     const buckets = new Map();
     for (let i = 0; i < weeks; i++) {
-      const d = new Date(firstMonday);
-      d.setUTCDate(d.getUTCDate() + 7 * i);
-      buckets.set(ymd(d), { week_start: ymd(d), volume: 0, reps: 0, sets: 0, workouts: 0 });
+      const k = addDays(firstMonday, 7 * i);
+      buckets.set(k, { week_start: k, volume: 0, reps: 0, sets: 0, workouts: 0 });
     }
 
     const rows = await all(
-      `SELECT w.id AS workout_id, w.date, ws.reps, ws.weight
+      `SELECT w.id AS workout_id,
+              date(w.date,'localtime') AS local_day,
+              ws.reps, ws.weight
          FROM workouts w
          JOIN workout_sets ws ON ws.workout_id = w.id
-        WHERE w.user_id = ? AND date(w.date) >= ?`,
+        WHERE w.user_id = ? AND date(w.date,'localtime') >= ?`,
       req.userId,
-      ymd(firstMonday)
+      firstMonday
     );
 
     const seenWorkoutPerWeek = new Set();
     for (const r of rows) {
-      const key = ymd(weekStart(new Date(String(r.date).replace(' ', 'T') + 'Z')));
+      const key = weekStartOf(r.local_day);
       const b = buckets.get(key);
       if (!b) continue;
       b.volume += r.reps * r.weight;
@@ -131,21 +144,23 @@ router.get('/stats/weekly', async (req, res, next) => {
 });
 
 // GET /api/stats/calendar?days=120
-//   One entry per day that has a workout, oldest first:
+//   One entry per local day that has a workout, oldest first:
 //   [{ date: 'YYYY-MM-DD', count, label }]
 router.get('/stats/calendar', async (req, res, next) => {
   try {
     const days = Math.min(400, Math.max(7, Math.trunc(Number(req.query.days)) || 120));
+    const from = addDays(localToday(), -days);
     const rows = await all(
-      `SELECT date(w.date) AS date,
+      `SELECT date(w.date,'localtime') AS date,
               COUNT(*) AS count,
               COALESCE(MIN(r.name), 'Freestyle') AS label
          FROM workouts w
          LEFT JOIN routines r ON r.id = w.routine_id
-        WHERE w.user_id = ? AND date(w.date) >= date('now', '-${days} days')
-        GROUP BY date(w.date)
-        ORDER BY date(w.date)`,
-      req.userId
+        WHERE w.user_id = ? AND date(w.date,'localtime') >= ?
+        GROUP BY date(w.date,'localtime')
+        ORDER BY date(w.date,'localtime')`,
+      req.userId,
+      from
     );
     res.json(rows);
   } catch (err) {

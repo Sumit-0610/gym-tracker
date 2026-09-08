@@ -26,12 +26,15 @@ router.get('/measurements', async (req, res, next) => {
 });
 
 // POST /api/measurements
-//   Body:    { weight, date? }   — weight in kg; date defaults to today (UTC)
-//   Returns: 201 { id, date, weight }   (200-shaped; upserts by date)
+//   Body:    { weight, date? }   — weight in kg; date defaults to today in the
+//            server's timezone (the client normally sends its own local date).
+//   Returns: 201 when a new day was logged, 200 when an existing day was
+//            updated (this endpoint upserts by (user, date)).
 router.post('/measurements', async (req, res, next) => {
   try {
     const { weight } = req.body || {};
-    const date = (req.body && req.body.date) || new Date().toISOString().slice(0, 10);
+    const date =
+      (req.body && req.body.date) || new Date().toLocaleDateString('en-CA');
 
     const err = nonNegativeNumber(weight, 'weight');
     if (err) return res.status(400).json({ error: err });
@@ -39,6 +42,12 @@ router.post('/measurements', async (req, res, next) => {
     if (!DATE_RE.test(date)) {
       return res.status(400).json({ error: 'date must be YYYY-MM-DD' });
     }
+
+    const existing = await get(
+      'SELECT id FROM measurements WHERE user_id = ? AND date = ?',
+      req.userId,
+      date
+    );
 
     await run(
       `INSERT INTO measurements (user_id, date, weight) VALUES (?, ?, ?)
@@ -53,7 +62,7 @@ router.post('/measurements', async (req, res, next) => {
       req.userId,
       date
     );
-    res.status(201).json(saved);
+    res.status(existing ? 200 : 201).json(saved);
   } catch (err) {
     next(err);
   }

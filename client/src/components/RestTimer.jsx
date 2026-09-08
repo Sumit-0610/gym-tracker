@@ -53,8 +53,11 @@ export default function RestTimer({ runId, defaultSeconds = 120 }) {
 
   function adjust(delta) {
     if (running) {
-      // move the finish line on the running countdown
-      const next = clamp(remaining + delta);
+      // Move the finish line on the running countdown. Read the live remaining
+      // from endRef (always current) rather than the `remaining` state, which
+      // only updates every 250 ms — so two quick taps both count.
+      const liveLeft = Math.max(0, Math.round((endRef.current - Date.now()) / 1000));
+      const next = clamp(liveLeft + delta);
       endRef.current = Date.now() + next * 1000;
       setRemaining(next);
     } else {

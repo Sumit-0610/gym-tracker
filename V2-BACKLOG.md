@@ -84,6 +84,12 @@ verification. See `V1-STATUS.md` for what is deployed.
 
 - **Automated browser E2E** — Playwright against the deployment, replacing the
   manual `E2E-CHECKLIST.md` pass.
+- **Per-user timezone** — today all date bucketing (calendar day, week, streak,
+  "last N days") uses one server timezone (`TZ=Asia/Kolkata`); correct only
+  because every user is in that zone. To support other zones: add
+  `users.timezone` (IANA), send it (or the client's offset) to the stats /
+  calendar / measurements endpoints, and replace SQLite `localtime` with an
+  explicit offset. See the "Timezone" note in `V1-STATUS.md`.
 
 ## Explicitly out of scope (do not add without a deliberate product decision)
 

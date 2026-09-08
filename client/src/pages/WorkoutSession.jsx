@@ -94,6 +94,7 @@ export default function WorkoutSession({ id }) {
     setFinishing(true);
     try {
       await api.finishWorkout(id);
+      workout.reload(); // so the screen behind the overlay reads "finished"
       setCelebrate(true); // the overlay's "Done" navigates to history
     } catch (err) {
       setFinishErr(err instanceof ApiError ? err : new ApiError(0));

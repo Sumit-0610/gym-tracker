@@ -55,6 +55,8 @@ check "me unauthenticated"      401 "$(code GET /api/me "$TMP/anon.jar")"
 check "signup duplicate"        409 "$(code POST /api/signup "$A" "{\"username\":\"${U}_a\",\"password\":\"secret1\"}")"
 check "signup missing password" 400 "$(code POST /api/signup "$TMP/x.jar" "{\"username\":\"z\"}")"
 check "login wrong password"    401 "$(code POST /api/login "$TMP/x.jar" "{\"username\":\"${U}_a\",\"password\":\"nope\"}")"
+check "unknown /api route -> 404"        404 "$(code GET /api/nope/nope "$A")"
+check "  ...and it is JSON, not HTML"    "true" "$(body | jget "typeof d.error === 'string'")"
 
 echo "== phase 7: exercises =="
 check "exercises unauthenticated" 401 "$(code GET /api/exercises "$TMP/anon.jar")"
@@ -262,9 +264,9 @@ check "bob's calendar is empty"        "0" "$(body | jget 'd.length')"
 # --- measurements (bodyweight log) ---
 code GET /api/measurements "$A" >/dev/null
 check "measurements start empty"       "0" "$(body | jget 'd.length')"
-check "log a bodyweight"               201 "$(code POST /api/measurements "$A" '{"weight":82.5,"date":"2026-09-01"}')"
+check "log a bodyweight (new day -> 201)" 201 "$(code POST /api/measurements "$A" '{"weight":82.5,"date":"2026-09-01"}')"
 check "  ...response has date + weight" "true" "$(body | jget "d.date==='2026-09-01' && d.weight===82.5")"
-check "re-logging the same date upserts" 201 "$(code POST /api/measurements "$A" '{"weight":83,"date":"2026-09-01"}')"
+check "re-logging the same date (update -> 200)" 200 "$(code POST /api/measurements "$A" '{"weight":83,"date":"2026-09-01"}')"
 code GET /api/measurements "$A" >/dev/null
 check "  ...still one row, updated weight" "true" "$(body | jget "d.length===1 && d[0].weight===83")"
 MID="$(body | jget 'd[0].id')"

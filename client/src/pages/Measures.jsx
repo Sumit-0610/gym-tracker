@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { api, ApiError } from '../api';
 import { useApi } from '../hooks/useApi';
 import { useAuth } from '../auth';
-import { fromKg, toKg, formatDay } from '../format';
+import { fromKg, toKg, formatDay, todayLocal } from '../format';
 import { Link } from '../router';
 import Card from '../components/Card';
 import Button from '../components/Button';
@@ -12,7 +12,7 @@ import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import './Measures.css';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = todayLocal;
 
 // A tiny weight-over-time sparkline. Oldest -> newest, left -> right.
 function Sparkline({ points, unit }) {

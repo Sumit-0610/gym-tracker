@@ -4,6 +4,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const express = require('express');
 const session = require('express-session');
+const helmet = require('helmet');
 const { init } = require('./db');
 const LibsqlStore = require('./session-store');
 
@@ -24,8 +25,15 @@ const app = express();
 // them, so req.secure is true and the Secure cookie is actually sent.
 if (PRODUCTION) app.set('trust proxy', 1);
 
-// Parse JSON request bodies into req.body.
-app.use(express.json());
+// Baseline security headers: HSTS, nosniff, frame-deny, referrer policy,
+// no X-Powered-By, etc. CSP is disabled: this is a single-origin SPA with no
+// user-authored HTML and React escapes all output, and a strict CSP for a
+// bundled SPA is fiddly enough to be its own task.
+app.use(helmet({ contentSecurityPolicy: false }));
+
+// Parse JSON request bodies into req.body. 32 KB is far more than any request
+// this API makes (the largest is a routine name or a set); reject the rest.
+app.use(express.json({ limit: '32kb' }));
 
 // Session middleware, backed by the libSQL store so logins survive a restart.
 app.use(
@@ -55,6 +63,12 @@ app.use('/api', require('./routes/workouts'));
 app.use('/api', require('./routes/stats'));
 app.use('/api', require('./routes/measurements'));
 
+// Any /api path that matched no route above is a 404 — answer in JSON, not the
+// SPA fallback's index.html (and not Express's default HTML error page).
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'not found' });
+});
+
 // Serve the built frontend and provide the SPA fallback — the job nginx did in
 // the V1 phone deployment. In local API-only dev `client/dist` may not exist,
 // so this is skipped and Vite serves the frontend instead.
@@ -74,7 +88,17 @@ if (fs.existsSync(clientDist)) {
 // so route code passes errors here via next(err).
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  console.error(err);
+  // express.json() rejects malformed / oversized bodies before any route runs.
+  if (err && err.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'request body too large' });
+  }
+  if (err && (err.type === 'entity.parse.failed' || err.status === 400)) {
+    return res.status(400).json({ error: 'invalid request body' });
+  }
+  console.error(
+    `[error] ${req.method} ${req.originalUrl} — ${err && err.message}`,
+    err && err.stack ? `\n${err.stack}` : ''
+  );
   res.status(500).json({ error: 'internal server error' });
 });
 

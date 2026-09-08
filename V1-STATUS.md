@@ -199,6 +199,16 @@ end-to-end mobile-viewport browser pass.
   new tables via `CREATE TABLE IF NOT EXISTS`) — no data loss on the live
   database.
 
+### Timezone (single-zone assumption)
+
+Workout timestamps are stored UTC. All *date bucketing* — calendar day, week,
+streak, "last N days" windows, the default date on the bodyweight log — is done
+in the **server's local time** (`TZ=Asia/Kolkata`, set in `render.yaml`) via
+SQLite's `localtime` modifier and the client's device timezone. This is correct
+as long as **all users are in one timezone**, which they are. Per-user
+timezones (`users.timezone`, threaded through every stats/calendar query) is the
+documented upgrade path in `V2-BACKLOG.md`.
+
 ### Still open (see `V2-BACKLOG.md`)
 
 - Custom domain — `gym-tracker.js.org` is pre-configured in Render, waiting on

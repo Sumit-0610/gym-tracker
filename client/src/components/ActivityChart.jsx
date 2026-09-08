@@ -64,7 +64,6 @@ export default function ActivityChart({ weeks, unit = 'kg' }) {
       <svg
         className="activity-chart-svg"
         viewBox={`0 0 ${VB_W} ${VB_H}`}
-        preserveAspectRatio="none"
         role="img"
         aria-label={`Weekly ${metric}, ${fmt(total)} over ${n} weeks`}
       >

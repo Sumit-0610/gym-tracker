@@ -19,6 +19,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # All users are in one timezone; date bucketing (calendar day, week,
+      # streak, "last N days") uses the server's local time. See V1-STATUS.md.
+      - key: TZ
+        value: Asia/Kolkata
       - key: TURSO_DATABASE_URL
         sync: false
       - key: TURSO_AUTH_TOKEN

@@ -1,5 +1,6 @@
 import { api } from '../api';
 import { useApi } from '../hooks/useApi';
+import { todayLocal } from '../format';
 import { Link } from '../router';
 import Spinner from '../components/Spinner';
 import ErrorMessage from '../components/ErrorMessage';
@@ -39,12 +40,14 @@ export default function Calendar() {
   }
 
   const byDate = new Map(cal.data.map((e) => [e.date, e]));
-  const now = new Date();
-  const todayIso = now.toISOString().slice(0, 10);
+  // Work from the device's local date, not UTC — otherwise "today" and the
+  // current month are wrong for ~5.5h after local midnight (IST).
+  const todayIso = todayLocal();
+  const [ty, tm] = todayIso.split('-').map(Number); // tm is 1-based
 
   const months = [];
   for (let i = MONTHS_SHOWN - 1; i >= 0; i--) {
-    const m = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+    const m = new Date(Date.UTC(ty, tm - 1 - i, 1));
     months.push([m.getUTCFullYear(), m.getUTCMonth()]);
   }
 

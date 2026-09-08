@@ -184,6 +184,12 @@ end-to-end mobile-viewport browser pass.
   sets renumber); reopen a finished workout; delete a workout and its sets
   (one transaction).
 - **History pagination** — `?limit=&offset=`; "Load more" button.
+- **Training volume** — `GET /api/stats`; total weight lifted per set / exercise
+  / workout and a `/stats` screen (7 / 30 / 365 days + all time).
+- **Rest-timer preference** (`users.rest_seconds`, editable in `/settings`); the
+  in-workout −15/+15 adjust the live countdown.
+- **Exercise library** grown 21 → ~68; `seed.js` tops up by name on boot.
+- **Finish celebration** — 🎉 overlay with the workout's set count + volume.
 - Schema changes land via idempotent `ALTER TABLE` migrations on boot — no
   data loss on the live database.
 

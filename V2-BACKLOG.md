@@ -35,6 +35,16 @@ verification. See `V1-STATUS.md` for what is deployed.
   `WorkoutDetail`. `db.js` gained a `tx()` helper.
 - ~~**History pagination**~~ — `GET /api/workouts?limit=&offset=` (bare-array
   response unchanged); History screen has a "Load more" button.
+- ~~**Training volume**~~ — `GET /api/stats` (Σ reps×weight over 7/30/365 days +
+  all time, workout counts). Shown per set / exercise / workout and on a new
+  `/stats` screen.
+- ~~**Rest-timer preference**~~ — `users.rest_seconds`; a stepper in `/settings`;
+  the −15/+15 in the running timer now adjust the live countdown.
+- ~~**Bigger exercise library**~~ — 21 → ~68; `seed.js` tops up by name on every
+  boot.
+- ~~**Finish celebration**~~ — 🎉 overlay with set count + volume after a workout.
+- ~~**Icon edit/delete**~~ — pencil / trash with hover + a11y labels; delete asks
+  "are you sure?".
 
 ## Infra / hosting
 
@@ -58,8 +68,9 @@ verification. See `V1-STATUS.md` for what is deployed.
 ## Workout features (remaining)
 
 - **1RM estimate** — Epley formula on the workout detail / exercise view.
-- **Progress charts** — weight/volume over time per exercise (`GROUP BY` + a
-  charting library — the first real UI dependency).
+- **Progress charts** — volume/weight *over time* per exercise, plotted (the
+  `/stats` numbers are point-in-time totals; this is the graph). Needs a
+  charting library — the first real UI dependency.
 
 ## Product (remaining)
 

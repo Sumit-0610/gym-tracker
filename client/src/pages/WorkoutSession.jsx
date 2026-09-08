@@ -3,13 +3,14 @@ import { api, ApiError } from '../api';
 import { useApi } from '../hooks/useApi';
 import { useAuth } from '../auth';
 import { useNavigate, Link } from '../router';
-import { formatDate } from '../format';
+import { formatDate, formatVolume } from '../format';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Spinner from '../components/Spinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import RestTimer from '../components/RestTimer';
+import Celebration from '../components/Celebration';
 import SetForm from './SetForm';
 import SetList from './SetList';
 import './WorkoutSession.css';
@@ -18,6 +19,7 @@ export default function WorkoutSession({ id }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const unit = user?.weight_unit || 'kg';
+  const restSeconds = user?.rest_seconds ?? 120;
 
   // Server state: the workout + every set logged so far (with exercise names).
   // GET /api/workouts/:id — the same endpoint history uses. Because the id is
@@ -45,6 +47,7 @@ export default function WorkoutSession({ id }) {
   // Finishing the workout.
   const [finishing, setFinishing] = useState(false);
   const [finishErr, setFinishErr] = useState(null);
+  const [celebrate, setCelebrate] = useState(false);
   const finishInFlight = useRef(false);
 
   // Initial load — keep the big spinner only until we first have data.
@@ -72,6 +75,7 @@ export default function WorkoutSession({ id }) {
   const w = workout.data;
   const sets = w.sets;
   const finished = w.completed_at != null;
+  const volumeKg = sets.reduce((t, s) => t + s.reps * s.weight, 0);
 
   function onSetLogged() {
     workout.reload();
@@ -90,7 +94,7 @@ export default function WorkoutSession({ id }) {
     setFinishing(true);
     try {
       await api.finishWorkout(id);
-      navigate(`/history/${id}`);
+      setCelebrate(true); // the overlay's "Done" navigates to history
     } catch (err) {
       setFinishErr(err instanceof ApiError ? err : new ApiError(0));
     } finally {
@@ -105,6 +109,12 @@ export default function WorkoutSession({ id }) {
         <h1>{w.routine_name || 'Freestyle workout'}</h1>
         <p className="ws-started">
           Started {formatDate(w.date)}
+          {volumeKg > 0 && (
+            <>
+              {' · '}
+              <span className="ws-volume">{formatVolume(volumeKg, unit)} lifted</span>
+            </>
+          )}
           {finished && (
             <>
               {' · '}
@@ -156,7 +166,7 @@ export default function WorkoutSession({ id }) {
         />
       )}
 
-      <RestTimer runId={restRun} />
+      <RestTimer runId={restRun} defaultSeconds={restSeconds} />
 
       <section aria-labelledby="logged-heading" className="ws-logged">
         <h2 id="logged-heading">Logged sets</h2>
@@ -193,6 +203,14 @@ export default function WorkoutSession({ id }) {
         >
           Finish workout
         </Button>
+      )}
+
+      {celebrate && (
+        <Celebration
+          setCount={sets.length}
+          volumeLabel={volumeKg > 0 ? formatVolume(volumeKg, unit) : null}
+          onDone={() => navigate(`/history/${id}`)}
+        />
       )}
     </div>
   );

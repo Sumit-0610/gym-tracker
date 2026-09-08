@@ -75,6 +75,9 @@ export const api = {
   // preferences
   updatePreferences: (prefs) => request('PATCH', '/api/me', prefs),
 
+  // stats
+  stats: () => request('GET', '/api/stats'),
+
   // exercises
   exercises: () => request('GET', '/api/exercises'),
   // the caller's sets for this exercise from their most recent other workout

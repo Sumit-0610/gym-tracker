@@ -142,6 +142,38 @@ Use **two accounts** — call them **A** and **B**.
 - [ ] "Load more" disappears once a short (< 20) page comes back
 - [ ] Order stays newest-first across pages (no client sort)
 
+## Volume & stats
+
+- [ ] A set with weight > 0 shows `· <reps×weight>` after it (in the unit)
+- [ ] Each exercise group shows its subtotal; the workout header + history
+      detail show the workout total
+- [ ] Bodyweight sets (weight 0) show no volume and don't change the totals
+- [ ] `/stats`: table of last 7 / 30 / 365 days + all time, volume + workout
+      count; 7-day ≤ 30-day ≤ 365-day ≤ all-time
+- [ ] `/stats` with nothing logged → "Nothing logged yet"
+- [ ] Switching kg ↔ lb re-renders every volume figure converted
+
+## Rest timer (updated)
+
+- [ ] Idle length = the value saved in `/settings` (default 2:00)
+- [ ] Changing the rest length in `/settings` (−15 / +15) persists (`/api/me`)
+- [ ] During a workout, while the timer is running, −15 / +15 change the
+      **live** countdown, not the saved default
+- [ ] While idle, −15 / +15 change only the next rest's length for this session
+
+## Finish celebration
+
+- [ ] Tapping "Finish workout" shows the 🎉 overlay with set count + volume
+- [ ] Confetti animates (and is hidden under `prefers-reduced-motion`)
+- [ ] "See it in history" → `/history/:id`, workout is finished
+
+## Edit / delete icons
+
+- [ ] Edit / delete are icons (pencil / trash), not text
+- [ ] Hovering an icon (desktop) shows its label; screen readers read
+      "Edit set N" / "Delete set N"
+- [ ] Delete → "Delete this set — are you sure?" with Cancel / Delete
+
 ## History  (`/history`, `/history/:id`)
 
 - [ ] Empty history → "No workouts yet" + "Start a workout"

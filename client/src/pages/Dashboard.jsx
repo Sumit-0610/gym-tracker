@@ -44,6 +44,8 @@ export default function Dashboard() {
         {' · '}
         <Link to="/exercises">Exercise library</Link>
         {' · '}
+        <Link to="/stats">Stats</Link>
+        {' · '}
         <Link to="/settings">Settings</Link>
       </p>
     </div>

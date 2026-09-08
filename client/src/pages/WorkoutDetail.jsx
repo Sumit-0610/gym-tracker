@@ -3,7 +3,7 @@ import { api, ApiError } from '../api';
 import { useApi } from '../hooks/useApi';
 import { useAuth } from '../auth';
 import { useNavigate, Link } from '../router';
-import { formatDate } from '../format';
+import { formatDate, formatVolume } from '../format';
 import Button from '../components/Button';
 import Spinner from '../components/Spinner';
 import ErrorMessage from '../components/ErrorMessage';
@@ -49,6 +49,7 @@ export default function WorkoutDetail({ id }) {
   // routine_id is null for a freestyle workout.
   const isFreestyle = data.routine_id == null;
   const finished = data.completed_at != null;
+  const volumeKg = data.sets.reduce((t, s) => t + s.reps * s.weight, 0);
 
   const editSet = (setId, patch) =>
     api.editSet(id, setId, patch).then(() => reload());
@@ -97,6 +98,7 @@ export default function WorkoutDetail({ id }) {
         <h1>{data.routine_name || 'Freestyle workout'}</h1>
         <p className="wd-meta">
           {isFreestyle ? 'Freestyle' : 'Routine'} · {formatDate(data.date)}
+          {volumeKg > 0 && <> · {formatVolume(volumeKg, unit)} lifted</>}
           {' · '}
           {finished ? (
             <span className="wd-status wd-status-done">

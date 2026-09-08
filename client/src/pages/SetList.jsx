@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { ApiError } from '../api';
-import { formatWeight, fromKg, toKg, setTypeLabel } from '../format';
+import {
+  formatWeight,
+  formatVolume,
+  fromKg,
+  toKg,
+  setTypeLabel,
+} from '../format';
 import Button from '../components/Button';
 import Select from '../components/Select';
 import Input from '../components/Input';
@@ -9,7 +15,6 @@ import './SetList.css';
 
 // Group the flat set list (server order = log order, oldest first) by exercise,
 // keeping each exercise in the order it first appeared in the workout.
-// The underlying rows are unchanged server records — this is display only.
 function groupByExercise(sets) {
   const order = [];
   const map = new Map();
@@ -35,17 +40,36 @@ const SET_TYPES = [
   ['failure', 'To failure'],
 ];
 
+const PencilIcon = () => (
+  <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" focusable="false">
+    <path
+      fill="currentColor"
+      d="M11.5 1.5a1.7 1.7 0 0 1 2.4 2.4l-.9.9-2.4-2.4.9-.9ZM9.3 3.7l2.4 2.4-6.6 6.6-2.9.6.6-2.9 6.5-6.7Z"
+    />
+  </svg>
+);
+const TrashIcon = () => (
+  <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" focusable="false">
+    <path
+      fill="currentColor"
+      d="M6 2h4l.5 1H14v2H2V3h3.5L6 2Zm-2.5 4h9l-.7 8.1a1 1 0 0 1-1 .9H5.2a1 1 0 0 1-1-.9L3.5 6Z"
+    />
+  </svg>
+);
+
 // One set. Read-only unless onEdit / onDelete are supplied, in which case it
-// grows an inline edit form and a two-tap delete. Each row owns its own edit /
-// confirm / busy state — a mistake on one row never touches the others.
+// grows an inline edit form and a two-step "are you sure?" delete. Each row
+// owns its own edit / confirm / busy state.
 function SetRow({ set: s, unit, onEdit, onDelete }) {
   const editable = Boolean(onEdit && onDelete);
-  const [mode, setMode] = useState('view'); // 'view' | 'edit' | 'confirm-delete'
+  const [mode, setMode] = useState('view'); // 'view' | 'edit' | 'confirm'
   const [reps, setReps] = useState('');
   const [weight, setWeight] = useState('');
   const [setType, setSetType] = useState('normal');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+
+  const volumeKg = s.reps * s.weight;
 
   function startEdit() {
     setReps(String(s.reps));
@@ -82,8 +106,7 @@ function SetRow({ set: s, unit, onEdit, onDelete }) {
     setBusy(true);
     setError(null);
     try {
-      await onDelete(s.id);
-      // the row disappears on the parent's re-fetch
+      await onDelete(s.id); // the row vanishes on the parent's re-fetch
     } catch (err) {
       setError(err instanceof ApiError ? err : new ApiError(0));
       setBusy(false);
@@ -147,33 +170,44 @@ function SetRow({ set: s, unit, onEdit, onDelete }) {
       </span>
       <span className="set-row-detail">
         {s.reps} reps × {formatWeight(s.weight, unit)}
+        {volumeKg > 0 && (
+          <span className="set-row-volume"> · {formatVolume(volumeKg, unit)}</span>
+        )}
       </span>
 
       {editable && mode === 'view' && (
         <span className="set-row-actions">
-          <button type="button" className="set-row-btn" onClick={startEdit}>
-            Edit
+          <button
+            type="button"
+            className="set-row-icon"
+            onClick={startEdit}
+            title="Edit"
+            aria-label={`Edit set ${s.set_number}`}
+          >
+            <PencilIcon />
           </button>
           <button
             type="button"
-            className="set-row-btn set-row-btn-danger"
-            onClick={() => setMode('confirm-delete')}
+            className="set-row-icon set-row-icon-danger"
+            onClick={() => setMode('confirm')}
+            title="Delete"
+            aria-label={`Delete set ${s.set_number}`}
           >
-            Delete
+            <TrashIcon />
           </button>
         </span>
       )}
 
-      {editable && mode === 'confirm-delete' && (
-        <span className="set-row-actions">
-          <span className="set-row-confirm">Delete this set?</span>
+      {editable && mode === 'confirm' && (
+        <span className="set-row-actions set-row-confirm">
+          <span>Delete this set — are you sure?</span>
           <button
             type="button"
             className="set-row-btn"
             onClick={() => setMode('view')}
             disabled={busy}
           >
-            No
+            Cancel
           </button>
           <button
             type="button"
@@ -181,12 +215,12 @@ function SetRow({ set: s, unit, onEdit, onDelete }) {
             onClick={remove}
             disabled={busy}
           >
-            {busy ? 'Deleting…' : 'Yes'}
+            {busy ? 'Deleting…' : 'Delete'}
           </button>
         </span>
       )}
 
-      {error && mode !== 'edit' && (
+      {error && mode === 'view' && (
         <span className="set-row-actions">
           <ErrorMessage error={error} />
         </span>
@@ -200,30 +234,37 @@ export default function SetList({ sets, unit = 'kg', onEditSet, onDeleteSet }) {
 
   return (
     <ul className="set-groups">
-      {groups.map((g) => (
-        <li key={g.exercise_id} className="set-group">
-          <div className="set-group-head">
-            {/* h3: the page owns h1, the "Sets"/"Logged sets" section owns h2,
-                so each exercise is an h3 — screen readers can jump between
-                exercises via heading navigation. */}
-            <h3 className="set-group-name">{g.name}</h3>
-            {g.muscle_group && (
-              <span className="set-group-muscle">{g.muscle_group}</span>
-            )}
-          </div>
-          <ol className="set-rows">
-            {g.rows.map((s) => (
-              <SetRow
-                key={s.id}
-                set={s}
-                unit={unit}
-                onEdit={onEditSet}
-                onDelete={onDeleteSet}
-              />
-            ))}
-          </ol>
-        </li>
-      ))}
+      {groups.map((g) => {
+        const groupVolumeKg = g.rows.reduce((t, s) => t + s.reps * s.weight, 0);
+        return (
+          <li key={g.exercise_id} className="set-group">
+            <div className="set-group-head">
+              {/* h3: the page owns h1, the "Sets" section owns h2, so each
+                  exercise is an h3 — screen readers can jump between them. */}
+              <h3 className="set-group-name">{g.name}</h3>
+              {g.muscle_group && (
+                <span className="set-group-muscle">{g.muscle_group}</span>
+              )}
+              {groupVolumeKg > 0 && (
+                <span className="set-group-volume">
+                  {formatVolume(groupVolumeKg, unit)}
+                </span>
+              )}
+            </div>
+            <ol className="set-rows">
+              {g.rows.map((s) => (
+                <SetRow
+                  key={s.id}
+                  set={s}
+                  unit={unit}
+                  onEdit={onEditSet}
+                  onDelete={onDeleteSet}
+                />
+              ))}
+            </ol>
+          </li>
+        );
+      })}
     </ul>
   );
 }

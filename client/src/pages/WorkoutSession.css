@@ -45,3 +45,8 @@
 .ws-finished {
   color: var(--c-primary);
 }
+
+.ws-volume {
+  color: var(--c-text-dim);
+  font-variant-numeric: tabular-nums;
+}

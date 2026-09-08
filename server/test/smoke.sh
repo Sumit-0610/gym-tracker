@@ -59,7 +59,7 @@ check "login wrong password"    401 "$(code POST /api/login "$TMP/x.jar" "{\"use
 echo "== phase 7: exercises =="
 check "exercises unauthenticated" 401 "$(code GET /api/exercises "$TMP/anon.jar")"
 code GET /api/exercises "$A" >/dev/null
-check "exercises count == 21"      21 "$(body | jget 'd.length')"
+check "exercise library is non-trivial" "true" "$(body | jget 'd.length >= 40')"
 check "exercise rows have id/name/muscle_group" "true" \
   "$(body | jget "d.every(e => 'id' in e && 'name' in e && 'muscle_group' in e)")"
 check "no leaked columns"          "true" \
@@ -212,15 +212,36 @@ code GET /api/exercises/1/last-sets "$B" >/dev/null
 check "bob's last-sets for exercise 1 -> null" "null" "$(body | jget 'String(d)')"
 code POST /api/workouts/$WID_NEW/finish "$A" >/dev/null
 
-# --- weight unit preference ---
+# --- preferences: weight unit + rest timer ---
 code GET /api/me "$A" >/dev/null
 check "me includes weight_unit (default kg)" "kg" "$(body | jget 'd.weight_unit')"
+check "me includes rest_seconds (default 120)" "120" "$(body | jget 'd.rest_seconds')"
 check "set weight_unit to lb"         200 "$(code PATCH /api/me "$A" '{"weight_unit":"lb"}')"
 check "  ...response shows lb"         "lb" "$(body | jget 'd.weight_unit')"
 check "invalid weight_unit rejected"   400 "$(code PATCH /api/me "$A" '{"weight_unit":"stone"}')"
+check "set rest_seconds to 90"        200 "$(code PATCH /api/me "$A" '{"rest_seconds":90}')"
+check "  ...response shows 90"         "90" "$(body | jget 'd.rest_seconds')"
+check "rest_seconds too low rejected"  400 "$(code PATCH /api/me "$A" '{"rest_seconds":5}')"
+check "rest_seconds too high rejected" 400 "$(code PATCH /api/me "$A" '{"rest_seconds":9999}')"
+check "rest_seconds non-integer rejected" 400 "$(code PATCH /api/me "$A" '{"rest_seconds":90.5}')"
+check "PATCH me with no fields -> 400" 400 "$(code PATCH /api/me "$A" '{}')"
 code GET /api/me "$A" >/dev/null
-check "me now shows lb"                "lb" "$(body | jget 'd.weight_unit')"
-code PATCH /api/me "$A" '{"weight_unit":"kg"}' >/dev/null
+check "me now shows lb + 90"           "true" "$(body | jget "d.weight_unit==='lb' && d.rest_seconds===90")"
+code PATCH /api/me "$A" '{"weight_unit":"kg","rest_seconds":120}' >/dev/null
+
+# --- stats (training volume) ---
+code GET /api/stats "$A" >/dev/null
+check "stats: shape"                   "true" \
+  "$(body | jget "typeof d.volume==='object' && typeof d.workouts==='object' && typeof d.total_sets==='number'")"
+check "stats: all-time volume > 0"     "true" "$(body | jget 'd.volume.all_time > 0')"
+check "stats: 7-day <= 30-day <= 365-day <= all-time" "true" \
+  "$(body | jget "d.volume.last_7_days <= d.volume.last_30_days && d.volume.last_30_days <= d.volume.last_365_days && d.volume.last_365_days <= d.volume.all_time")"
+check "stats: workout counts present" "true" \
+  "$(body | jget "d.workouts.all_time >= 1")"
+check "stats unauthenticated -> 401"   401 "$(code GET /api/stats "$TMP/anon.jar")"
+code GET /api/stats "$B" >/dev/null
+check "bob's stats are all zero"        "true" \
+  "$(body | jget "d.volume.all_time === 0 && d.workouts.all_time === 0 && d.total_sets === 0")"
 
 echo "== phase 13: edit / delete / pagination =="
 # fresh workout, 3 sets of one exercise

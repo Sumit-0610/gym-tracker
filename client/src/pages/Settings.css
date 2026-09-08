@@ -39,3 +39,17 @@
   color: var(--c-primary);
   font-size: var(--t-sm);
 }
+
+.settings-stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.settings-stepper-value {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-lg);
+  font-weight: 600;
+  min-width: 3.5rem;
+  text-align: center;
+}

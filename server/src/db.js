@@ -68,6 +68,7 @@ const MIGRATIONS = [
   ['workouts', 'completed_at', 'TEXT'],
   ['workout_sets', 'set_type', "TEXT NOT NULL DEFAULT 'normal'"],
   ['users', 'weight_unit', "TEXT NOT NULL DEFAULT 'kg'"],
+  ['users', 'rest_seconds', 'INTEGER NOT NULL DEFAULT 120'],
 ];
 
 async function migrate() {

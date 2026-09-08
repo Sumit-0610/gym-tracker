@@ -20,6 +20,14 @@ FROM node:22-slim
 # + Secure cookie. HOST=0.0.0.0 so the platform's router can reach the process.
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
+# All users share one timezone. Date bucketing (calendar day, week, streak,
+# "last N days") uses the server's local time, so pin it here rather than
+# relying on a dashboard env var. node:22-slim has no zoneinfo DB -> add tzdata
+# so both `new Date()` local methods and SQLite date(...,'localtime') resolve it.
+ENV TZ=Asia/Kolkata
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends tzdata \
+  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/server
 COPY server/package*.json ./
 RUN npm ci --omit=dev

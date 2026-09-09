@@ -12,6 +12,7 @@
     "dev": "node --watch src/index.js",
     "test": "node --test \"test/unit/**/*.test.js\"",
     "test:smoke": "bash test/smoke.sh",
+    "db:snapshot": "node --env-file=.env scripts/db-snapshot.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.js\" \"test/**/*.js\" \"*.js\"",

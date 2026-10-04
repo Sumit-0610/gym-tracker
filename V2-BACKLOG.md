@@ -105,8 +105,10 @@ verification. See `V1-STATUS.md` for what is deployed.
 
 ## Engineering (remaining)
 
-- **Automated browser E2E** — Playwright against the deployment, replacing the
-  manual `E2E-CHECKLIST.md` pass.
+- **Automated browser E2E** — started: Playwright tests in `e2e/` (run in CI
+  against a local build) cover signup/login, logging a workout and the coach.
+  Remaining: move more of `E2E-CHECKLIST.md` over (routines, edit/delete,
+  settings, second-user isolation, responsive checks).
 - **Widen `checkJs`** — `tsc --noEmit` currently type-checks only the client
   logic modules (`format.js`, `api.js`, hooks, `setGrouping.js`); the JSX
   component/page files take untyped props. Add per-component JSDoc `@typedef`

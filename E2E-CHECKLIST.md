@@ -1,8 +1,12 @@
 # Gym Tracker — manual E2E checklist
 
 Reproducible browser checklist for the frontend. Pair it with the backend's
-`server/test/smoke.sh` (161 automated checks) and the vitest unit tests. No
-browser-automation framework — a human runs this.
+`server/test/smoke.sh` (161 automated checks) and the vitest unit tests.
+
+**Automated:** signup / login / logout, logging a freestyle workout (refresh,
+resume, finish, history) and the coach (suggested routine, next-set suggestion,
+typo guard) are covered by the Playwright tests in `e2e/` and run in CI —
+those items have been removed below. What remains is still a manual pass.
 
 ## Setup
 
@@ -18,12 +22,6 @@ Use **two accounts** — call them **A** and **B**.
 
 ## Authentication
 
-- [ ] Visiting `/` while logged out → redirected to `/login`
-- [ ] Sign up A (`secret1`) → lands on dashboard, greets by username
-- [ ] Hard refresh on dashboard → still logged in
-- [ ] Log out → `/login`; `GET /api/me` returns 401; protected pages redirect to `/login`
-- [ ] Log in A with the right password → dashboard
-- [ ] Log in with a wrong password → "Invalid username or password.", stays on `/login`
 - [ ] Log in while the API is down → "Could not reach the server…", button not stuck
 - [ ] Rapid double-click "Log in" / "Sign up" → only one request
 
@@ -55,11 +53,8 @@ Use **two accounts** — call them **A** and **B**.
 - [ ] Double-click Start → exactly one workout created
 - [ ] Active screen shows the routine name + "Today's plan" chips
 - [ ] Tap a chip → it pre-selects the exercise in the form
-- [ ] Enter reps + weight, Log set → row appears **after** the server responds
 - [ ] Double-submit "Log set" → exactly one set
-- [ ] Log a 2nd set of the same exercise → "Set 2"; exercise/reps/weight kept
 - [ ] Switch exercise → set number resets to 1 for that exercise
-- [ ] Decimal weight (`22.5`) logs; weight `0` shows as "bodyweight"
 - [ ] reps `0` → error, no request; negative weight → error; weight as text → error
 - [ ] Log a set with the API down → error shown, set list unchanged, button re-enabled
 - [ ] `/workout/999999` and B opening A's `/workout/:id` → "Workout not found"
@@ -68,12 +63,9 @@ Use **two accounts** — call them **A** and **B**.
 
 - [ ] `/workout`: choose "Freestyle", Start (if A has no routines, this is the only option)
 - [ ] Active screen says "Freestyle workout" — **no** plan card, no fake routine
-- [ ] Select an exercise from the full library, log a set → appears
 
 ## Active workout refresh
 
-- [ ] Start a workout, log 2–3 sets
-- [ ] Hard refresh `/workout/:id` → workout + all logged sets reconstructed
 - [ ] Refresh bare `/workout` (no id) → start screen, plus a "Resume" card if a
       workout is unfinished
 

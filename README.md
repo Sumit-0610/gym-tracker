@@ -53,10 +53,16 @@ cd server && npm run check         # eslint + tsc --checkJs + prettier + node:te
 node src/index.js & npm run test:smoke   # 161-check API + two-user-authz integration test
 
 cd client && npm run check         # eslint + tsc --checkJs + prettier + vitest + build
+
+cd e2e && npm install && npx playwright install chromium
+npx playwright test                # browser tests against the built client (build it first)
 ```
 
 CI (`.github/workflows/ci.yml`) runs all of the above on every push and PR to
-`main`. `E2E-CHECKLIST.md` is the manual browser pass.
+`main`. The Playwright tests (`e2e/`) cover signup/login, logging a workout and
+the coach suggestions; they start the server on a throwaway database and serve
+`client/dist`, so run `npm run build` in `client/` first. `E2E-CHECKLIST.md` is
+the remaining manual browser pass.
 
 ## Application flow
 

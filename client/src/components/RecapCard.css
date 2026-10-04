@@ -1,0 +1,40 @@
+.recap {
+  text-align: left;
+  margin: var(--s-3) 0;
+  padding: var(--s-3);
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+}
+
+.recap-title {
+  margin: 0 0 var(--s-2);
+  font-size: var(--t-base);
+}
+
+.recap .spinner-wrap {
+  padding: var(--s-2) 0;
+  font-size: var(--t-sm);
+}
+
+.recap-text {
+  margin: 0 0 var(--s-2);
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.recap-note {
+  margin: 0;
+  color: var(--c-text-dim);
+  font-size: var(--t-sm);
+}
+
+.recap-retry {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--c-primary);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

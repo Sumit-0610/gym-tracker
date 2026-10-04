@@ -11,6 +11,7 @@ export default function Celebration({
   volumeLabel,
   prLines = [],
   onDone,
+  children, // optional extra content above the button (the AI recap)
 }) {
   const btnRef = useRef(null);
   const restoreRef = useRef(null);
@@ -74,6 +75,7 @@ export default function Celebration({
             </ul>
           </div>
         )}
+        {children}
         <button
           ref={btnRef}
           type="button"

@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   created_at    TEXT DEFAULT CURRENT_TIMESTAMP,
   weight_unit   TEXT NOT NULL DEFAULT 'kg',  -- 'kg' | 'lb'; weights are stored in kg, converted for display
-  rest_seconds  INTEGER NOT NULL DEFAULT 120 -- default rest-timer length, 15..600
+  rest_seconds  INTEGER NOT NULL DEFAULT 120, -- default rest-timer length, 15..600
+  ai_enabled    INTEGER NOT NULL DEFAULT 0    -- 1 = opted in to the AI coach recap
 );
 
 -- Shared exercise library (not per-user). Seeded on first boot.
@@ -82,4 +83,17 @@ CREATE TABLE IF NOT EXISTS workout_sets (
   created_at  TEXT,   -- UTC timestamp the set was logged; NULL on older rows
   FOREIGN KEY (workout_id) REFERENCES workouts(id),
   FOREIGN KEY (exercise_id) REFERENCES exercises(id)
+);
+
+-- AI coach recaps (see src/coach-recap.js). One per workout, generated on
+-- request and cached so a reload never calls the AI provider again.
+--   fingerprint = hash of the workout's sets when the recap was written; if
+--                 the sets change afterwards the recap is regenerated.
+CREATE TABLE IF NOT EXISTS ai_recaps (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  workout_id  INTEGER NOT NULL UNIQUE,
+  fingerprint TEXT NOT NULL,
+  text        TEXT NOT NULL,
+  created_at  TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (workout_id) REFERENCES workouts(id)
 );

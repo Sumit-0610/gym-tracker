@@ -357,10 +357,12 @@ router.delete('/workouts/:id', async (req, res, next) => {
       return res.status(404).json({ error: 'workout not found' });
     }
 
-    // Sets first (they reference the workout), then the workout — atomically,
+    // The AI recap and the sets first (they reference the workout), then the
+    // workout — atomically,
     // so a failure can't leave orphaned sets. There is no ON DELETE CASCADE on
     // the foreign key, so the order matters and the transaction guarantees it.
     await tx([
+      ['DELETE FROM ai_recaps WHERE workout_id = ?', workoutId],
       ['DELETE FROM workout_sets WHERE workout_id = ?', workoutId],
       ['DELETE FROM workouts WHERE id = ?', workoutId],
     ]);

@@ -11,14 +11,16 @@ const REST_MIN = 15;
 const REST_MAX = 600;
 const REST_STEP = 15;
 
-// Preferences screen: weight unit + default rest-timer length. Both are saved
-// server-side (PATCH /api/me) so they follow the account across devices.
+// Preferences screen: weight unit, default rest-timer length and the AI coach
+// recap opt-in. All saved server-side (PATCH /api/me) so they follow the
+// account across devices.
 export default function Settings() {
   const { user, updatePreferences } = useAuth();
 
   const [unit, setUnit] = useState(user?.weight_unit || 'kg');
   const [rest, setRest] = useState(user?.rest_seconds ?? 120);
-  const [savingWhat, setSavingWhat] = useState(null); // 'unit' | 'rest' | null
+  const [aiOn, setAiOn] = useState(Boolean(user?.ai_enabled));
+  const [savingWhat, setSavingWhat] = useState(null); // 'unit' | 'rest' | 'ai' | null
   const [error, setError] = useState(null);
   const [savedAt, setSavedAt] = useState(0);
 
@@ -50,6 +52,12 @@ export default function Settings() {
     const prev = rest;
     setRest(next);
     save('rest', { rest_seconds: next }, () => setRest(prev));
+  }
+
+  function toggleAi(next) {
+    const prev = aiOn;
+    setAiOn(next);
+    save('ai', { ai_enabled: next }, () => setAiOn(prev));
   }
 
   const busy = savingWhat !== null;
@@ -125,6 +133,28 @@ export default function Settings() {
           </div>
         </fieldset>
       </Card>
+
+      {user?.ai_available && (
+        <Card>
+          <fieldset className="settings-group">
+            <legend>AI coach recap</legend>
+            <p className="settings-hint">
+              After you finish a workout, an AI writes a short recap with one or
+              two tips. Only your workout numbers, exercise names and muscle
+              groups are sent to the AI provider, never your username.
+            </p>
+            <label className="settings-option">
+              <input
+                type="checkbox"
+                checked={aiOn}
+                disabled={busy}
+                onChange={(e) => toggleAi(e.target.checked)}
+              />
+              <span>Write a recap after each workout</span>
+            </label>
+          </fieldset>
+        </Card>
+      )}
 
       {error && <ErrorMessage error={error} />}
       {!error && savedAt > 0 && !busy && (

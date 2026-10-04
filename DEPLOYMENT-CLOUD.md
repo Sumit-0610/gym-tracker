@@ -120,6 +120,8 @@ bash server/test/smoke.sh                        # 65/65
 | `TURSO_DATABASE_URL` | unset → local file | **required** | the libSQL database to use |
 | `TURSO_AUTH_TOKEN` | unset | **required** | authenticates to Turso |
 | `SESSION_SECRET` | optional (dev default) | **required** — app refuses to boot without it | signs the session cookie |
+| `GEMINI_API_KEY` | optional | optional | enables the AI coach recap; unset → the feature is hidden. Free key from Google AI Studio |
+| `AI_MODEL` | optional | optional | Gemini model id, default `gemini-2.5-flash` |
 | `NODE_ENV` | unset | `production` | enables `trust proxy` + `Secure` cookie |
 | `PORT` | 3000 | injected by Render | listen port |
 | `HOST` | `127.0.0.1` | `0.0.0.0` (set in the Dockerfile) | bind address |

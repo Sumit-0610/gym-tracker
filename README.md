@@ -44,6 +44,7 @@ Everything works unset for local dev. See `server/.env.example`.
 | `DB_PATH` | `server/data/app.db` | local file location (ignored when Turso is set) |
 | `PORT` / `HOST` | `3000` / `127.0.0.1` | the host injects `PORT`; set `HOST=0.0.0.0` in a container |
 | `SESSION_SECRET` | dev placeholder | **required** when `NODE_ENV=production` (boot fails otherwise) |
+| `GEMINI_API_KEY` / `AI_MODEL` | unset → AI recap hidden | key from Google AI Studio enables the opt-in AI coach recap; model defaults to `gemini-2.5-flash` |
 | `TZ` | system | production sets `Asia/Kolkata` — all date bucketing uses it (single-timezone assumption; see `V1-STATUS.md`) |
 
 ## Checks

@@ -41,3 +41,84 @@
   font-size: var(--t-sm);
   color: var(--c-text-dim);
 }
+
+.muscle-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.muscle-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s-3);
+}
+
+.muscle-name {
+  font-weight: 600;
+}
+
+.muscle-status {
+  font-size: var(--t-sm);
+  color: var(--c-text-dim);
+}
+
+.muscle-ok {
+  color: var(--c-primary);
+}
+
+.muscle-low {
+  color: var(--c-focus);
+}
+
+.muscle-high {
+  color: var(--c-danger);
+}
+
+.muscle-bar {
+  position: relative;
+  height: 8px;
+  margin: var(--s-1) 0;
+  background: var(--c-bg);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.muscle-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--c-text-dim);
+}
+
+.muscle-fill-ok {
+  background: var(--c-primary);
+}
+
+.muscle-fill-low {
+  background: var(--c-focus);
+}
+
+.muscle-fill-high {
+  background: var(--c-danger);
+}
+
+/* the "minimum useful" tick */
+.muscle-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--c-text);
+  opacity: 0.6;
+}
+
+.muscle-meta {
+  font-size: var(--t-sm);
+  color: var(--c-text-dim);
+  font-variant-numeric: tabular-nums;
+}

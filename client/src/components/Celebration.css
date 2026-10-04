@@ -91,3 +91,26 @@
     display: none;
   }
 }
+
+.celebrate-prs {
+  text-align: left;
+  margin: var(--s-3) 0;
+  padding: var(--s-3);
+  background: var(--c-bg);
+  border: 1px solid var(--c-primary);
+  border-radius: var(--r-md);
+}
+
+.celebrate-prs h3 {
+  margin: 0 0 var(--s-2);
+  font-size: var(--t-base);
+}
+
+.celebrate-prs ul {
+  margin: 0;
+  padding-left: var(--s-4);
+  font-size: var(--t-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}

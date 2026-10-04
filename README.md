@@ -64,10 +64,12 @@ CI (`.github/workflows/ci.yml`) runs all of the above on every push and PR to
 sign up / log in
   → home        profile header (workouts, streak), weekly activity chart, dashboard grid
   → workout     follow a routine or freestyle → log sets (reps, weight, set type)
-                → rest timer between sets → Finish (🎉) → history
+                → suggested next set + typo guard + optional RPE → rest timer
+                → 🏆 PR badges live → Finish (🎉, lists new records) → history
   → history     paginated list; open one → sets grouped by exercise, edit/delete,
                 reopen or delete the workout
-  → stats       total volume over 7 / 30 / 365 days + all time
+  → stats       total volume over 7 / 30 / 365 days + all time; this week's sets per muscle
+  → exercise    est. 1RM + PRs + progress chart per lift (from the Exercises list)
   → calendar    training days over the last 3 months, streak
   → measures    bodyweight log with a trend sparkline
   → settings    kg/lb unit, rest-timer default
@@ -82,10 +84,10 @@ under `server/src/routes/`.
 | Area | Routes |
 |---|---|
 | auth | `POST /api/signup`, `POST /api/login`, `POST /api/logout`, `GET /api/me`, `PATCH /api/me` |
-| exercises | `GET /api/exercises`, `GET /api/exercises/:id/last-sets` |
-| routines | `GET/POST /api/routines`, `GET /api/routines/:id`, `POST /api/routines/:id/exercises` |
-| workouts | `POST /api/workouts`, `GET /api/workouts?limit=&offset=`, `GET /api/workouts/current`, `GET /api/workouts/:id`, `POST .../finish`, `POST .../reopen`, `DELETE /api/workouts/:id`, `POST .../sets`, `PATCH/DELETE .../sets/:setId` |
-| stats | `GET /api/stats`, `GET /api/stats/weekly`, `GET /api/stats/calendar` |
+| exercises | `GET /api/exercises`, `GET /api/exercises/:id/last-sets`, `GET /api/exercises/:id/suggestion`, `GET /api/exercises/:id/progress` |
+| routines | `GET/POST /api/routines`, `GET /api/routines/recommend`, `GET /api/routines/:id`, `POST /api/routines/:id/exercises` |
+| workouts | `POST /api/workouts`, `GET /api/workouts?limit=&offset=`, `GET /api/workouts/current`, `GET /api/workouts/:id`, `POST .../finish`, `POST .../reopen`, `DELETE /api/workouts/:id`, `POST .../sets`, `PATCH/DELETE .../sets/:setId`, `GET /api/workouts/:id/prs` |
+| stats | `GET /api/stats`, `GET /api/stats/weekly`, `GET /api/stats/calendar`, `GET /api/stats/muscles` |
 | measurements | `GET/POST /api/measurements`, `DELETE /api/measurements/:id` |
 
 ## Documentation

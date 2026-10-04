@@ -78,6 +78,8 @@ CREATE TABLE IF NOT EXISTS workout_sets (
   reps        INTEGER,
   weight      REAL,   -- always kilograms; the client converts for lb users
   set_type    TEXT NOT NULL DEFAULT 'normal',  -- 'normal' | 'warmup' | 'dropset' | 'failure'
+  rpe         REAL,   -- optional effort, 6..10 in 0.5 steps; NULL = not recorded
+  created_at  TEXT,   -- UTC timestamp the set was logged; NULL on older rows
   FOREIGN KEY (workout_id) REFERENCES workouts(id),
   FOREIGN KEY (exercise_id) REFERENCES exercises(id)
 );

@@ -45,7 +45,16 @@ async function request(method, path, body) {
 
   // 204 No Content or an empty body: nothing to parse.
   const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
+  let data = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      // A proxy / platform error page (HTML) instead of our JSON. Surface it as
+      // an ordinary ApiError rather than an opaque SyntaxError.
+      throw new ApiError(res.status || 500, 'Unexpected response from server.');
+    }
+  }
 
   if (!res.ok) {
     // A 401 from any call means "the session is gone" — react globally by
@@ -100,6 +109,19 @@ export const api = {
       `/api/exercises/${exerciseId}/last-sets` +
         (excludeWorkoutId ? `?exclude=${excludeWorkoutId}` : ''),
     ),
+
+  // coach: progress, suggestions, muscle balance, PRs
+  exerciseProgress: (exerciseId, limit = 30) =>
+    request('GET', `/api/exercises/${exerciseId}/progress?limit=${limit}`),
+  exerciseSuggestion: (exerciseId, setNumber, excludeWorkoutId) =>
+    request(
+      'GET',
+      `/api/exercises/${exerciseId}/suggestion?set=${setNumber}` +
+        (excludeWorkoutId ? `&exclude=${excludeWorkoutId}` : ''),
+    ),
+  muscleStats: () => request('GET', '/api/stats/muscles'),
+  recommendRoutine: () => request('GET', '/api/routines/recommend'),
+  workoutPRs: (workoutId) => request('GET', `/api/workouts/${workoutId}/prs`),
 
   // routines
   routines: () => request('GET', '/api/routines'),

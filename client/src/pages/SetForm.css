@@ -37,3 +37,70 @@
   color: var(--c-text);
   font-weight: 600;
 }
+
+/* Tap-to-use double-progression suggestion. */
+.set-form-suggest {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px var(--s-3);
+  text-align: left;
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: var(--s-2) var(--s-3);
+  font: inherit;
+  color: var(--c-text);
+  background: var(--c-bg);
+  border: 1px dashed var(--c-primary);
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+
+.set-form-suggest:hover {
+  background: var(--c-surface-2);
+}
+
+.set-form-suggest-label {
+  grid-column: 1;
+  font-size: var(--t-sm);
+  color: var(--c-primary);
+  font-weight: 600;
+}
+
+.set-form-suggest-value {
+  grid-column: 1;
+  font-size: var(--t-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.set-form-suggest-why {
+  grid-column: 1;
+  font-size: var(--t-sm);
+  color: var(--c-text-dim);
+}
+
+.set-form-suggest-use {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: center;
+  font-size: var(--t-sm);
+  color: var(--c-primary);
+}
+
+/* "Did you mean…?" confirmation before logging an odd-looking set. */
+.set-form-warning {
+  padding: var(--s-3);
+  background: var(--c-danger-bg);
+  border: 1px solid var(--c-danger);
+  border-radius: var(--r-md);
+}
+
+.set-form-warning p {
+  margin: 0 0 var(--s-3);
+}
+
+.set-form-warning-actions {
+  display: flex;
+  gap: var(--s-2);
+  justify-content: flex-end;
+}

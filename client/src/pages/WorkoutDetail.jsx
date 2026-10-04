@@ -4,6 +4,7 @@ import { useApi } from '../hooks/useApi';
 import { useAuth } from '../auth';
 import { useNavigate, Link } from '../router';
 import { formatDate, formatVolume } from '../format';
+import { workingVolumeKg } from '../coach';
 import Button from '../components/Button';
 import Spinner from '../components/Spinner';
 import ErrorMessage from '../components/ErrorMessage';
@@ -20,6 +21,8 @@ export default function WorkoutDetail({ id }) {
   // Everything on this page is rebuilt from this one GET. Nothing depends on
   // earlier React state, so a hard refresh behaves exactly like navigating here.
   const { data, loading, error, reload } = useApi(() => api.workout(id), [id]);
+  // Records set in this workout (vs earlier ones) — shown as 🏆 badges.
+  const prs = useApi(() => api.workoutPRs(id), [id]);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [actionErr, setActionErr] = useState(null);
@@ -49,11 +52,15 @@ export default function WorkoutDetail({ id }) {
   // routine_id is null for a freestyle workout.
   const isFreestyle = data.routine_id == null;
   const finished = data.completed_at != null;
-  const volumeKg = data.sets.reduce((t, s) => t + s.reps * s.weight, 0);
+  const volumeKg = workingVolumeKg(data.sets);
 
+  const refresh = () => {
+    reload();
+    prs.reload();
+  };
   const editSet = (setId, patch) =>
-    api.editSet(id, setId, patch).then(() => reload());
-  const deleteSet = (setId) => api.deleteSet(id, setId).then(() => reload());
+    api.editSet(id, setId, patch).then(() => refresh());
+  const deleteSet = (setId) => api.deleteSet(id, setId).then(() => refresh());
 
   async function reopen() {
     if (inFlight.current) return;
@@ -127,6 +134,7 @@ export default function WorkoutDetail({ id }) {
           <SetList
             sets={data.sets}
             unit={unit}
+            prs={prs.data ?? []}
             onEditSet={editSet}
             onDeleteSet={deleteSet}
           />

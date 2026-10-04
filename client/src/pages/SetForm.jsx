@@ -1,7 +1,14 @@
 import { useMemo, useRef, useState } from 'react';
 import { api, ApiError } from '../api';
 import { useApi } from '../hooks/useApi';
-import { formatWeight, toKg, formatDate, setTypeLabel } from '../format';
+import {
+  formatWeight,
+  fromKg,
+  toKg,
+  formatDate,
+  setTypeLabel,
+} from '../format';
+import { checkSetSanity, RPE_OPTIONS } from '../coach';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -44,6 +51,8 @@ export default function SetForm({
   const [reps, setReps] = useState('');
   const [weight, setWeight] = useState('');
   const [setType, setSetType] = useState('normal');
+  const [rpe, setRpe] = useState(''); // '' = not recorded
+  const [warning, setWarning] = useState(null); // "did you mean…?" text
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const inFlight = useRef(false);
@@ -68,8 +77,32 @@ export default function SetForm({
 
   const chosen = exercises.find((e) => e.id === id);
 
-  async function onSubmit(e) {
+  // Server state: a double-progression suggestion for THIS set, built from last
+  // session. Purely advisory — a failed lookup just hides the chip.
+  const suggestion = useApi(
+    () =>
+      id
+        ? api.exerciseSuggestion(id, nextSetNumber, workoutId)
+        : Promise.resolve(null),
+    [id, nextSetNumber, workoutId],
+  );
+
+  function applySuggestion() {
+    const s = suggestion.data;
+    if (!s) return;
+    setReps(String(s.reps));
+    setWeight(String(fromKg(s.weight_kg, unit)));
+    setSetType('normal');
+    setWarning(null);
+  }
+
+  function onSubmit(e) {
     e.preventDefault();
+    submit(false);
+  }
+
+  // `force` skips the typo check — the user answered "log anyway".
+  async function submit(force) {
     if (inFlight.current) return; // synchronous guard — see ARCHITECTURE.md
 
     if (!Number.isInteger(id) || id <= 0) {
@@ -92,7 +125,22 @@ export default function SetForm({
       return;
     }
 
+    if (!force) {
+      const doubt = checkSetSanity({
+        reps: r,
+        weightKg: toKg(wt, unit),
+        previousSets: previous.data?.sets ?? [],
+        unit,
+        setType,
+      });
+      if (doubt) {
+        setWarning(doubt);
+        return;
+      }
+    }
+
     inFlight.current = true;
+    setWarning(null);
     setError(null);
     setSubmitting(true);
     try {
@@ -104,7 +152,9 @@ export default function SetForm({
         reps: r,
         weight: toKg(wt, unit),
         set_type: setType,
+        ...(rpe === '' ? {} : { rpe: Number(rpe) }),
       });
+      setRpe(''); // effort is per set — start the next one blank
       // Keep exercise + reps + weight + type so the next set is one tap.
       // The set number advances on its own once the parent re-fetches `sets`.
       onLogged();
@@ -143,6 +193,22 @@ export default function SetForm({
         </p>
       )}
 
+      {chosen && suggestion.data && (
+        <button
+          type="button"
+          className="set-form-suggest"
+          onClick={applySuggestion}
+        >
+          <span className="set-form-suggest-label">Suggested</span>
+          <span className="set-form-suggest-value">
+            {suggestion.data.reps} ×{' '}
+            {formatWeight(suggestion.data.weight_kg, unit)}
+          </span>
+          <span className="set-form-suggest-why">{suggestion.data.reason}</span>
+          <span className="set-form-suggest-use">Tap to use</span>
+        </button>
+      )}
+
       {chosen && (
         <p className="set-form-context">
           Logging <strong>set {nextSetNumber}</strong> of {chosen.name}
@@ -156,7 +222,10 @@ export default function SetForm({
           inputMode="numeric"
           min="1"
           value={reps}
-          onChange={(e) => setReps(e.target.value)}
+          onChange={(e) => {
+            setReps(e.target.value);
+            setWarning(null);
+          }}
         />
         <Input
           label={`Weight (${unit})`}
@@ -165,7 +234,10 @@ export default function SetForm({
           min="0"
           step="0.5"
           value={weight}
-          onChange={(e) => setWeight(e.target.value)}
+          onChange={(e) => {
+            setWeight(e.target.value);
+            setWarning(null);
+          }}
         />
       </div>
 
@@ -180,6 +252,38 @@ export default function SetForm({
           </option>
         ))}
       </Select>
+
+      <Select
+        label="Effort (RPE, optional)"
+        value={rpe}
+        onChange={(e) => setRpe(e.target.value)}
+      >
+        <option value="">Not recorded</option>
+        {RPE_OPTIONS.map((v) => (
+          <option key={v} value={v}>
+            {v}
+            {v === 10 ? ' — max effort' : ''}
+          </option>
+        ))}
+      </Select>
+
+      {warning && (
+        <div className="set-form-warning" role="alert">
+          <p>{warning}</p>
+          <div className="set-form-warning-actions">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setWarning(null)}
+            >
+              Change it
+            </Button>
+            <Button type="button" onClick={() => submit(true)}>
+              Log anyway
+            </Button>
+          </div>
+        </div>
+      )}
 
       {error && <ErrorMessage error={error} />}
 

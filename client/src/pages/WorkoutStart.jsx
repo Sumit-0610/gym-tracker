@@ -17,6 +17,8 @@ export default function WorkoutStart() {
   const navigate = useNavigate();
   const { data: routines, loading, error } = useApi(() => api.routines(), []);
   const current = useApi(() => api.currentWorkout(), []);
+  // Advisory only: the routine whose muscles have rested the longest.
+  const recommend = useApi(() => api.recommendRoutine(), []);
 
   const [mode, setMode] = useState('routine'); // 'routine' | 'freestyle'
   const [routineId, setRoutineId] = useState(''); // string, from <select>
@@ -28,11 +30,15 @@ export default function WorkoutStart() {
   // If the user has no routines, freestyle is the only option.
   const effectiveMode = noRoutines ? 'freestyle' : mode;
 
-  async function start() {
+  // `forcedRoutineId` is set by the "Suggested today" card; otherwise the form
+  // below decides.
+  async function start(forcedRoutineId) {
     if (inFlight.current) return;
 
     let routineArg; // undefined => freestyle
-    if (effectiveMode === 'routine') {
+    if (forcedRoutineId) {
+      routineArg = forcedRoutineId;
+    } else if (effectiveMode === 'routine') {
       const n = Number(routineId);
       if (!Number.isInteger(n) || n <= 0) {
         setStartErr(
@@ -73,6 +79,22 @@ export default function WorkoutStart() {
             onClick={() => navigate(`/workout/${current.data.id}`)}
           >
             Resume it
+          </Button>
+        </Card>
+      )}
+
+      {recommend.data && (
+        <Card className="ws-recommend">
+          <p className="ws-recommend-label">Suggested today</p>
+          <h2>{recommend.data.name}</h2>
+          <p className="ws-hint">{recommend.data.reason}</p>
+          <Button
+            className="btn-block"
+            onClick={() => start(recommend.data.routine_id)}
+            pending={starting}
+            pendingLabel="Starting…"
+          >
+            Start {recommend.data.name}
           </Button>
         </Card>
       )}
@@ -131,7 +153,7 @@ export default function WorkoutStart() {
           {startErr && <ErrorMessage error={startErr} />}
 
           <Button
-            onClick={start}
+            onClick={() => start()}
             pending={starting}
             pendingLabel="Starting…"
             className="btn-block"

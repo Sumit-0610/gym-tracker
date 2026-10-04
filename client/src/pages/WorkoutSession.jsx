@@ -4,6 +4,7 @@ import { useApi } from '../hooks/useApi';
 import { useAuth } from '../auth';
 import { useNavigate, Link } from '../router';
 import { formatDate, formatVolume } from '../format';
+import { describePRs, workingSetCount, workingVolumeKg } from '../coach';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Spinner from '../components/Spinner';
@@ -25,6 +26,11 @@ export default function WorkoutSession({ id }) {
   // GET /api/workouts/:id — the same endpoint history uses. Because the id is
   // in the URL, a refresh reloads this cleanly.
   const workout = useApi(() => api.workout(id), [id]);
+
+  // Server state: personal records set in THIS workout so far (vs earlier
+  // workouts). Refetched after every change so a 🏆 appears the moment you lift
+  // it, and the finish celebration can list them.
+  const prs = useApi(() => api.workoutPRs(id), [id]);
 
   // Server state: the full exercise library, for the set-logging selector.
   const library = useApi(() => api.exercises(), []);
@@ -75,17 +81,24 @@ export default function WorkoutSession({ id }) {
   const w = workout.data;
   const sets = w.sets;
   const finished = w.completed_at != null;
-  const volumeKg = sets.reduce((t, s) => t + s.reps * s.weight, 0);
+  const volumeKg = workingVolumeKg(sets);
 
   function onSetLogged() {
     workout.reload();
+    prs.reload();
     setRestRun((n) => n + 1);
   }
 
   const editSet = (setId, patch) =>
-    api.editSet(id, setId, patch).then(() => workout.reload());
+    api.editSet(id, setId, patch).then(() => {
+      workout.reload();
+      prs.reload();
+    });
   const deleteSet = (setId) =>
-    api.deleteSet(id, setId).then(() => workout.reload());
+    api.deleteSet(id, setId).then(() => {
+      workout.reload();
+      prs.reload();
+    });
 
   async function finish() {
     if (finishInFlight.current) return;
@@ -95,6 +108,7 @@ export default function WorkoutSession({ id }) {
     try {
       await api.finishWorkout(id);
       workout.reload(); // so the screen behind the overlay reads "finished"
+      prs.reload();
       setCelebrate(true); // the overlay's "Done" navigates to history
     } catch (err) {
       setFinishErr(err instanceof ApiError ? err : new ApiError(0));
@@ -185,6 +199,7 @@ export default function WorkoutSession({ id }) {
           <SetList
             sets={sets}
             unit={unit}
+            prs={prs.data ?? []}
             onEditSet={editSet}
             onDeleteSet={deleteSet}
           />
@@ -214,8 +229,9 @@ export default function WorkoutSession({ id }) {
 
       {celebrate && (
         <Celebration
-          setCount={sets.length}
+          setCount={workingSetCount(sets)}
           volumeLabel={volumeKg > 0 ? formatVolume(volumeKg, unit) : null}
+          prLines={describePRs(prs.data ?? [], unit)}
           onDone={() => navigate(`/history/${id}`)}
         />
       )}

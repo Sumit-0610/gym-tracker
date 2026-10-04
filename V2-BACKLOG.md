@@ -75,10 +75,28 @@ verification. See `V1-STATUS.md` for what is deployed.
 
 ## Workout features (remaining)
 
-- **1RM estimate** — Epley formula on the workout detail / exercise view.
-- **Progress charts** — volume/weight *over time* per exercise, plotted (the
-  `/stats` numbers are point-in-time totals; this is the graph). Needs a
-  charting library — the first real UI dependency.
+- ~~**1RM estimate**~~ and ~~**progress charts**~~ — shipped with the coach
+  engine: `GET /api/exercises/:id/progress`, `/exercises/:id` page (Epley
+  estimate, PRs, hand-drawn SVG trend — no charting library needed).
+
+### Coach engine (rules-based, no LLM) — shipped
+
+- ~~Next-set suggestion~~ (double progression, `GET /api/exercises/:id/suggestion`),
+  ~~PR detection~~ (`GET /api/workouts/:id/prs`, live 🏆 badges + the finish
+  celebration), ~~stall nudge~~, ~~weekly sets per muscle~~
+  (`GET /api/stats/muscles`), ~~"suggested routine today"~~
+  (`GET /api/routines/recommend`), ~~typo guard~~ (client `coach.js`), optional
+  per-set **RPE**, and a per-set `created_at`.
+- **Warm-up sets no longer count** toward volume, set totals or records
+  (behaviour change).
+
+### AI roadmap (planned, see the plan in the session notes)
+
+- Optional LLM layer on a free tier (Gemini / Groq), opt-in per user, anonymised
+  aggregates only: weekly recap + routine generator.
+- Copy-history-to-ChatGPT/Claude button.
+- Natural-language / voice set entry ("bench 80 for 5, 5, 4").
+- Deferred: phone rep-counting, photo calorie estimation.
 
 ## Engineering (remaining)
 

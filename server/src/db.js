@@ -78,6 +78,11 @@ const MIGRATIONS = [
   ['workout_sets', 'set_type', "TEXT NOT NULL DEFAULT 'normal'"],
   ['users', 'weight_unit', "TEXT NOT NULL DEFAULT 'kg'"],
   ['users', 'rest_seconds', 'INTEGER NOT NULL DEFAULT 120'],
+  // Effort (6-10 in 0.5 steps) and when a set was logged. Both nullable: sets
+  // logged before these existed stay NULL. created_at has no DEFAULT because
+  // SQLite cannot ADD COLUMN with a non-constant default; the INSERT sets it.
+  ['workout_sets', 'rpe', 'REAL'],
+  ['workout_sets', 'created_at', 'TEXT'],
 ];
 
 async function migrate() {

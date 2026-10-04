@@ -358,6 +358,105 @@ check "pagination: limit clamps to <=100" "true" "$(body | jget 'd.length <= 100
 code GET "/api/workouts?limit=abc" "$A" >/dev/null
 check "pagination: bad limit falls back" "true" "$(body | jget 'Array.isArray(d) && d.length >= 1')"
 
+echo "== phase 14: coach engine =="
+# Exercise 5 has never been logged by alice, so this history is fully controlled.
+# W1: two working sets + a huge warm-up that must never count as anything.
+check "start coach workout 1"          201 "$(code POST /api/workouts "$A" '{}')"
+C1="$(body | jget 'd.id')"
+code POST /api/workouts/$C1/sets "$A" '{"exercise_id":5,"set_number":1,"reps":10,"weight":60,"rpe":8}' >/dev/null
+check "  ...rpe is stored and returned"  "8" "$(body | jget 'd.rpe')"
+code POST /api/workouts/$C1/sets "$A" '{"exercise_id":5,"set_number":2,"reps":10,"weight":60}' >/dev/null
+check "  ...rpe defaults to null"        "null" "$(body | jget 'String(d.rpe)')"
+code POST /api/workouts/$C1/sets "$A" '{"exercise_id":5,"set_number":3,"reps":5,"weight":200,"set_type":"warmup"}' >/dev/null
+check "rpe too high rejected"          400 "$(code POST /api/workouts/$C1/sets "$A" '{"exercise_id":5,"set_number":4,"reps":5,"weight":60,"rpe":11}')"
+check "rpe too low rejected"           400 "$(code POST /api/workouts/$C1/sets "$A" '{"exercise_id":5,"set_number":4,"reps":5,"weight":60,"rpe":5.5}')"
+check "rpe off the half-step rejected" 400 "$(code POST /api/workouts/$C1/sets "$A" '{"exercise_id":5,"set_number":4,"reps":5,"weight":60,"rpe":7.25}')"
+code GET /api/workouts/$C1 "$A" >/dev/null
+CSET="$(body | jget 'd.sets[0].id')"
+check "workout detail carries rpe"     "true" "$(body | jget "d.sets.every(s=>'rpe' in s)")"
+check "edit rpe"                        200 "$(code PATCH /api/workouts/$C1/sets/$CSET "$A" '{"rpe":9.5}')"
+check "  ...rpe updated"                "9.5" "$(body | jget 'd.rpe')"
+check "clear rpe with null"             200 "$(code PATCH /api/workouts/$C1/sets/$CSET "$A" '{"rpe":null}')"
+check "  ...rpe cleared"                "null" "$(body | jget 'String(d.rpe)')"
+check "edit rpe invalid -> 400"         400 "$(code PATCH /api/workouts/$C1/sets/$CSET "$A" '{"rpe":3}')"
+code POST /api/workouts/$C1/finish "$A" >/dev/null
+
+# warm-ups never count toward volume or set totals
+code GET /api/stats "$A" >/dev/null
+VOL_BEFORE="$(body | jget 'd.volume.all_time')"
+SETS_BEFORE="$(body | jget 'd.total_sets')"
+code POST /api/workouts/$C1/sets "$A" '{"exercise_id":5,"set_number":4,"reps":10,"weight":100,"set_type":"warmup"}' >/dev/null
+code GET /api/stats "$A" >/dev/null
+check "warm-up adds no volume"          "$VOL_BEFORE" "$(body | jget 'd.volume.all_time')"
+check "warm-up adds no working set"     "$SETS_BEFORE" "$(body | jget 'd.total_sets')"
+
+# W2: heavier, two sets at the rep ceiling
+check "start coach workout 2"          201 "$(code POST /api/workouts "$A" '{}')"
+C2="$(body | jget 'd.id')"
+code POST /api/workouts/$C2/sets "$A" '{"exercise_id":5,"set_number":1,"reps":12,"weight":62.5}' >/dev/null
+code POST /api/workouts/$C2/sets "$A" '{"exercise_id":5,"set_number":2,"reps":12,"weight":62.5}' >/dev/null
+code POST /api/workouts/$C2/finish "$A" >/dev/null
+
+# --- PRs ---
+code GET /api/workouts/$C1/prs "$A" >/dev/null
+check "first-ever session has no PRs"   "0" "$(body | jget 'd.length')"
+check "PRs for workout 2"               200 "$(code GET /api/workouts/$C2/prs "$A")"
+check "  ...lists the exercise"         "true" "$(body | jget "d.length===1 && d[0].exercise_id===5 && typeof d[0].exercise_name==='string'")"
+check "  ...weight PR ignores the 200 kg warm-up" "true" \
+  "$(body | jget "d[0].weight.previous===60 && d[0].weight.current===62.5")"
+check "  ...e1RM PR present"            "true" "$(body | jget "d[0].e1rm.current > d[0].e1rm.previous")"
+check "BOB cannot read alice's PRs"     404 "$(code GET /api/workouts/$C2/prs "$B")"
+check "PRs for nonexistent workout"     404 "$(code GET /api/workouts/999999/prs "$A")"
+check "PRs for non-numeric id"          404 "$(code GET /api/workouts/abc/prs "$A")"
+check "PRs unauthenticated -> 401"      401 "$(code GET /api/workouts/$C2/prs "$TMP/anon.jar")"
+
+# --- suggestion (double progression) ---
+check "start coach workout 3 (in progress)" 201 "$(code POST /api/workouts "$A" '{}')"
+C3="$(body | jget 'd.id')"
+check "suggestion after hitting the rep ceiling" 200 "$(code GET "/api/exercises/5/suggestion?set=1&exclude=$C3" "$A")"
+check "  ...adds a load step (62.5 -> 65, back to 8 reps)" "true" \
+  "$(body | jget "d.weight_kg===65 && d.reps===8 && typeof d.reason==='string' && d.based_on.workout_id===$C2")"
+code GET "/api/exercises/5/suggestion?exclude=$C3" "$B" >/dev/null
+check "bob has no suggestion for it"    "null" "$(body | jget 'String(d)')"
+code GET "/api/exercises/7/suggestion" "$A" >/dev/null
+check "never-done exercise -> null"     "null" "$(body | jget 'String(d)')"
+check "suggestion unknown exercise"     404 "$(code GET /api/exercises/999999/suggestion "$A")"
+check "suggestion non-numeric id"       404 "$(code GET /api/exercises/abc/suggestion "$A")"
+check "suggestion bad exclude -> 400"   400 "$(code GET "/api/exercises/5/suggestion?exclude=-3" "$A")"
+check "suggestion unauthenticated"      401 "$(code GET /api/exercises/5/suggestion "$TMP/anon.jar")"
+
+# --- progress ---
+check "progress for exercise 5"         200 "$(code GET /api/exercises/5/progress "$A")"
+check "  ...one point per session (2)"  "2" "$(body | jget 'd.sessions.length')"
+check "  ...oldest first, top weights"  "true" "$(body | jget "d.sessions[0].top_weight===60 && d.sessions[1].top_weight===62.5")"
+check "  ...PRs exclude the warm-ups"   "true" \
+  "$(body | jget "d.prs.weight.value===62.5 && d.prs.volume.value===750 && d.prs.e1rm.value>62.5")"
+check "  ...not stalled with 2 sessions" "false" "$(body | jget 'd.stalled')"
+check "  ...carries the exercise"       "5" "$(body | jget 'd.exercise.id')"
+code GET "/api/exercises/5/progress?limit=1" "$A" >/dev/null
+check "  ...limit trims to the latest"  "true" "$(body | jget "d.sessions.length===1 && d.sessions[0].top_weight===62.5")"
+code GET /api/exercises/5/progress "$B" >/dev/null
+check "bob's progress is empty"         "true" "$(body | jget "d.sessions.length===0 && d.prs.e1rm===null && d.prs.weight===null && d.stalled===false")"
+check "progress unknown exercise"       404 "$(code GET /api/exercises/999999/progress "$A")"
+check "progress unauthenticated"        401 "$(code GET /api/exercises/5/progress "$TMP/anon.jar")"
+
+# --- muscle summary + routine recommendation ---
+check "muscle summary"                  200 "$(code GET /api/stats/muscles "$A")"
+check "  ...every muscle group, with status" "true" \
+  "$(body | jget "/^\\d{4}-\\d{2}-\\d{2}$/.test(d.week_start) && d.muscles.length===11 && d.muscles.every(m=>['low','ok','high'].includes(m.status) && typeof m.sets==='number')")"
+check "  ...alice has working sets this week" "true" "$(body | jget "d.muscles.reduce((t,m)=>t+m.sets,0) > 0")"
+check "  ...trained muscle has days_since" "true" "$(body | jget "d.muscles.some(m=>m.sets>0 && m.days_since===0)")"
+code GET /api/stats/muscles "$B" >/dev/null
+check "bob's muscle sets are all zero"  "true" "$(body | jget "d.muscles.every(m=>m.sets===0 && m.last_trained===null)")"
+check "muscles unauthenticated"         401 "$(code GET /api/stats/muscles "$TMP/anon.jar")"
+
+check "recommend a routine (alice)"     200 "$(code GET /api/routines/recommend "$A")"
+check "  ...picks the routine that has exercises" "true" \
+  "$(body | jget "d.routine_id===$RID && d.name==='Push Day' && typeof d.reason==='string'")"
+code GET /api/routines/recommend "$B" >/dev/null
+check "bob has nothing to recommend"    "null" "$(body | jget 'String(d)')"
+check "recommend unauthenticated"       401 "$(code GET /api/routines/recommend "$TMP/anon.jar")"
+
 echo
 echo "== two-user authorization summary =="
 echo "  alice: routine $RID, workout $WID  |  bob: cannot touch either"

@@ -37,3 +37,14 @@
   color: var(--c-text-dim);
   padding: var(--s-4) 0;
 }
+
+a.exercise-name {
+  flex: 1;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+a.exercise-name:hover {
+  text-decoration: underline;
+}

@@ -2,7 +2,12 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { weekStartOf, addDays, localToday } = require('../../src/dates');
+const {
+  weekStartOf,
+  addDays,
+  daysBetween,
+  localToday,
+} = require('../../src/dates');
 
 test('weekStartOf — snaps to the Monday of that week', () => {
   // 2026-09-09 is a Wednesday; its Monday is 2026-09-07.
@@ -36,4 +41,12 @@ test('addDays composes for the streak walk (12 weeks back)', () => {
 
 test('localToday — ISO shape', () => {
   assert.match(localToday(), /^\d{4}-\d{2}-\d{2}$/);
+});
+
+test('daysBetween — signed whole days, across month/year/leap boundaries', () => {
+  assert.equal(daysBetween('2026-09-08', '2026-09-08'), 0);
+  assert.equal(daysBetween('2026-09-01', '2026-09-08'), 7);
+  assert.equal(daysBetween('2026-09-08', '2026-09-01'), -7);
+  assert.equal(daysBetween('2026-12-31', '2027-01-01'), 1);
+  assert.equal(daysBetween('2028-02-28', '2028-03-01'), 2); // leap year
 });

@@ -14,6 +14,9 @@ const {
   positiveInt,
   optionalPositiveInt,
 } = require('../validation');
+const { recommendRoutine } = require('../analytics');
+const { lastTrainedByMuscle } = require('../training-data');
+const { daysBetween, localToday } = require('../dates');
 
 const router = express.Router();
 
@@ -57,6 +60,47 @@ router.get('/routines', async (req, res, next) => {
       req.userId,
     );
     res.json(routines);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/routines/recommend
+//   "What should I train today?" — the caller's routine whose muscle groups have
+//   had the most rest (see analytics.recommendRoutine). Registered before
+//   /routines/:id so "recommend" is not read as an id.
+//   Returns: 200 { routine_id, name, reason } | 200 null (no routine has exercises)
+router.get('/routines/recommend', async (req, res, next) => {
+  try {
+    const rows = await all(
+      `SELECT r.id, r.name, e.muscle_group
+         FROM routines r
+         JOIN routine_exercises re ON re.routine_id = r.id
+         JOIN exercises e          ON e.id = re.exercise_id
+        WHERE r.user_id = ?
+        ORDER BY r.id`,
+      req.userId,
+    );
+    /** @type {Map<number, { id: number, name: string, muscles: string[] }>} */
+    const byRoutine = new Map();
+    for (const r of rows) {
+      let entry = byRoutine.get(r.id);
+      if (!entry) {
+        entry = { id: r.id, name: r.name, muscles: [] };
+        byRoutine.set(r.id, entry);
+      }
+      if (r.muscle_group) entry.muscles.push(String(r.muscle_group));
+    }
+
+    const lastTrained = await lastTrainedByMuscle(req.userId);
+    const today = localToday();
+    /** @type {Record<string, number | null>} */
+    const daysSince = {};
+    for (const [muscle, day] of Object.entries(lastTrained)) {
+      daysSince[muscle] = Math.max(0, daysBetween(day, today));
+    }
+
+    res.json(recommendRoutine([...byRoutine.values()], daysSince));
   } catch (err) {
     next(err);
   }

@@ -7,7 +7,7 @@
 //
 // The key lives only on the server (env var); it never reaches the browser.
 
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+const DEFAULT_MODEL = 'gemini-3.5-flash';
 const TIMEOUT_MS = 20_000;
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 

@@ -7,6 +7,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import Spinner from '../components/Spinner';
 import ActivityChart from '../components/ActivityChart';
+import RecapCard from '../components/RecapCard';
 import { Icon } from '../components/icons';
 import './Dashboard.css';
 
@@ -27,6 +28,17 @@ export default function Dashboard() {
   const current = useApi(() => api.currentWorkout(), []);
   const stats = useApi(() => api.stats(), []);
   const weekly = useApi(() => api.weeklyStats(12), []);
+
+  // The AI recap of the latest finished workout (only when the user opted in
+  // and the server has an AI key). Older recaps live on each workout in History.
+  const aiOn = Boolean(user?.ai_enabled && user?.ai_available);
+  const recent = useApi(
+    () => (aiOn ? api.workouts({ limit: 10 }) : Promise.resolve([])),
+    [aiOn],
+  );
+  const lastFinished = (recent.data ?? []).find(
+    (w) => w.completed_at && w.set_count > 0,
+  );
 
   const s = stats.data;
 
@@ -78,6 +90,20 @@ export default function Dashboard() {
           {current.data ? 'Start a new workout' : 'Start a workout'}
         </Button>
       </Card>
+
+      {lastFinished && (
+        <RecapCard
+          workoutId={lastFinished.id}
+          title={`Coach’s recap · ${formatDate(lastFinished.date)}`}
+        >
+          <p className="recap-footer">
+            <Link to={`/history/${lastFinished.id}`}>See this workout</Link>
+            {' · '}
+            Recaps for earlier workouts are on each workout in{' '}
+            <Link to="/history">History</Link>.
+          </p>
+        </RecapCard>
+      )}
 
       {weekly.loading && <Spinner label="Loading your activity…" />}
       {weekly.data && weekly.data.some((w) => w.sets > 0) && (

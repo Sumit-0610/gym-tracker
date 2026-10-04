@@ -90,10 +90,15 @@ verification. See `V1-STATUS.md` for what is deployed.
 - **Warm-up sets no longer count** toward volume, set totals or records
   (behaviour change).
 
-### AI roadmap (planned, see the plan in the session notes)
+### AI roadmap
 
-- Optional LLM layer on a free tier (Gemini / Groq), opt-in per user, anonymised
-  aggregates only: weekly recap + routine generator.
+- ~~**AI coach recap**~~ — after a finished workout, Gemini narrates the facts
+  the coach engine computed (PRs, stalls, weekly sets per muscle) in 3–5
+  sentences. Opt-in per user (`users.ai_enabled`, Settings), no username or ids
+  sent, cached per workout in `ai_recaps` (regenerated if the sets change),
+  rate-limited. `server/src/ai.js` is the only provider call;
+  `server/src/coach-recap.js` builds the facts. Needs `GEMINI_API_KEY`.
+- Weekly recap and routine generator, reusing `ai.js`.
 - Copy-history-to-ChatGPT/Claude button.
 - Natural-language / voice set entry ("bench 80 for 5, 5, 4").
 - Deferred: phone rep-counting, photo calorie estimation.

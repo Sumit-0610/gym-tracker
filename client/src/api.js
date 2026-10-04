@@ -122,6 +122,9 @@ export const api = {
   muscleStats: () => request('GET', '/api/stats/muscles'),
   recommendRoutine: () => request('GET', '/api/routines/recommend'),
   workoutPRs: (workoutId) => request('GET', `/api/workouts/${workoutId}/prs`),
+  // AI-written recap of a finished workout (cached server-side)
+  workoutRecap: (workoutId) =>
+    request('POST', `/api/workouts/${workoutId}/recap`),
 
   // routines
   routines: () => request('GET', '/api/routines'),

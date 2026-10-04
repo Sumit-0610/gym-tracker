@@ -29,3 +29,6 @@ services:
         sync: false
       - key: SESSION_SECRET
         generateValue: true
+      # Optional: enables the AI coach recap (unset = feature hidden).
+      - key: GEMINI_API_KEY
+        sync: false

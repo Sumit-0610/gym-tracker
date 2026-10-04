@@ -83,6 +83,8 @@ const MIGRATIONS = [
   // SQLite cannot ADD COLUMN with a non-constant default; the INSERT sets it.
   ['workout_sets', 'rpe', 'REAL'],
   ['workout_sets', 'created_at', 'TEXT'],
+  // Opt-in for the AI coach recap; off until the user turns it on.
+  ['users', 'ai_enabled', 'INTEGER NOT NULL DEFAULT 0'],
 ];
 
 async function migrate() {

@@ -12,6 +12,7 @@ import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import RestTimer from '../components/RestTimer';
 import Celebration from '../components/Celebration';
+import RecapCard from '../components/RecapCard';
 import SetForm from './SetForm';
 import SetList from './SetList';
 import './WorkoutSession.css';
@@ -233,7 +234,11 @@ export default function WorkoutSession({ id }) {
           volumeLabel={volumeKg > 0 ? formatVolume(volumeKg, unit) : null}
           prLines={describePRs(prs.data ?? [], unit)}
           onDone={() => navigate(`/history/${id}`)}
-        />
+        >
+          {user?.ai_enabled && user?.ai_available && (
+            <RecapCard workoutId={id} allowRetry={false} />
+          )}
+        </Celebration>
       )}
     </div>
   );

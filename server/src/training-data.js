@@ -90,4 +90,87 @@ async function lastTrainedByMuscle(userId) {
   return out;
 }
 
-module.exports = { previousSession, weeklyMuscleCounts, lastTrainedByMuscle };
+/**
+ * Everything the AI recap needs about one workout: its sets grouped by
+ * exercise (in the order first performed), and for each exercise the working
+ * sets of every EARLIER workout, grouped per workout, oldest first.
+ * @param {number} userId
+ * @param {{ id: number, date: string }} workout
+ * @returns {Promise<{
+ *   rows: any[],
+ *   exercises: { name: string, muscle_group: string | null, sets: any[], priorSessions: any[][] }[],
+ * }>} rows = this workout's raw sets (for cache fingerprinting)
+ */
+async function workoutWithHistory(userId, workout) {
+  const rows = await all(
+    `SELECT ws.id, ws.exercise_id, e.name, e.muscle_group,
+            ws.reps, ws.weight, ws.set_type, ws.rpe
+       FROM workout_sets ws
+       JOIN exercises e ON e.id = ws.exercise_id
+      WHERE ws.workout_id = ?
+      ORDER BY ws.id`,
+    workout.id,
+  );
+
+  /** @type {Map<number, { name: string, muscle_group: string | null, sets: any[], priorSessions: any[][] }>} */
+  const byExercise = new Map();
+  for (const r of rows) {
+    let e = byExercise.get(r.exercise_id);
+    if (!e) {
+      e = {
+        name: String(r.name),
+        muscle_group: r.muscle_group == null ? null : String(r.muscle_group),
+        sets: [],
+        priorSessions: [],
+      };
+      byExercise.set(r.exercise_id, e);
+    }
+    e.sets.push({
+      reps: r.reps,
+      weight: r.weight,
+      set_type: r.set_type,
+      rpe: r.rpe,
+    });
+  }
+  if (byExercise.size === 0) return { rows, exercises: [] };
+
+  // Earlier history for every exercise in one query. The ids come from the
+  // database, not the request; placeholders keep them bound.
+  const ids = [...byExercise.keys()];
+  const prior = await all(
+    `SELECT ws.exercise_id, ws.workout_id, ws.reps, ws.weight
+       FROM workout_sets ws
+       JOIN workouts w ON w.id = ws.workout_id
+      WHERE w.user_id = ?
+        AND ws.exercise_id IN (${ids.map(() => '?').join(',')})
+        AND ws.set_type <> 'warmup'
+        AND (w.date < ? OR (w.date = ? AND w.id < ?))
+      ORDER BY w.date, w.id, ws.id`,
+    userId,
+    ...ids,
+    workout.date,
+    workout.date,
+    workout.id,
+  );
+  /** @type {Map<string, any[]>} */
+  const sessions = new Map(); // "exercise:workout" -> sets, insertion = oldest first
+  for (const r of prior) {
+    const key = `${r.exercise_id}:${r.workout_id}`;
+    let list = sessions.get(key);
+    if (!list) {
+      list = [];
+      sessions.set(key, list);
+      byExercise.get(r.exercise_id)?.priorSessions.push(list);
+    }
+    list.push({ reps: r.reps, weight: r.weight });
+  }
+
+  return { rows, exercises: [...byExercise.values()] };
+}
+
+module.exports = {
+  previousSession,
+  weeklyMuscleCounts,
+  lastTrainedByMuscle,
+  workoutWithHistory,
+};

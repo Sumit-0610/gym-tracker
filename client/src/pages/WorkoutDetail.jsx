@@ -9,6 +9,7 @@ import Button from '../components/Button';
 import Spinner from '../components/Spinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
+import RecapCard from '../components/RecapCard';
 import SetList from './SetList';
 import './WorkoutDetail.css';
 
@@ -140,6 +141,14 @@ export default function WorkoutDetail({ id }) {
           />
         )}
       </section>
+
+      {/* Remounts when the sets change, so an edit gets a fresh recap. */}
+      {finished && user?.ai_enabled && user?.ai_available && (
+        <RecapCard
+          key={data.sets.map((s) => `${s.id}:${s.reps}:${s.weight}`).join()}
+          workoutId={data.id}
+        />
+      )}
 
       {actionErr && <ErrorMessage error={actionErr} />}
 

@@ -1,4 +1,4 @@
-// Rate limiters for the auth endpoints.
+// Rate limiters for the auth endpoints and the AI recap.
 //
 // Once the app is reachable from the public internet, brute-forcing a password
 // and mass-registering accounts are the obvious abuse vectors — every other
@@ -38,4 +38,19 @@ const signupLimiter = rateLimit({
   handler: tooMany,
 });
 
-module.exports = { loginLimiter, signupLimiter };
+// AI recap calls per signed-in user: 30 per hour. Cached recaps are cheap, but
+// this caps how often one account can make the server call the AI provider.
+// Mounted after requireAuth, so req.userId is set and is the key.
+const aiLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 30,
+  keyGenerator: (req) => `user:${req.userId}`,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: (req, res) =>
+    res.status(429).json({
+      error: 'Too many AI recap requests. Please try again later.',
+    }),
+});
+
+module.exports = { loginLimiter, signupLimiter, aiLimiter };

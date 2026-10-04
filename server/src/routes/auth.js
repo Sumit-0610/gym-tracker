@@ -6,6 +6,7 @@ const { get, run } = require('../db');
 const requireAuth = require('../middleware/auth');
 const { loginLimiter, signupLimiter } = require('../middleware/rate-limit');
 const { oneOf } = require('../validation');
+const ai = require('../ai');
 
 const router = express.Router();
 
@@ -86,18 +87,34 @@ router.post('/logout', (req, res) => {
   });
 });
 
-const ME_COLUMNS = 'id, username, created_at, weight_unit, rest_seconds';
+const ME_COLUMNS =
+  'id, username, created_at, weight_unit, rest_seconds, ai_enabled';
+
+/**
+ * The caller's profile + preferences, as GET/PATCH /api/me return it.
+ * ai_enabled comes back as a boolean; ai_available says whether this server
+ * has an AI provider configured at all (the client hides the toggle if not).
+ * @param {number} userId
+ */
+async function loadMe(userId) {
+  const user = await get(
+    `SELECT ${ME_COLUMNS} FROM users WHERE id = ?`,
+    userId,
+  );
+  if (!user) return user;
+  return {
+    ...user,
+    ai_enabled: Boolean(user.ai_enabled),
+    ai_available: ai.isConfigured(),
+  };
+}
 const REST_MIN = 15;
 const REST_MAX = 600;
 
 // Protected: used by the frontend on load to check for an existing session.
 router.get('/me', requireAuth, async (req, res, next) => {
   try {
-    const user = await get(
-      `SELECT ${ME_COLUMNS} FROM users WHERE id = ?`,
-      req.userId,
-    );
-    res.json(user);
+    res.json(await loadMe(req.userId));
   } catch (err) {
     next(err);
   }
@@ -105,8 +122,9 @@ router.get('/me', requireAuth, async (req, res, next) => {
 
 // PATCH /api/me
 //   Update the caller's preferences. Any of:
-//     { weight_unit: 'kg' | 'lb', rest_seconds: 15..600 }
-//   Returns: 200 { id, username, created_at, weight_unit, rest_seconds }
+//     { weight_unit: 'kg' | 'lb', rest_seconds: 15..600, ai_enabled: boolean }
+//   Returns: 200 { id, username, created_at, weight_unit, rest_seconds,
+//                  ai_enabled, ai_available }
 router.patch('/me', requireAuth, async (req, res, next) => {
   try {
     const body = req.body || {};
@@ -129,6 +147,13 @@ router.patch('/me', requireAuth, async (req, res, next) => {
       updates.push('rest_seconds = ?');
       args.push(n);
     }
+    if (body.ai_enabled !== undefined) {
+      if (typeof body.ai_enabled !== 'boolean') {
+        return res.status(400).json({ error: 'ai_enabled must be a boolean' });
+      }
+      updates.push('ai_enabled = ?');
+      args.push(body.ai_enabled ? 1 : 0);
+    }
     if (updates.length === 0) {
       return res.status(400).json({ error: 'no preferences to update' });
     }
@@ -136,11 +161,7 @@ router.patch('/me', requireAuth, async (req, res, next) => {
     args.push(req.userId);
     await run(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, ...args);
 
-    const user = await get(
-      `SELECT ${ME_COLUMNS} FROM users WHERE id = ?`,
-      req.userId,
-    );
-    res.json(user);
+    res.json(await loadMe(req.userId));
   } catch (err) {
     next(err);
   }

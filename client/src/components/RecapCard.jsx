@@ -11,7 +11,12 @@ import './RecapCard.css';
 // or the AI fails, the card shows a quiet note (or nothing) and the rest of
 // the screen is unaffected. `onRetry` is offered only where the caller allows
 // another focusable element (the finish overlay keeps a single button).
-export default function RecapCard({ workoutId, allowRetry = true }) {
+export default function RecapCard({
+  workoutId,
+  allowRetry = true,
+  title = 'Coach’s recap',
+  children, // optional footer, e.g. a link (shown with the recap only)
+}) {
   const { data, error, loading, reload } = useApi(
     () => api.workoutRecap(workoutId),
     [workoutId],
@@ -22,7 +27,7 @@ export default function RecapCard({ workoutId, allowRetry = true }) {
 
   return (
     <section className="recap" aria-live="polite" aria-label="Coach's recap">
-      <h3 className="recap-title">🤖 Coach&rsquo;s recap</h3>
+      <h3 className="recap-title">🤖 {title}</h3>
       {loading && !data && <Spinner label="Your coach is writing a recap…" />}
       {error && (
         <p className="recap-note">
@@ -41,6 +46,7 @@ export default function RecapCard({ workoutId, allowRetry = true }) {
         <>
           <p className="recap-text">{data.text}</p>
           <p className="recap-note">AI-generated from your logged numbers.</p>
+          {children}
         </>
       )}
     </section>

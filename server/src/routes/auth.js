@@ -44,7 +44,8 @@ router.post('/signup', signupLimiter, async (req, res, next) => {
 
     const id = Number(result.lastInsertRowid);
     req.session.userId = id; // log them in immediately
-    res.status(201).json({ id, username });
+    // Same shape as GET /api/me, so the client has the preferences at once.
+    res.status(201).json(await loadMe(id));
   } catch (err) {
     if (String(err.message).includes('UNIQUE')) {
       return res.status(409).json({ error: 'username already taken' });
@@ -74,7 +75,9 @@ router.post('/login', loginLimiter, async (req, res, next) => {
     // Only the session id travels to the browser (in a signed cookie). The
     // userId stays server-side in the session store; the client never sees it.
     req.session.userId = user.id;
-    res.json({ id: user.id, username: user.username });
+    // Same shape as GET /api/me: without the preferences the client would
+    // show defaults (kg, no AI recap) until the next page refresh.
+    res.json(await loadMe(user.id));
   } catch (err) {
     next(err);
   }

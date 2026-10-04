@@ -46,6 +46,38 @@ Everything works unset for local dev. See `server/.env.example`.
 | `SESSION_SECRET` | dev placeholder | **required** when `NODE_ENV=production` (boot fails otherwise) |
 | `TZ` | system | production sets `Asia/Kolkata` — all date bucketing uses it (single-timezone assumption; see `V1-STATUS.md`) |
 
+## Viewing production data (DBeaver)
+
+DBeaver and other SQL clients can't connect to Turso directly (it speaks
+libSQL over HTTP, not a Postgres/MySQL wire protocol). Instead, pull a
+read-only local copy of the production database and open that:
+
+1. In `server/`, create `.env` with the two values from the Render dashboard →
+   **Environment** (eye icon to reveal):
+   ```
+   TURSO_DATABASE_URL=libsql://gym-tracker-<org>.turso.io
+   TURSO_AUTH_TOKEN=<secret>
+   ```
+   `.env` is gitignored. Don't `npm start` with it loaded unless you mean to
+   run against production.
+2. Run `cd server && npm run db:snapshot`. It syncs Turso into
+   `server/data/gym-tracker-snapshot.db` (also gitignored) and prints the user
+   count.
+3. In DBeaver: **New Database Connection → SQLite → Path** = that file.
+
+To list users:
+
+```sql
+SELECT id, username, created_at, weight_unit FROM users ORDER BY created_at;
+```
+
+**Keeping it current:** the snapshot does not update on its own. It reflects
+production as of the last `npm run db:snapshot`; re-run it whenever you want
+fresh data (it syncs only what changed, then refresh in DBeaver with F5).
+Edits made in DBeaver stay in the local file and are never pushed back to
+Turso; they can also break the next sync, in which case delete the snapshot
+file and re-run. To change production data, use the app or the Turso CLI.
+
 ## Checks
 
 ```bash

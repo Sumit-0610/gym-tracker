@@ -10,6 +10,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Exercises from './pages/Exercises';
+import ExerciseProgress from './pages/ExerciseProgress';
 import Routines from './pages/Routines';
 import RoutineDetail from './pages/RoutineDetail';
 import Workout from './pages/Workout';
@@ -28,6 +29,7 @@ const ROUTES = [
   { path: '/signup', component: Signup, public: true },
   { path: '/', component: Dashboard },
   { path: '/exercises', component: Exercises },
+  { path: '/exercises/:id', component: ExerciseProgress },
   { path: '/routines', component: Routines },
   { path: '/routines/:id', component: RoutineDetail },
   { path: '/workout', component: Workout },

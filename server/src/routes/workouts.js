@@ -12,7 +12,9 @@ const {
   optionalPositiveInt,
   nonNegativeNumber,
   oneOf,
+  optionalRpe,
 } = require('../validation');
+const { computePRs } = require('../analytics');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -62,9 +64,10 @@ router.post('/workouts', async (req, res, next) => {
 });
 
 // POST /api/workouts/:id/sets
-//   Body:    { exercise_id, set_number, reps, weight, set_type? }
-//            set_type defaults to 'normal'; weight is in kilograms.
-//   Returns: 201 { id, workout_id, exercise_id, set_number, reps, weight, set_type }
+//   Body:    { exercise_id, set_number, reps, weight, set_type?, rpe? }
+//            set_type defaults to 'normal'; weight is in kilograms;
+//            rpe is optional effort, 6..10 in 0.5 steps.
+//   Returns: 201 { id, workout_id, exercise_id, set_number, reps, weight, set_type, rpe }
 //            400 bad body / unknown exercise_id
 //            404 workout not found or not the caller's
 router.post('/workouts/:id/sets', async (req, res, next) => {
@@ -74,14 +77,15 @@ router.post('/workouts/:id/sets', async (req, res, next) => {
       return res.status(404).json({ error: 'workout not found' });
     }
 
-    const { exercise_id, set_number, reps, weight } = req.body || {};
+    const { exercise_id, set_number, reps, weight, rpe } = req.body || {};
     const set_type = (req.body && req.body.set_type) ?? 'normal';
     const err =
       positiveInt(exercise_id, 'exercise_id') ||
       positiveInt(set_number, 'set_number') ||
       positiveInt(reps, 'reps') ||
       nonNegativeNumber(weight, 'weight') || // 0 is allowed (bodyweight exercise)
-      oneOf(set_type, 'set_type', SET_TYPES);
+      oneOf(set_type, 'set_type', SET_TYPES) ||
+      optionalRpe(rpe, 'rpe');
     if (err) return res.status(400).json({ error: err });
 
     // Ownership check, in SQL, before the INSERT. A POST to
@@ -108,14 +112,16 @@ router.post('/workouts/:id/sets', async (req, res, next) => {
     }
 
     const info = await run(
-      `INSERT INTO workout_sets (workout_id, exercise_id, set_number, reps, weight, set_type)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO workout_sets
+         (workout_id, exercise_id, set_number, reps, weight, set_type, rpe, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
       workoutId,
       exercise_id,
       set_number,
       reps,
       weight,
       set_type,
+      rpe ?? null,
     );
 
     res.status(201).json({
@@ -126,6 +132,7 @@ router.post('/workouts/:id/sets', async (req, res, next) => {
       reps,
       weight,
       set_type,
+      rpe: rpe ?? null,
     });
   } catch (err) {
     next(err);
@@ -207,9 +214,10 @@ router.post('/workouts/:id/reopen', async (req, res, next) => {
 });
 
 // PATCH /api/workouts/:id/sets/:setId
-//   Body:    any of { reps, weight, set_type } — at least one.
+//   Body:    any of { reps, weight, set_type, rpe } — at least one.
+//            rpe: null clears it.
 //            The exercise a set belongs to cannot be changed (delete + re-add).
-//   Returns: 200 { id, workout_id, exercise_id, set_number, reps, weight, set_type }
+//   Returns: 200 { id, workout_id, exercise_id, set_number, reps, weight, set_type, rpe }
 //            400 nothing to update / a field is invalid
 //            404 the set doesn't exist, or its workout isn't the caller's
 router.patch('/workouts/:id/sets/:setId', async (req, res, next) => {
@@ -220,7 +228,7 @@ router.patch('/workouts/:id/sets/:setId', async (req, res, next) => {
       return res.status(404).json({ error: 'set not found' });
     }
 
-    const { reps, weight, set_type } = req.body || {};
+    const { reps, weight, set_type, rpe } = req.body || {};
     const updates = [];
     const args = [];
 
@@ -241,6 +249,12 @@ router.patch('/workouts/:id/sets/:setId', async (req, res, next) => {
       if (err) return res.status(400).json({ error: err });
       updates.push('set_type = ?');
       args.push(set_type);
+    }
+    if (rpe !== undefined) {
+      const err = optionalRpe(rpe, 'rpe');
+      if (err) return res.status(400).json({ error: err });
+      updates.push('rpe = ?');
+      args.push(rpe);
     }
     if (updates.length === 0) {
       return res.status(400).json({ error: 'no fields to update' });
@@ -269,7 +283,7 @@ router.patch('/workouts/:id/sets/:setId', async (req, res, next) => {
     );
 
     const updated = await get(
-      `SELECT id, workout_id, exercise_id, set_number, reps, weight, set_type
+      `SELECT id, workout_id, exercise_id, set_number, reps, weight, set_type, rpe
          FROM workout_sets WHERE id = ?`,
       setId,
     );
@@ -472,7 +486,8 @@ router.get('/workouts/:id', async (req, res, next) => {
               ws.set_number,
               ws.reps,
               ws.weight,
-              ws.set_type
+              ws.set_type,
+              ws.rpe
          FROM workout_sets ws
          JOIN exercises e ON e.id = ws.exercise_id
         WHERE ws.workout_id = ?
@@ -481,6 +496,91 @@ router.get('/workouts/:id', async (req, res, next) => {
     );
 
     res.json({ ...workout, sets });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/workouts/:id/prs
+//   Personal records set in this workout, compared with everything the caller
+//   logged in EARLIER workouts (warm-ups ignored; a lift with no earlier history
+//   has no PRs — see analytics.computePRs). Used by the finish celebration.
+//   Returns: 200 [{ exercise_id, exercise_name,
+//                   e1rm, weight, volume }]   each { previous, current } | null
+//            404 workout not found or not the caller's
+router.get('/workouts/:id/prs', async (req, res, next) => {
+  try {
+    const workoutId = parseId(req.params.id);
+    if (workoutId === null) {
+      return res.status(404).json({ error: 'workout not found' });
+    }
+    const workout = await get(
+      'SELECT id, date FROM workouts WHERE id = ? AND user_id = ?',
+      workoutId,
+      req.userId,
+    );
+    if (!workout) {
+      return res.status(404).json({ error: 'workout not found' });
+    }
+
+    const current = await all(
+      `SELECT ws.exercise_id, e.name AS exercise_name, ws.reps, ws.weight, ws.set_type
+         FROM workout_sets ws
+         JOIN exercises e ON e.id = ws.exercise_id
+        WHERE ws.workout_id = ? AND ws.set_type <> 'warmup'
+        ORDER BY ws.id`,
+      workoutId,
+    );
+    if (current.length === 0) return res.json([]);
+
+    /** @type {Map<number, { name: string, sets: any[] }>} */
+    const byExercise = new Map();
+    for (const r of current) {
+      let e = byExercise.get(r.exercise_id);
+      if (!e) {
+        e = { name: r.exercise_name, sets: [] };
+        byExercise.set(r.exercise_id, e);
+      }
+      e.sets.push({ reps: r.reps, weight: r.weight });
+    }
+
+    // One query for the earlier history of every exercise in this workout. The
+    // ids come from the database, not the request; placeholders keep it bound.
+    const ids = [...byExercise.keys()];
+    const prior = await all(
+      `SELECT ws.exercise_id, ws.reps, ws.weight
+         FROM workout_sets ws
+         JOIN workouts w ON w.id = ws.workout_id
+        WHERE w.user_id = ?
+          AND ws.exercise_id IN (${ids.map(() => '?').join(',')})
+          AND ws.set_type <> 'warmup'
+          AND (w.date < ? OR (w.date = ? AND w.id < ?))`,
+      req.userId,
+      ...ids,
+      workout.date,
+      workout.date,
+      workoutId,
+    );
+    /** @type {Map<number, any[]>} */
+    const priorBy = new Map();
+    for (const r of prior) {
+      const list = priorBy.get(r.exercise_id) || [];
+      list.push({ reps: r.reps, weight: r.weight });
+      priorBy.set(r.exercise_id, list);
+    }
+
+    const prs = [];
+    for (const [exerciseId, e] of byExercise) {
+      const r = computePRs(priorBy.get(exerciseId) || [], e.sets);
+      if (r.e1rm || r.weight || r.volume) {
+        prs.push({
+          exercise_id: exerciseId,
+          exercise_name: e.name,
+          ...r,
+        });
+      }
+    }
+    res.json(prs);
   } catch (err) {
     next(err);
   }

@@ -1,7 +1,9 @@
 // Training-volume and activity stats.
 //
-// "Volume" = total weight moved = SUM(reps * weight) over sets, in kilograms
-// (the client converts for lb users). Bodyweight sets (weight 0) contribute 0.
+// "Volume" = total weight moved = SUM(reps * weight) over WORKING sets, in
+// kilograms (the client converts for lb users). Warm-up sets are excluded from
+// volume, reps and set counts everywhere, so the numbers reflect real training
+// effort. Bodyweight sets (weight 0) contribute 0 volume.
 //
 // Dates: workout timestamps are stored UTC. All *bucketing* here (which day,
 // which week, "last N days", the streak) is done in the SERVER'S local time via
@@ -13,6 +15,12 @@ const express = require('express');
 const { get, all } = require('../db');
 const requireAuth = require('../middleware/auth');
 const { weekStartOf, addDays, localToday } = require('../dates');
+const { muscleSummary } = require('../analytics');
+const { weeklyMuscleCounts, lastTrainedByMuscle } = require('../training-data');
+
+// SQL fragment: a set's volume, but NULL for warm-ups so SUM() skips them.
+const WORK_VOL =
+  "CASE WHEN ws.set_type <> 'warmup' THEN ws.reps * ws.weight END";
 
 const router = express.Router();
 router.use(requireAuth);
@@ -25,15 +33,15 @@ router.get('/stats', async (req, res, next) => {
   try {
     const row = await get(
       `SELECT
-         COALESCE(SUM(CASE WHEN date(w.date,'localtime') >= date('now','localtime','-7 days')   THEN ws.reps * ws.weight END), 0) AS vol_7,
-         COALESCE(SUM(CASE WHEN date(w.date,'localtime') >= date('now','localtime','-30 days')  THEN ws.reps * ws.weight END), 0) AS vol_30,
-         COALESCE(SUM(CASE WHEN date(w.date,'localtime') >= date('now','localtime','-365 days') THEN ws.reps * ws.weight END), 0) AS vol_365,
-         COALESCE(SUM(ws.reps * ws.weight), 0) AS vol_all,
+         COALESCE(SUM(CASE WHEN date(w.date,'localtime') >= date('now','localtime','-7 days') AND ws.set_type <> 'warmup' THEN ws.reps * ws.weight END), 0) AS vol_7,
+         COALESCE(SUM(CASE WHEN date(w.date,'localtime') >= date('now','localtime','-30 days') AND ws.set_type <> 'warmup' THEN ws.reps * ws.weight END), 0) AS vol_30,
+         COALESCE(SUM(CASE WHEN date(w.date,'localtime') >= date('now','localtime','-365 days') AND ws.set_type <> 'warmup' THEN ws.reps * ws.weight END), 0) AS vol_365,
+         COALESCE(SUM(${WORK_VOL}), 0) AS vol_all,
          COUNT(DISTINCT CASE WHEN date(w.date,'localtime') >= date('now','localtime','-7 days')   THEN w.id END) AS wk_7,
          COUNT(DISTINCT CASE WHEN date(w.date,'localtime') >= date('now','localtime','-30 days')  THEN w.id END) AS wk_30,
          COUNT(DISTINCT CASE WHEN date(w.date,'localtime') >= date('now','localtime','-365 days') THEN w.id END) AS wk_365,
          COUNT(DISTINCT w.id) AS wk_all,
-         COUNT(ws.id) AS total_sets
+         COUNT(CASE WHEN ws.set_type <> 'warmup' THEN ws.id END) AS total_sets
        FROM workouts w
        JOIN workout_sets ws ON ws.workout_id = w.id
        WHERE w.user_id = ?`,
@@ -108,7 +116,7 @@ router.get('/stats/weekly', async (req, res, next) => {
     const rows = await all(
       `SELECT w.id AS workout_id,
               date(w.date,'localtime') AS local_day,
-              ws.reps, ws.weight
+              ws.reps, ws.weight, ws.set_type
          FROM workouts w
          JOIN workout_sets ws ON ws.workout_id = w.id
         WHERE w.user_id = ? AND date(w.date,'localtime') >= ?`,
@@ -121,9 +129,13 @@ router.get('/stats/weekly', async (req, res, next) => {
       const key = weekStartOf(r.local_day);
       const b = buckets.get(key);
       if (!b) continue;
-      b.volume += r.reps * r.weight;
-      b.reps += r.reps;
-      b.sets += 1;
+      // Warm-ups don't count toward volume / reps / sets, but the workout
+      // itself still counts as a training day.
+      if (r.set_type !== 'warmup') {
+        b.volume += r.reps * r.weight;
+        b.reps += r.reps;
+        b.sets += 1;
+      }
       const wk = `${key}:${r.workout_id}`;
       if (!seenWorkoutPerWeek.has(wk)) {
         seenWorkoutPerWeek.add(wk);
@@ -160,6 +172,29 @@ router.get('/stats/calendar', async (req, res, next) => {
       from,
     );
     res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/stats/muscles
+//   This week's working sets per muscle group (Monday-based, server-local) next
+//   to an approximate recommended range, plus how long since each was trained.
+//   Returns: 200 { week_start, muscles: [{ muscle_group, sets, mev, mrv,
+//                  status: 'low'|'ok'|'high', last_trained, days_since }] }
+//   The ranges are rough expert-opinion guidance (see analytics.LANDMARKS).
+router.get('/stats/muscles', async (req, res, next) => {
+  try {
+    const today = localToday();
+    const weekStart = weekStartOf(today);
+    const [counts, lastTrained] = await Promise.all([
+      weeklyMuscleCounts(req.userId, weekStart),
+      lastTrainedByMuscle(req.userId),
+    ]);
+    res.json({
+      week_start: weekStart,
+      muscles: muscleSummary({ counts, lastTrained, today }),
+    });
   } catch (err) {
     next(err);
   }

@@ -157,3 +157,18 @@
   margin-left: 0;
   justify-content: flex-end;
 }
+
+.set-group-pr {
+  font-size: var(--t-sm);
+  font-weight: 700;
+  color: var(--c-primary);
+  background: var(--c-bg);
+  border: 1px solid var(--c-primary);
+  border-radius: 999px;
+  padding: 0 var(--s-2);
+  white-space: nowrap;
+}
+
+.set-row-rpe {
+  color: var(--c-text-dim);
+}

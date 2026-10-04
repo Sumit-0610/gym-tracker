@@ -13,6 +13,7 @@ import Input from '../components/Input';
 import ErrorMessage from '../components/ErrorMessage';
 import { Icon } from '../components/icons';
 import { groupByExercise } from './setGrouping';
+import { workingVolumeKg } from '../coach';
 import './SetList.css';
 
 const SET_TYPES = [
@@ -34,7 +35,8 @@ function SetRow({ set: s, unit, onEdit, onDelete }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
-  const volumeKg = s.reps * s.weight;
+  // A warm-up is not training volume, so it shows no per-set total.
+  const volumeKg = s.set_type === 'warmup' ? 0 : s.reps * s.weight;
 
   function startEdit() {
     setReps(String(s.reps));
@@ -139,6 +141,7 @@ function SetRow({ set: s, unit, onEdit, onDelete }) {
       </span>
       <span className="set-row-detail">
         {s.reps} reps × {formatWeight(s.weight, unit)}
+        {s.rpe != null && <span className="set-row-rpe"> · RPE {s.rpe}</span>}
         {volumeKg > 0 && (
           <span className="set-row-volume">
             {' '}
@@ -201,13 +204,23 @@ function SetRow({ set: s, unit, onEdit, onDelete }) {
   );
 }
 
-export default function SetList({ sets, unit = 'kg', onEditSet, onDeleteSet }) {
+// `prs` (optional) is the /workouts/:id/prs array; an exercise that appears in
+// it gets a 🏆 badge on its header.
+export default function SetList({
+  sets,
+  unit = 'kg',
+  prs = [],
+  onEditSet,
+  onDeleteSet,
+}) {
   const groups = groupByExercise(sets);
+  const prByExercise = new Map(prs.map((p) => [p.exercise_id, p]));
 
   return (
     <ul className="set-groups">
       {groups.map((g) => {
-        const groupVolumeKg = g.rows.reduce((t, s) => t + s.reps * s.weight, 0);
+        const groupVolumeKg = workingVolumeKg(g.rows);
+        const pr = prByExercise.get(g.exercise_id);
         return (
           <li key={g.exercise_id} className="set-group">
             <div className="set-group-head">
@@ -216,6 +229,11 @@ export default function SetList({ sets, unit = 'kg', onEditSet, onDeleteSet }) {
               <h3 className="set-group-name">{g.name}</h3>
               {g.muscle_group && (
                 <span className="set-group-muscle">{g.muscle_group}</span>
+              )}
+              {pr && (
+                <span className="set-group-pr" title="New personal record">
+                  🏆 PR
+                </span>
               )}
               {groupVolumeKg > 0 && (
                 <span className="set-group-volume">

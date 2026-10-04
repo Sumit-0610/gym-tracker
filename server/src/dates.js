@@ -27,9 +27,22 @@ function addDays(ymd, n) {
 }
 
 /**
+ * Whole days from `fromYmd` to `toYmd` (negative if `toYmd` is earlier).
+ * @param {string} fromYmd - 'YYYY-MM-DD'
+ * @param {string} toYmd - 'YYYY-MM-DD'
+ * @returns {number}
+ */
+function daysBetween(fromYmd, toYmd) {
+  const ms =
+    new Date(toYmd + 'T00:00:00Z').getTime() -
+    new Date(fromYmd + 'T00:00:00Z').getTime();
+  return Math.round(ms / 86400000);
+}
+
+/**
  * Today's date in the server's timezone. en-CA formats as ISO 'YYYY-MM-DD'.
  * @returns {string}
  */
 const localToday = () => new Date().toLocaleDateString('en-CA');
 
-module.exports = { weekStartOf, addDays, localToday };
+module.exports = { weekStartOf, addDays, daysBetween, localToday };

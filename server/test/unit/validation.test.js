@@ -9,6 +9,7 @@ const {
   optionalPositiveInt,
   nonNegativeNumber,
   oneOf,
+  optionalRpe,
 } = require('../../src/validation');
 
 test('parseId — accepts positive integers (incl. numeric strings)', () => {
@@ -94,4 +95,17 @@ test('oneOf', () => {
   assert.equal(oneOf('lb', 'unit', units), null);
   assert.equal(oneOf('stone', 'unit', units), 'unit must be one of: kg, lb');
   assert.equal(oneOf(undefined, 'unit', units), 'unit must be one of: kg, lb');
+});
+
+test('optionalRpe — absent is fine, otherwise 6..10 in 0.5 steps', () => {
+  assert.equal(optionalRpe(undefined, 'rpe'), null);
+  assert.equal(optionalRpe(null, 'rpe'), null);
+  for (const ok of [6, 6.5, 8, 9.5, 10])
+    assert.equal(optionalRpe(ok, 'rpe'), null);
+  for (const bad of [5.5, 10.5, 7.25, '8', NaN, Infinity, 0]) {
+    assert.match(
+      String(optionalRpe(bad, 'rpe')),
+      /rpe must be a number from 6 to 10/,
+    );
+  }
 });

@@ -188,6 +188,11 @@ end-to-end mobile-viewport browser pass.
 - **History pagination** — `?limit=&offset=`; "Load more" button.
 - **Training volume** — `GET /api/stats`; total weight lifted per set / exercise
   / workout and a `/stats` screen (7 / 30 / 365 days + all time).
+- **Coach engine** (rules-based, no LLM; pure logic in `server/src/analytics.js`):
+  Epley est. 1RM, PR detection, double-progression "suggested next set", stall
+  nudge, weekly working sets per muscle vs rough ranges, "suggested routine
+  today", optional per-set RPE (`workout_sets.rpe`, `created_at`). **Warm-up
+  sets are excluded** from volume, set counts and records everywhere.
 - **Rest-timer preference** (`users.rest_seconds`, editable in `/settings`); the
   in-workout −15/+15 adjust the live countdown.
 - **Exercise library** grown 21 → ~68; `seed.js` tops up by name on boot.
@@ -216,4 +221,4 @@ documented upgrade path in `V2-BACKLOG.md`.
 - Custom domain — `gym-tracker.js.org` is pre-configured in Render, waiting on
   js.org to reopen subdomain requests (~mid-Sept 2026).
 - Installable **PWA** (manifest + service worker).
-- 1RM estimate, progress charts, automated browser E2E.
+- Automated browser E2E. (1RM estimate + progress charts shipped — see below.)

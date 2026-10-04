@@ -1,0 +1,34 @@
+.progress-chart {
+  margin: 0;
+}
+
+.progress-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.progress-chart-line {
+  stroke: var(--c-primary);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.progress-chart-dot {
+  fill: var(--c-bg);
+  stroke: var(--c-primary);
+  stroke-width: 2;
+}
+
+.progress-chart-axis {
+  fill: var(--c-text-dim);
+  font-size: 9px;
+}
+
+.progress-chart-range {
+  margin-top: var(--s-1);
+  font-size: var(--t-sm);
+  color: var(--c-text-dim);
+  font-variant-numeric: tabular-nums;
+}

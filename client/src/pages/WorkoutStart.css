@@ -46,3 +46,18 @@
   flex-direction: column;
   gap: var(--s-3);
 }
+
+.ws-recommend {
+  border-color: var(--c-primary);
+}
+
+.ws-recommend h2 {
+  margin: 0 0 var(--s-1);
+}
+
+.ws-recommend-label {
+  margin: 0;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--c-primary);
+}

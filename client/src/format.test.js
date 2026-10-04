@@ -105,6 +105,7 @@ describe('describeError', () => {
     expect(describeError({ status: 404 })).toMatch(/no longer exists/i);
     expect(describeError({ status: 429 })).toMatch(/too many/i);
     expect(describeError({ status: 500 })).toMatch(/went wrong/i);
+    expect(describeError({ status: 503 })).toMatch(/not available/i);
   });
   it('prefers the server message for 400/409', () => {
     expect(describeError({ status: 400, message: 'bad name' })).toBe(

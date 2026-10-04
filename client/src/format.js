@@ -19,6 +19,8 @@ export function describeError(error) {
       return 'Too many attempts. Please wait a few minutes and try again.';
     case 500:
       return 'Something went wrong on the server. Please try again.';
+    case 503:
+      return 'This feature is not available right now.';
     default:
       return error?.message || 'An unexpected error occurred.';
   }

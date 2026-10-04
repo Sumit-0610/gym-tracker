@@ -55,8 +55,24 @@ function oneOf(value, field, allowed) {
   return null;
 }
 
+// Optional perceived effort: absent/null is fine; otherwise 6..10 in 0.5 steps.
+function optionalRpe(value, field) {
+  if (value === undefined || value === null) return null;
+  if (
+    typeof value !== 'number' ||
+    !Number.isFinite(value) ||
+    value < 6 ||
+    value > 10 ||
+    !Number.isInteger(value * 2)
+  ) {
+    return `${field} must be a number from 6 to 10 in steps of 0.5`;
+  }
+  return null;
+}
+
 module.exports = {
   parseId,
+  optionalRpe,
   nonEmptyString,
   positiveInt,
   optionalPositiveInt,

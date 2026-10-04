@@ -26,6 +26,15 @@ module.exports = [
     },
   },
   {
+    // ES-module scripts (e.g. scripts/db-snapshot.mjs).
+    files: ['**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'module',
+      globals: { ...globals.node },
+    },
+  },
+  {
     files: ['test/**/*.js'],
     languageOptions: { globals: { ...globals.node } },
   },

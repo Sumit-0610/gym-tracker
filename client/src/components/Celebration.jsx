@@ -6,7 +6,12 @@ import './Celebration.css';
 //
 // It is a modal dialog: on mount it takes focus, keeps Tab inside (there is one
 // button), closes on Escape, and returns focus on unmount.
-export default function Celebration({ setCount, volumeLabel, onDone }) {
+export default function Celebration({
+  setCount,
+  volumeLabel,
+  prLines = [],
+  onDone,
+}) {
   const btnRef = useRef(null);
   const restoreRef = useRef(null);
 
@@ -59,6 +64,16 @@ export default function Celebration({ setCount, volumeLabel, onDone }) {
             </>
           )}
         </p>
+        {prLines.length > 0 && (
+          <div className="celebrate-prs">
+            <h3>🏆 New {prLines.length === 1 ? 'record' : 'records'}</h3>
+            <ul>
+              {prLines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         <button
           ref={btnRef}
           type="button"

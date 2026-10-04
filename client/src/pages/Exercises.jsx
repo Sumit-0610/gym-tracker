@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { api } from '../api';
+import { Link } from '../router';
 import { useApi } from '../hooks/useApi';
 import Input from '../components/Input';
 import Spinner from '../components/Spinner';
@@ -75,7 +76,9 @@ export default function Exercises() {
         <ul className="exercise-list">
           {filtered.map((e) => (
             <li key={e.id} className="exercise-row">
-              <span className="exercise-name">{e.name}</span>
+              <Link to={`/exercises/${e.id}`} className="exercise-name">
+                {e.name}
+              </Link>
               {e.muscle_group && (
                 <span className="exercise-muscle">{e.muscle_group}</span>
               )}

@@ -50,3 +50,38 @@ jobs:
       - run: npm test
       - run: npx prettier --check "src/**/*.{js,jsx,css}" "*.{js,json}" "index.html"
       - run: npm run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            server/package-lock.json
+            client/package-lock.json
+            e2e/package-lock.json
+      - run: npm ci
+        working-directory: server
+      - run: npm ci && npm run build
+        working-directory: client
+      - run: npm ci
+        working-directory: e2e
+      - run: npm run format:check
+        working-directory: e2e
+      - run: npx playwright install --with-deps chromium
+        working-directory: e2e
+      - run: npx playwright test
+        working-directory: e2e
+        env:
+          CI: true
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          retention-days: 7

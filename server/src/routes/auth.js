@@ -7,6 +7,7 @@ const requireAuth = require('../middleware/auth');
 const { loginLimiter, signupLimiter } = require('../middleware/rate-limit');
 const { oneOf } = require('../validation');
 const ai = require('../ai');
+const mailer = require('../mailer');
 
 const router = express.Router();
 
@@ -96,7 +97,8 @@ const ME_COLUMNS =
 /**
  * The caller's profile + preferences, as GET/PATCH /api/me return it.
  * ai_enabled comes back as a boolean; ai_available says whether this server
- * has an AI provider configured at all (the client hides the toggle if not).
+ * has an AI provider configured at all (the client hides the toggle if not);
+ * email_available likewise for emailing a data export.
  * @param {number} userId
  */
 async function loadMe(userId) {
@@ -109,6 +111,7 @@ async function loadMe(userId) {
     ...user,
     ai_enabled: Boolean(user.ai_enabled),
     ai_available: ai.isConfigured(),
+    email_available: mailer.isConfigured(),
   };
 }
 const REST_MIN = 15;
@@ -127,7 +130,7 @@ router.get('/me', requireAuth, async (req, res, next) => {
 //   Update the caller's preferences. Any of:
 //     { weight_unit: 'kg' | 'lb', rest_seconds: 15..600, ai_enabled: boolean }
 //   Returns: 200 { id, username, created_at, weight_unit, rest_seconds,
-//                  ai_enabled, ai_available }
+//                  ai_enabled, ai_available, email_available }
 router.patch('/me', requireAuth, async (req, res, next) => {
   try {
     const body = req.body || {};

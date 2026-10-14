@@ -5,6 +5,7 @@ import { formatDuration } from '../format';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import ErrorMessage from '../components/ErrorMessage';
+import ExportCard from '../components/ExportCard';
 import './Settings.css';
 
 const REST_MIN = 15;
@@ -13,7 +14,7 @@ const REST_STEP = 15;
 
 // Preferences screen: weight unit, default rest-timer length and the AI coach
 // recap opt-in. All saved server-side (PATCH /api/me) so they follow the
-// account across devices.
+// account across devices. Below them, the data export.
 export default function Settings() {
   const { user, updatePreferences } = useAuth();
 
@@ -162,6 +163,8 @@ export default function Settings() {
           Saved.
         </p>
       )}
+
+      <ExportCard user={user} />
     </div>
   );
 }

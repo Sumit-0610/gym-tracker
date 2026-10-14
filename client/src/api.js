@@ -70,6 +70,36 @@ async function request(method, path, body) {
   return data;
 }
 
+// Download a file (e.g. the data export) and hand it to the browser as a save.
+// Not a plain <a href>: on a 400/401 that would navigate the app to a raw JSON
+// error page. Fetching first lets errors flow through ApiError like any call.
+async function download(path) {
+  let res;
+  try {
+    res = await fetch(path, { credentials: 'same-origin' });
+  } catch {
+    throw new ApiError(0, 'Network error — is the server running?');
+  }
+  if (!res.ok) {
+    if (res.status === 401) onUnauthorized();
+    const data = await res.json().catch(() => null);
+    throw new ApiError(res.status, data?.error);
+  }
+  // The server names the file in Content-Disposition: attachment; filename="…"
+  const match = /filename="([^"]+)"/.exec(
+    res.headers.get('Content-Disposition') || '',
+  );
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = match ? match[1] : 'gym-tracker-export';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // Give the browser a moment to start the save before freeing the blob.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 // Thin named helpers — one per endpoint the UI uses. Keeping them here means
 // there is a single readable list of everything the frontend can ask for.
 export const api = {
@@ -99,6 +129,14 @@ export const api = {
       date ? { weight: weightKg, date } : { weight: weightKg },
     ),
   deleteMeasurement: (id) => request('DELETE', `/api/measurements/${id}`),
+
+  // data export (from/to are 'YYYY-MM-DD', inclusive; format 'csv' | 'json')
+  downloadExport: ({ from, to, format }) =>
+    download(
+      `/api/export?${new URLSearchParams({ from, to, format }).toString()}`,
+    ),
+  emailExport: ({ from, to, format, email }) =>
+    request('POST', '/api/export/email', { from, to, format, email }),
 
   // exercises
   exercises: () => request('GET', '/api/exercises'),

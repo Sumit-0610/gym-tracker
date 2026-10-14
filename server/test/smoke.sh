@@ -457,6 +457,33 @@ code GET /api/routines/recommend "$B" >/dev/null
 check "bob has nothing to recommend"    "null" "$(body | jget 'String(d)')"
 check "recommend unauthenticated"       401 "$(code GET /api/routines/recommend "$TMP/anon.jar")"
 
+echo "== data export =="
+TODAY="$(node -e "console.log(new Date().toLocaleDateString('en-CA'))")"
+check "export csv for today"            200 "$(code GET "/api/export?from=$TODAY&to=$TODAY" "$A")"
+check "  ...header row first"           "true" "$(body | head -1 | grep -q '^date,workout_id,routine,exercise' && echo true)"
+check "  ...has workout 2's 62.5 kg sets" "2" "$(body | grep -c "^$TODAY,$C2,.*,12,62.5,kg,")"
+check "export json"                     200 "$(code GET "/api/export?from=$TODAY&to=$TODAY&format=json" "$A")"
+check "  ...nested workouts with sets"  "true" \
+  "$(body | jget "d.unit==='kg' && d.workouts.some(w=>w.id===$C2 && w.sets.length===2) && Array.isArray(d.measurements)")"
+check "  ...attachment header" "true" \
+  "$(curl -s -D - -o /dev/null -b "$A" "$BASE/api/export?from=$TODAY&to=$TODAY" | grep -qi "content-disposition: attachment; filename=\"gym-tracker-$TODAY-to-$TODAY.csv\"" && echo true)"
+code GET "/api/export?from=2000-01-01&to=2000-01-31" "$A" >/dev/null
+check "range with no workouts -> header only" "1" "$(body | grep -c .)"
+code GET "/api/export?from=$TODAY&to=$TODAY" "$B" >/dev/null
+check "bob's export has none of alice's sets" "1" "$(body | grep -c .)"
+check "export reversed range -> 400"    400 "$(code GET "/api/export?from=2026-09-30&to=2026-09-01" "$A")"
+check "export bad date -> 400"          400 "$(code GET "/api/export?from=2026-02-30&to=2026-03-01" "$A")"
+check "export bad format -> 400"        400 "$(code GET "/api/export?from=$TODAY&to=$TODAY&format=xlsx" "$A")"
+check "export unauthenticated -> 401"   401 "$(code GET "/api/export?from=$TODAY&to=$TODAY" "$TMP/anon.jar")"
+code GET /api/me "$A" >/dev/null
+check "me reports email_available"      "boolean" "$(body | jget 'typeof d.email_available')"
+check "email export bad address -> 400" 400 "$(code POST /api/export/email "$A" "{\"from\":\"$TODAY\",\"to\":\"$TODAY\",\"email\":\"nope\"}")"
+check "email export bad range -> 400"   400 "$(code POST /api/export/email "$A" '{"from":"x","to":"y","email":"a@b.co"}')"
+if [ -z "${RESEND_API_KEY:-}" ]; then
+  check "email export, no provider -> 503" 503 "$(code POST /api/export/email "$A" "{\"from\":\"$TODAY\",\"to\":\"$TODAY\",\"email\":\"a@b.co\"}")"
+fi
+check "email export unauthenticated"    401 "$(code POST /api/export/email "$TMP/anon.jar" '{}')"
+
 echo
 echo "== two-user authorization summary =="
 echo "  alice: routine $RID, workout $WID  |  bob: cannot touch either"

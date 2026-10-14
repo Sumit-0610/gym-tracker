@@ -128,6 +128,7 @@ under `server/src/routes/`.
 | workouts | `POST /api/workouts`, `GET /api/workouts?limit=&offset=`, `GET /api/workouts/current`, `GET /api/workouts/:id`, `POST .../finish`, `POST .../reopen`, `DELETE /api/workouts/:id`, `POST .../sets`, `PATCH/DELETE .../sets/:setId`, `GET /api/workouts/:id/prs` |
 | stats | `GET /api/stats`, `GET /api/stats/weekly`, `GET /api/stats/calendar`, `GET /api/stats/muscles` |
 | measurements | `GET/POST /api/measurements`, `DELETE /api/measurements/:id` |
+| export | `GET /api/export?from=&to=&format=csv\|json` (download), `POST /api/export/email` (needs `RESEND_API_KEY`) |
 
 ## Documentation
 

@@ -1,4 +1,4 @@
-// Rate limiters for the auth endpoints and the AI recap.
+// Rate limiters for the auth endpoints, the AI recap and export emails.
 //
 // Once the app is reachable from the public internet, brute-forcing a password
 // and mass-registering accounts are the obvious abuse vectors — every other
@@ -53,4 +53,18 @@ const aiLimiter = rateLimit({
     }),
 });
 
-module.exports = { loginLimiter, signupLimiter, aiLimiter };
+// Export emails per signed-in user: 5 per hour. Each one sends a real email to
+// an address the user types, so this keeps the server from being used to spam.
+const exportEmailLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  keyGenerator: (req) => `user:${req.userId}`,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: (req, res) =>
+    res.status(429).json({
+      error: 'Too many export emails. Please try again later.',
+    }),
+});
+
+module.exports = { loginLimiter, signupLimiter, aiLimiter, exportEmailLimiter };

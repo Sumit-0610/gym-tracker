@@ -32,3 +32,8 @@ services:
       # Optional: enables the AI coach recap (unset = feature hidden).
       - key: GEMINI_API_KEY
         sync: false
+      # Optional: enables emailing a data export (unset = option hidden).
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false

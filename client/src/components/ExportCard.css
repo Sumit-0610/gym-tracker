@@ -1,0 +1,45 @@
+.export {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.export .settings-hint {
+  margin-bottom: 0;
+}
+
+.export-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.export-preset {
+  min-height: var(--tap-min);
+  padding: var(--s-1) var(--s-3);
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  color: inherit;
+  font-size: var(--t-sm);
+  cursor: pointer;
+}
+
+.export-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-3);
+}
+
+.export-formats {
+  display: flex;
+  gap: var(--s-4);
+}
+
+.export-email {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--c-border);
+}

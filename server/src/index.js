@@ -65,6 +65,7 @@ app.use('/api', require('./routes/workouts'));
 app.use('/api', require('./routes/recap'));
 app.use('/api', require('./routes/stats'));
 app.use('/api', require('./routes/measurements'));
+app.use('/api', require('./routes/export'));
 
 // Any /api path that matched no route above is a 404 — answer in JSON, not the
 // SPA fallback's index.html (and not Express's default HTML error page).

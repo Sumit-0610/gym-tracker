@@ -122,8 +122,9 @@ bash server/test/smoke.sh                        # 65/65
 | `SESSION_SECRET` | optional (dev default) | **required** — app refuses to boot without it | signs the session cookie |
 | `GEMINI_API_KEY` | optional | optional | enables the AI coach recap; unset → the feature is hidden. Free key from Google AI Studio |
 | `AI_MODEL` | optional | optional | Gemini model id, default `gemini-3.5-flash` |
-| `RESEND_API_KEY` | optional | optional | enables "Email it" on Settings → Export data; unset → only download is offered. Free key from resend.com |
-| `EMAIL_FROM` | optional | optional | export email sender, default Resend's test sender (`onboarding@resend.dev`), which only delivers to the Resend account's own email; verify a domain in Resend to email anyone |
+| `BREVO_API_KEY` | optional | optional | enables "Send email" on Settings → Export data, to any address typed in (needs `EMAIL_FROM`). Free key from brevo.com; no domain needed |
+| `RESEND_API_KEY` | optional | optional | alternative email provider, used when `BREVO_API_KEY` is unset; emailing anyone needs a domain verified in Resend |
+| `EMAIL_FROM` | with Brevo | with Brevo | export email sender, e.g. `Gym Tracker <you@gmail.com>`. With Brevo it must be a sender verified in Brevo; with Resend it defaults to the test sender `onboarding@resend.dev`, which only delivers to the Resend account's own email |
 | `NODE_ENV` | unset | `production` | enables `trust proxy` + `Secure` cookie |
 | `PORT` | 3000 | injected by Render | listen port |
 | `HOST` | `127.0.0.1` | `0.0.0.0` (set in the Dockerfile) | bind address |

@@ -33,6 +33,8 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       # Optional: enables emailing a data export (unset = option hidden).
+      - key: BREVO_API_KEY
+        sync: false
       - key: RESEND_API_KEY
         sync: false
       - key: EMAIL_FROM

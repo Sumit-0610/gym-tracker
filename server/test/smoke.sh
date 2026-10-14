@@ -479,7 +479,7 @@ code GET /api/me "$A" >/dev/null
 check "me reports email_available"      "boolean" "$(body | jget 'typeof d.email_available')"
 check "email export bad address -> 400" 400 "$(code POST /api/export/email "$A" "{\"from\":\"$TODAY\",\"to\":\"$TODAY\",\"email\":\"nope\"}")"
 check "email export bad range -> 400"   400 "$(code POST /api/export/email "$A" '{"from":"x","to":"y","email":"a@b.co"}')"
-if [ -z "${RESEND_API_KEY:-}" ]; then
+if [ -z "${RESEND_API_KEY:-}" ] && [ -z "${BREVO_API_KEY:-}" ]; then
   check "email export, no provider -> 503" 503 "$(code POST /api/export/email "$A" "{\"from\":\"$TODAY\",\"to\":\"$TODAY\",\"email\":\"a@b.co\"}")"
 fi
 check "email export unauthenticated"    401 "$(code POST /api/export/email "$TMP/anon.jar" '{}')"

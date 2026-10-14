@@ -1,61 +1,107 @@
-// The one place the server sends email. Used by the data export's "email it
-// to me" option, so switching provider is a change to this file only.
+// The one place the server sends email. Used by the data export's "email it"
+// option, so switching provider is a change to this file only. Each provider
+// is one fetch call to its REST API (no SDK). The first one configured wins:
 //
-// Provider: Resend over its REST API (no SDK — one fetch call).
-//   RESEND_API_KEY  required; without it the email option is hidden
-//   EMAIL_FROM      optional sender, defaults to Resend's shared test sender.
-//                   That sender can only deliver to the address that owns the
-//                   Resend account; verify a domain in Resend and set
-//                   EMAIL_FROM (e.g. "Gym Tracker <export@yourdomain.com>")
-//                   to email anyone.
+// Brevo — sends to any address with no domain of your own: you verify a single
+//   sender address (e.g. your Gmail) in Brevo by clicking a link it emails you.
+//   BREVO_API_KEY  the API key (Brevo → SMTP & API → API keys)
+//   EMAIL_FROM     required; the verified sender, "Name <you@gmail.com>" or
+//                  just "you@gmail.com"
 //
-// The key lives only on the server (env var); it never reaches the browser.
+// Resend — needs a domain you own to send to anyone; without one its test
+//   sender only delivers to the Resend account's own address.
+//   RESEND_API_KEY  the API key
+//   EMAIL_FROM      optional, defaults to Resend's test sender
+//
+// Keys live only on the server (env vars); they never reach the browser.
 
-const DEFAULT_FROM = 'Gym Tracker <onboarding@resend.dev>';
 const TIMEOUT_MS = 15_000;
-const API_URL = 'https://api.resend.com/emails';
-
-/** True when an API key is configured, i.e. email can be sent at all. */
-const isConfigured = () => Boolean(process.env.RESEND_API_KEY);
+const RESEND_DEFAULT_FROM = 'Gym Tracker <onboarding@resend.dev>';
 
 /**
- * Send one plain-text email with one attachment. Throws on a missing key, a
- * timeout or an HTTP error, so callers have one failure path.
+ * Split "Name <a@b.c>" (or a bare "a@b.c") into its parts.
+ * @param {string} from
+ * @returns {{ name: string | undefined, email: string }}
+ */
+function parseFrom(from) {
+  const m = /^\s*(.*?)\s*<([^>]+)>\s*$/.exec(from);
+  return m
+    ? { name: m[1] || undefined, email: m[2].trim() }
+    : { name: undefined, email: from.trim() };
+}
+
+/** Which provider is configured, or null when email is off. */
+function provider() {
+  if (process.env.BREVO_API_KEY && process.env.EMAIL_FROM) return 'brevo';
+  if (process.env.RESEND_API_KEY) return 'resend';
+  return null;
+}
+
+/** True when email can be sent at all. */
+const isConfigured = () => provider() !== null;
+
+/** Throw with the status and the provider's short message, never the body. */
+async function failure(res, name) {
+  const data = /** @type {any} */ (await res.json().catch(() => null));
+  return new Error(
+    `${name} returned HTTP ${res.status}${data?.message ? `: ${data.message}` : ''}`,
+  );
+}
+
+/**
+ * Send one plain-text email with one attachment. Throws when no provider is
+ * configured, on a timeout or on an HTTP error, so callers have one failure
+ * path.
  * @param {{ to: string, subject: string, text: string,
  *           attachment: { filename: string, content: string } }} message
  */
 async function sendMail({ to, subject, text, attachment }) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) throw new Error('RESEND_API_KEY is not set');
+  const content = Buffer.from(attachment.content, 'utf8').toString('base64');
+  const which = provider();
 
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${key}`,
-    },
-    body: JSON.stringify({
-      from: process.env.EMAIL_FROM || DEFAULT_FROM,
-      to: [to],
-      subject,
-      text,
-      attachments: [
-        {
-          filename: attachment.filename,
-          content: Buffer.from(attachment.content, 'utf8').toString('base64'),
-        },
-      ],
-    }),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  });
-  if (!res.ok) {
-    // Resend's error body names the problem (e.g. an unverified sender) but
-    // can echo the request; log only the status and its short message.
-    const data = /** @type {any} */ (await res.json().catch(() => null));
-    throw new Error(
-      `email provider returned HTTP ${res.status}${data?.message ? `: ${data.message}` : ''}`,
-    );
+  if (which === 'brevo') {
+    const sender = parseFrom(process.env.EMAIL_FROM || '');
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+        'api-key': process.env.BREVO_API_KEY || '',
+      },
+      body: JSON.stringify({
+        sender: sender.name ? sender : { email: sender.email },
+        to: [{ email: to }],
+        subject,
+        textContent: text,
+        attachment: [{ name: attachment.filename, content }],
+      }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!res.ok) throw await failure(res, 'Brevo');
+    return;
   }
+
+  if (which === 'resend') {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: process.env.EMAIL_FROM || RESEND_DEFAULT_FROM,
+        to: [to],
+        subject,
+        text,
+        attachments: [{ filename: attachment.filename, content }],
+      }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!res.ok) throw await failure(res, 'Resend');
+    return;
+  }
+
+  throw new Error('no email provider is configured');
 }
 
-module.exports = { isConfigured, sendMail };
+module.exports = { isConfigured, sendMail, parseFrom };

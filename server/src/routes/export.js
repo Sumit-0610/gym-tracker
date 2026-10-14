@@ -100,8 +100,11 @@ router.post('/export/email', exportEmailLimiter, async (req, res, next) => {
       console.error(
         `[email] export for user ${req.userId} failed: ${err.message}`,
       );
+      // The provider's own reason (e.g. an unverified sender) helps fix the
+      // setup; it never contains the key or the attachment.
+      const reason = err.reason ? ` (${err.reason})` : '';
       return res.status(502).json({
-        error: 'Could not send the email right now. Try downloading instead.',
+        error: `Could not send the email${reason}. Try downloading instead.`,
       });
     }
 

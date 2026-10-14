@@ -40,12 +40,37 @@ function provider() {
 /** True when email can be sent at all. */
 const isConfigured = () => provider() !== null;
 
-/** Throw with the status and the provider's short message, never the body. */
+/**
+ * An Error with the status and the provider's short message, never the body.
+ * `reason` is that message alone (e.g. "unrecognised IP address"), safe to
+ * show the signed-in user so a setup problem can be fixed without the logs.
+ */
 async function failure(res, name) {
   const data = /** @type {any} */ (await res.json().catch(() => null));
-  return new Error(
-    `${name} returned HTTP ${res.status}${data?.message ? `: ${data.message}` : ''}`,
+  const message = typeof data?.message === 'string' ? data.message : '';
+  const err = /** @type {Error & { reason?: string }} */ (
+    new Error(
+      `${name} returned HTTP ${res.status}${message ? `: ${message}` : ''}`,
+    )
   );
+  err.reason = `${name}: ${message || `HTTP ${res.status}`}`;
+  return err;
+}
+
+/** fetch(), but a network error or timeout also carries a user-facing reason. */
+async function post(name, url, init) {
+  try {
+    return await fetch(url, {
+      ...init,
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+  } catch (cause) {
+    const err = /** @type {Error & { reason?: string }} */ (
+      new Error(`${name} request failed: ${cause.message}`)
+    );
+    err.reason = `${name}: could not connect (${cause.message})`;
+    throw err;
+  }
 }
 
 /**
@@ -61,7 +86,7 @@ async function sendMail({ to, subject, text, attachment }) {
 
   if (which === 'brevo') {
     const sender = parseFrom(process.env.EMAIL_FROM || '');
-    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    const res = await post('Brevo', 'https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -75,14 +100,13 @@ async function sendMail({ to, subject, text, attachment }) {
         textContent: text,
         attachment: [{ name: attachment.filename, content }],
       }),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (!res.ok) throw await failure(res, 'Brevo');
     return;
   }
 
   if (which === 'resend') {
-    const res = await fetch('https://api.resend.com/emails', {
+    const res = await post('Resend', 'https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -95,7 +119,6 @@ async function sendMail({ to, subject, text, attachment }) {
         text,
         attachments: [{ filename: attachment.filename, content }],
       }),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (!res.ok) throw await failure(res, 'Resend');
     return;

@@ -110,11 +110,39 @@ test('an HTTP error throws with the status and short message', async () => {
     async () => {
       await assert.rejects(
         mailer.sendMail(message),
-        /Brevo returned HTTP 400: bad sender/,
+        (/** @type {any} */ err) => {
+          assert.match(err.message, /Brevo returned HTTP 400: bad sender/);
+          assert.equal(err.reason, 'Brevo: bad sender');
+          return true;
+        },
       );
     },
     { ok: false, status: 400 },
   );
+});
+
+test('a network failure gets a reason too', async () => {
+  const realFetch = global.fetch;
+  const saved = { ...process.env };
+  process.env.BREVO_API_KEY = 'bk';
+  process.env.EMAIL_FROM = 'me@gmail.com';
+  global.fetch = /** @type {any} */ (
+    async () => {
+      throw new TypeError('fetch failed');
+    }
+  );
+  try {
+    await assert.rejects(mailer.sendMail(message), (/** @type {any} */ err) => {
+      assert.equal(err.reason, 'Brevo: could not connect (fetch failed)');
+      return true;
+    });
+  } finally {
+    global.fetch = realFetch;
+    for (const k of KEYS) {
+      if (saved[k] === undefined) delete process.env[k];
+      else process.env[k] = saved[k];
+    }
+  }
 });
 
 test('no provider -> throws', async () => {

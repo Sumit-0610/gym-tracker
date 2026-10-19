@@ -56,19 +56,23 @@ const remote = createClient({
 removeWithSideFiles(tmpFile);
 const local = createClient({ url: 'file:' + tmpFile });
 
-// Tables first, then indexes/views/triggers that depend on them.
+// Tables first, then indexes/views/triggers.
 const { rows: objects } = await remote.execute(
   `SELECT type, name, sql FROM sqlite_master
    WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'libsql_%'
    ORDER BY CASE type WHEN 'table' THEN 0 ELSE 1 END, name`,
 );
 
+// Create every table before copying any rows, and copy with foreign-key
+// checks off: a child table (e.g. workout_sets) can sort before its parent
+// (workouts), and production may hold orphan rows the checks would reject.
+// Indexes and triggers are added after the data so triggers never fire.
+const tableObjs = objects.filter((o) => o.type === 'table');
+for (const obj of tableObjs) await local.execute(String(obj.sql));
+await local.execute('PRAGMA foreign_keys = OFF');
+
 const BATCH = 500;
-let tables = 0;
-for (const obj of objects) {
-  await local.execute(String(obj.sql));
-  if (obj.type !== 'table') continue;
-  tables++;
+for (const obj of tableObjs) {
   const name = String(obj.name);
   const quoted = '"' + name.replaceAll('"', '""') + '"';
   // Page by rowid so large tables never come back in one huge response.
@@ -92,6 +96,10 @@ for (const obj of objects) {
   }
 }
 
+for (const obj of objects) {
+  if (obj.type !== 'table') await local.execute(String(obj.sql));
+}
+
 const { rows: count } = await local.execute('SELECT COUNT(*) AS n FROM users');
 local.close();
 remote.close();
@@ -107,7 +115,7 @@ try {
   process.exit(1);
 }
 
-console.log(`Copied ${tables} tables, ${count[0].n} users -> ${outFile}`);
+console.log(`Copied ${tableObjs.length} tables, ${count[0].n} users -> ${outFile}`);
 console.log(
   'Open that file in DBeaver: New Connection -> SQLite -> Path (press F5 to refresh).',
 );

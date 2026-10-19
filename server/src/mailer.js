@@ -1,5 +1,5 @@
 // The one place the server sends email. Used by the data export's "email it"
-// option, so switching provider is a change to this file only. Each provider
+// option and by the forgot-password link, so switching provider is a change to this file only. Each provider
 // is one fetch call to its REST API (no SDK). The first one configured wins:
 //
 // Brevo — sends to any address with no domain of your own: you verify a single
@@ -74,14 +74,17 @@ async function post(name, url, init) {
 }
 
 /**
- * Send one plain-text email with one attachment. Throws when no provider is
- * configured, on a timeout or on an HTTP error, so callers have one failure
- * path.
+ * Send one plain-text email, optionally with one attachment. Throws when no
+ * provider is configured, on a timeout or on an HTTP error, so callers have
+ * one failure path.
  * @param {{ to: string, subject: string, text: string,
- *           attachment: { filename: string, content: string } }} message
+ *           attachment?: { filename: string, content: string } }} message
  */
 async function sendMail({ to, subject, text, attachment }) {
-  const content = Buffer.from(attachment.content, 'utf8').toString('base64');
+  const file = attachment && {
+    filename: attachment.filename,
+    content: Buffer.from(attachment.content, 'utf8').toString('base64'),
+  };
   const which = provider();
 
   if (which === 'brevo') {
@@ -98,7 +101,9 @@ async function sendMail({ to, subject, text, attachment }) {
         to: [{ email: to }],
         subject,
         textContent: text,
-        attachment: [{ name: attachment.filename, content }],
+        ...(file && {
+          attachment: [{ name: file.filename, content: file.content }],
+        }),
       }),
     });
     if (!res.ok) throw await failure(res, 'Brevo');
@@ -117,7 +122,7 @@ async function sendMail({ to, subject, text, attachment }) {
         to: [to],
         subject,
         text,
-        attachments: [{ filename: attachment.filename, content }],
+        ...(file && { attachments: [file] }),
       }),
     });
     if (!res.ok) throw await failure(res, 'Resend');

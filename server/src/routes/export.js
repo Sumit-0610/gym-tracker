@@ -12,14 +12,10 @@ const {
   exportFilename,
 } = require('../export');
 const mailer = require('../mailer');
+const { isEmail } = require('../validation');
 
 const router = express.Router();
 router.use(requireAuth);
-
-// Loose on purpose: something@something.tld, no spaces. The provider does the
-// real check; this catches typos before a round-trip.
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const EMAIL_MAX = 254;
 
 const CONTENT_TYPES = {
   csv: 'text/csv; charset=utf-8',
@@ -73,7 +69,7 @@ router.post('/export/email', exportEmailLimiter, async (req, res, next) => {
     if ('error' in range) return res.status(400).json({ error: range.error });
 
     const email = typeof body.email === 'string' ? body.email.trim() : '';
-    if (!EMAIL_RE.test(email) || email.length > EMAIL_MAX) {
+    if (!isEmail(email)) {
       return res.status(400).json({ error: 'Enter a valid email address.' });
     }
     if (!mailer.isConfigured()) {

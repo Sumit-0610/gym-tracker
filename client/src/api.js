@@ -105,11 +105,16 @@ async function download(path) {
 export const api = {
   // auth
   me: () => request('GET', '/api/me'),
-  signup: (username, password) =>
-    request('POST', '/api/signup', { username, password }),
+  // email is optional ('' = none); it is where a reset link goes
+  signup: (username, password, email) =>
+    request('POST', '/api/signup', { username, password, email }),
   login: (username, password) =>
     request('POST', '/api/login', { username, password }),
   logout: () => request('POST', '/api/logout'),
+  // forgot password: email a reset link, then set a new password with it
+  forgotPassword: (email) => request('POST', '/api/password/forgot', { email }),
+  resetPassword: (token, password) =>
+    request('POST', '/api/password/reset', { token, password }),
 
   // preferences
   updatePreferences: (prefs) => request('PATCH', '/api/me', prefs),

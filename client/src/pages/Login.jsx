@@ -76,6 +76,9 @@ export default function Login() {
           <Button type="submit" pending={pending} className="btn-block">
             Log in
           </Button>
+          <p className="auth-forgot">
+            <Link to="/forgot-password">Forgot password?</Link>
+          </p>
         </form>
       </Card>
       <p className="auth-switch">

@@ -150,3 +150,19 @@ test('no provider -> throws', async () => {
     await assert.rejects(mailer.sendMail(message), /no email provider/);
   });
 });
+
+test('sendMail — the attachment is optional', async () => {
+  const plain = { to: 'a@b.co', subject: 'Reset', text: 'Link' };
+  await withEnv({ RESEND_API_KEY: 'k' }, async (calls) => {
+    await mailer.sendMail(plain);
+    assert.equal(calls[0].body.attachments, undefined);
+  });
+  await withEnv(
+    { BREVO_API_KEY: 'k', EMAIL_FROM: 'me@gmail.com' },
+    async (calls) => {
+      await mailer.sendMail(plain);
+      assert.equal(calls[0].body.attachment, undefined);
+      assert.equal(calls[0].body.textContent, 'Link');
+    },
+  );
+});

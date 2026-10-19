@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
   created_at    TEXT DEFAULT CURRENT_TIMESTAMP,
   weight_unit   TEXT NOT NULL DEFAULT 'kg',  -- 'kg' | 'lb'; weights are stored in kg, converted for display
   rest_seconds  INTEGER NOT NULL DEFAULT 120, -- default rest-timer length, 15..600
-  ai_enabled    INTEGER NOT NULL DEFAULT 0    -- 1 = opted in to the AI coach recap
+  ai_enabled    INTEGER NOT NULL DEFAULT 0,   -- 1 = opted in to the AI coach recap
+  email         TEXT                          -- optional, lowercased; where a password reset link goes
 );
 
 -- Shared exercise library (not per-user). Seeded on first boot.
@@ -68,6 +69,20 @@ CREATE TABLE IF NOT EXISTS sessions (
   sid    TEXT PRIMARY KEY,
   sess   TEXT NOT NULL,
   expire INTEGER NOT NULL
+);
+
+-- Forgot-password links. Only a SHA-256 hash of each token is stored: the raw
+-- token exists only in the emailed link, so a leaked copy of this table cannot
+-- be used to reset anyone's password.
+--   expires_at = unix-epoch milliseconds (30 minutes after the request)
+--   used_at    = set when the link is used; a used link never works again
+CREATE TABLE IF NOT EXISTS password_resets (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id     INTEGER NOT NULL,
+  token_hash  TEXT UNIQUE NOT NULL,
+  expires_at  INTEGER NOT NULL,
+  used_at     INTEGER,
+  FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 -- The actual sets performed during a logged workout.

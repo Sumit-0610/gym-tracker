@@ -32,7 +32,8 @@ services:
       # Optional: enables the AI coach recap (unset = feature hidden).
       - key: GEMINI_API_KEY
         sync: false
-      # Optional: enables emailing a data export (unset = option hidden).
+      # Optional: enables emailing a data export and forgot password (unset =
+      # both hidden). Reset links use Render's own RENDER_EXTERNAL_URL.
       - key: BREVO_API_KEY
         sync: false
       - key: RESEND_API_KEY

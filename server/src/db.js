@@ -85,6 +85,8 @@ const MIGRATIONS = [
   ['workout_sets', 'created_at', 'TEXT'],
   // Opt-in for the AI coach recap; off until the user turns it on.
   ['users', 'ai_enabled', 'INTEGER NOT NULL DEFAULT 0'],
+  // Optional email for password resets (stored lowercased).
+  ['users', 'email', 'TEXT'],
 ];
 
 async function migrate() {
@@ -94,6 +96,13 @@ async function migrate() {
     await db.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
     console.log(`migrated: added ${table}.${column}`);
   }
+  // One account per email, so a reset link always goes to exactly one
+  // account. Created here, not in schema.sql, because on an older database
+  // the column only exists once the loop above has added it. NULLs (no email)
+  // never clash with each other.
+  await db.execute(
+    'CREATE UNIQUE INDEX IF NOT EXISTS users_email ON users(email)',
+  );
 }
 
 async function init() {

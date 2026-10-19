@@ -1,4 +1,5 @@
 import { api } from '../api';
+import { useState } from 'react';
 import { useApi } from '../hooks/useApi';
 import { useAuth } from '../auth';
 import { useNavigate, Link } from '../router';
@@ -8,6 +9,7 @@ import Button from '../components/Button';
 import Spinner from '../components/Spinner';
 import ActivityChart from '../components/ActivityChart';
 import RecapCard from '../components/RecapCard';
+import ExportModal from '../components/ExportModal';
 import { Icon } from '../components/icons';
 import './Dashboard.css';
 
@@ -24,6 +26,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const unit = user?.weight_unit || 'kg';
+  const [exportOpen, setExportOpen] = useState(false);
 
   const current = useApi(() => api.currentWorkout(), []);
   const stats = useApi(() => api.stats(), []);
@@ -62,10 +65,30 @@ export default function Dashboard() {
             </p>
           )}
         </div>
-        <Link to="/settings" className="dash-gear" aria-label="Settings">
-          <Icon.Settings />
-        </Link>
+        <div className="dash-actions">
+          <button
+            type="button"
+            className="dash-icon"
+            aria-label="Export data"
+            data-tip="Export data"
+            onClick={() => setExportOpen(true)}
+          >
+            <Icon.Download />
+          </button>
+          <Link
+            to="/settings"
+            className="dash-icon"
+            aria-label="Settings"
+            data-tip="Settings"
+          >
+            <Icon.Settings />
+          </Link>
+        </div>
       </header>
+
+      {exportOpen && (
+        <ExportModal user={user} onClose={() => setExportOpen(false)} />
+      )}
 
       {current.data && (
         <Card>

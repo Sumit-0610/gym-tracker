@@ -10,8 +10,10 @@ test('exports the last 30 days as CSV and JSON', async ({ page }) => {
   await logSet(page, { reps: 6, weight: 65 });
   await finishWorkout(page);
 
-  await page.goto('/settings');
-  const card = page.locator('fieldset.export');
+  // From the export icon on Home (finishWorkout left us on the workout page).
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Export data' }).click();
+  const card = page.getByRole('dialog', { name: 'Export your data' });
   await expect(card.getByRole('group', { name: 'Quick ranges' })).toBeVisible();
   // No email provider on the test server, so only download is offered.
   await expect(card.getByRole('button', { name: 'Send email' })).toHaveCount(0);
@@ -47,10 +49,21 @@ test('exports the last 30 days as CSV and JSON', async ({ page }) => {
   expect(data.workouts[0].sets).toHaveLength(2);
 });
 
+test('the export icon on Home opens the export modal', async ({ page }) => {
+  await signUp(page);
+  await page.getByRole('button', { name: 'Export data' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Export your data' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText('Keep a backup of your training');
+  await expect(dialog.getByRole('button', { name: 'Download' })).toBeEnabled();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+});
+
 test('rejects a start date after the end date', async ({ page }) => {
   await signUp(page);
   await page.goto('/settings');
-  const card = page.locator('fieldset.export');
+  const card = page.locator('div.export');
   await card.getByLabel('From').fill('2026-02-10');
   await card.getByLabel('To').fill('2026-02-01');
   await expect(

@@ -4,10 +4,10 @@
 //
 // An admin is an account whose email is in ADMIN_EMAILS (comma-separated)
 // AND has been verified. The verified part matters: anyone can type any
-// address into Settings, so without it, whoever saved "sumit@gmail.com"
+// address into Settings, so without it, whoever saved "sumitjad36@gmail.com"
 // first would get the admin page and see every user's email.
 
-const DEFAULT_ADMIN_EMAILS = 'sumit@gmail.com';
+const DEFAULT_ADMIN_EMAILS = 'sumitjad36@gmail.com';
 
 /**
  * The admin addresses, lowercased.

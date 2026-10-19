@@ -98,7 +98,7 @@ check "admin config: not an admin -> 403" 403 "$(code GET /api/admin/config "$A"
 # Saving the admin address is not enough: it has to be verified first.
 D="$TMP/dave.jar"
 code POST /api/signup "$D" "{\"username\":\"${U}_d\",\"password\":\"secret1\"}" >/dev/null
-SAVE_ADMIN="$(code PATCH /api/me "$D" '{"email":"sumit@gmail.com"}')"
+SAVE_ADMIN="$(code PATCH /api/me "$D" '{"email":"sumitjad36@gmail.com"}')"
 if [ "$SAVE_ADMIN" = 200 ]; then
   check "unverified admin email is not admin" "false" "$(body | jget 'd.is_admin')"
   check "  ...and gets 403"                  403 "$(code GET /api/admin/users "$D")"

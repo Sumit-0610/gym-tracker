@@ -47,9 +47,21 @@ test('exports the last 30 days as CSV and JSON', async ({ page }) => {
   expect(data.workouts[0].sets).toHaveLength(2);
 });
 
+test('Home links to the export page', async ({ page }) => {
+  await signUp(page);
+  await page.getByRole('link', { name: 'Export data' }).click();
+  await expect(page).toHaveURL(/\/export$/);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Export data' }),
+  ).toBeVisible();
+  await expect(
+    page.locator('fieldset.export').getByRole('button', { name: 'Download' }),
+  ).toBeEnabled();
+});
+
 test('rejects a start date after the end date', async ({ page }) => {
   await signUp(page);
-  await page.goto('/settings');
+  await page.goto('/export');
   const card = page.locator('fieldset.export');
   await card.getByLabel('From').fill('2026-02-10');
   await card.getByLabel('To').fill('2026-02-01');

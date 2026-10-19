@@ -17,6 +17,7 @@ import Workout from './pages/Workout';
 import History from './pages/History';
 import WorkoutDetail from './pages/WorkoutDetail';
 import Settings from './pages/Settings';
+import Export from './pages/Export';
 import Stats from './pages/Stats';
 import Calendar from './pages/Calendar';
 import Measures from './pages/Measures';
@@ -37,6 +38,7 @@ const ROUTES = [
   { path: '/history', component: History },
   { path: '/history/:id', component: WorkoutDetail },
   { path: '/settings', component: Settings },
+  { path: '/export', component: Export },
   { path: '/stats', component: Stats },
   { path: '/calendar', component: Calendar },
   { path: '/measures', component: Measures },

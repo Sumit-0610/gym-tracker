@@ -18,6 +18,8 @@ const TILES = [
   ['/history', 'History', Icon.Clock],
   ['/calendar', 'Calendar', Icon.Calendar],
   ['/measures', 'Measures', Icon.Scale],
+  ['/export', 'Export data', Icon.Download],
+  ['/settings', 'Settings', Icon.Settings],
 ];
 
 export default function Dashboard() {

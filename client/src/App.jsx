@@ -8,6 +8,8 @@ import Spinner from './components/Spinner';
 
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Exercises from './pages/Exercises';
 import ExerciseProgress from './pages/ExerciseProgress';
@@ -23,10 +25,13 @@ import Measures from './pages/Measures';
 
 // The whole route table in one readable list.
 //   public: true  -> reachable when logged out (login / signup)
+//   anyone: true  -> reachable signed in or not (a reset link from an email)
 //   everything else requires a session
 const ROUTES = [
   { path: '/login', component: Login, public: true },
   { path: '/signup', component: Signup, public: true },
+  { path: '/forgot-password', component: ForgotPassword, public: true },
+  { path: '/reset-password', component: ResetPassword, anyone: true },
   { path: '/', component: Dashboard },
   { path: '/exercises', component: Exercises },
   { path: '/exercises/:id', component: ExerciseProgress },
@@ -75,7 +80,7 @@ function Shell() {
 
   // Frontend route guarding is a UI convenience only. The backend is still the
   // real security boundary: it 401s every /api call that has no session.
-  if (match) {
+  if (match && !match.route.anyone) {
     if (!match.route.public && !authed) return <Redirect to="/login" />;
     if (match.route.public && authed) return <Redirect to="/" />;
   }

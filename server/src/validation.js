@@ -70,8 +70,34 @@ function optionalRpe(value, field) {
   return null;
 }
 
+// Loose on purpose: something@something.tld, no spaces. The email provider
+// does the real check; this catches typos before a round-trip.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_MAX = 254;
+
+/** True when `value` is a string that looks like an email address. */
+function isEmail(value) {
+  return (
+    typeof value === 'string' &&
+    value.length <= EMAIL_MAX &&
+    EMAIL_RE.test(value)
+  );
+}
+
+/**
+ * An email as the users table stores it: trimmed and lowercased, so
+ * "Me@Gmail.com " and "me@gmail.com" are the same account.
+ * @param {unknown} value
+ * @returns {string}
+ */
+function normalizeEmail(value) {
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
+
 module.exports = {
   parseId,
+  isEmail,
+  normalizeEmail,
   optionalRpe,
   nonEmptyString,
   positiveInt,

@@ -69,6 +69,27 @@ check "login wrong password"    401 "$(code POST /api/login "$TMP/x.jar" "{\"use
 check "unknown /api route -> 404"        404 "$(code GET /api/nope/nope "$A")"
 check "  ...and it is JSON, not HTML"    "true" "$(body | jget "typeof d.error === 'string'")"
 
+echo "== email + forgot password =="
+C="$TMP/carol.jar"
+check "signup with email"        201 "$(code POST /api/signup "$C" "{\"username\":\"${U}_c\",\"password\":\"secret1\",\"email\":\" ${U}_C@Example.com \"}")"
+check "  ...email stored lowercased" "${U}_c@example.com" "$(body | jget 'd.email')"
+check "signup with taken email"  409 "$(code POST /api/signup "$TMP/x.jar" "{\"username\":\"${U}_d\",\"password\":\"secret1\",\"email\":\"${U}_c@example.com\"}")"
+check "signup with bad email"    400 "$(code POST /api/signup "$TMP/x.jar" "{\"username\":\"${U}_d\",\"password\":\"secret1\",\"email\":\"nope\"}")"
+check "alice has no email yet"   "null" "$(code GET /api/me "$A" >/dev/null; body | jget 'String(d.email)')"
+check "alice adds an email"      200 "$(code PATCH /api/me "$A" "{\"email\":\"${U}_a@example.com\"}")"
+check "  ...and it shows on /me" "${U}_a@example.com" "$(body | jget 'd.email')"
+check "bob cannot take alice's email" 409 "$(code PATCH /api/me "$B" "{\"email\":\"${U}_A@example.com\"}")"
+check "bad email on /me"         400 "$(code PATCH /api/me "$A" '{"email":"not-an-email"}')"
+check "forgot: bad email"        400 "$(code POST /api/password/forgot "$TMP/x.jar" '{"email":"nope"}')"
+# Without an email provider configured the server says so; with one, every
+# valid email (known or not) gets the same 200.
+FORGOT="$(code POST /api/password/forgot "$TMP/x.jar" "{\"email\":\"${U}_a@example.com\"}")"
+FORGOT_UNKNOWN="$(code POST /api/password/forgot "$TMP/x.jar" '{"email":"nobody-here@example.com"}')"
+check "forgot: known and unknown email answer alike" "$FORGOT" "$FORGOT_UNKNOWN"
+check "reset: made-up token"     400 "$(code POST /api/password/reset "$TMP/x.jar" "{\"token\":\"$(printf 'a%.0s' $(seq 64))\",\"password\":\"secret2\"}")"
+check "reset: short password"    400 "$(code POST /api/password/reset "$TMP/x.jar" '{"token":"x","password":"123"}')"
+check "alice can still log in"   200 "$(code POST /api/login "$TMP/x.jar" "{\"username\":\"${U}_a\",\"password\":\"secret1\"}")"
+
 echo "== phase 7: exercises =="
 check "exercises unauthenticated" 401 "$(code GET /api/exercises "$TMP/anon.jar")"
 code GET /api/exercises "$A" >/dev/null

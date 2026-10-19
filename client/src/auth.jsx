@@ -72,9 +72,21 @@ export function AuthProvider({ children }) {
   );
 
   const signup = useCallback(
-    async (username, password) => {
+    async (username, password, email) => {
       // The backend logs the user in as part of signup (sets the session).
-      const u = await api.signup(username, password);
+      const u = await api.signup(username, password, email);
+      setUser(u);
+      setStatus('authenticated');
+      navigate('/', { replace: true });
+    },
+    [navigate],
+  );
+
+  // Set a new password from an emailed reset link. The server signs this
+  // browser in, so go straight to the dashboard. Other devices stay signed in.
+  const resetPassword = useCallback(
+    async (token, password) => {
+      const u = await api.resetPassword(token, password);
       setUser(u);
       setStatus('authenticated');
       navigate('/', { replace: true });
@@ -103,7 +115,15 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, status, login, signup, logout, updatePreferences }}
+      value={{
+        user,
+        status,
+        login,
+        signup,
+        logout,
+        resetPassword,
+        updatePreferences,
+      }}
     >
       {children}
     </AuthContext.Provider>

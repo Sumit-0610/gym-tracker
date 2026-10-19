@@ -15,6 +15,7 @@ export default function Signup() {
   const { signup } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState(null);
   const [pending, setPending] = useState(false);
   const inFlight = useRef(false);
@@ -36,7 +37,7 @@ export default function Signup() {
     setError(null);
     setPending(true);
     try {
-      await signup(username.trim(), password);
+      await signup(username.trim(), password, email.trim());
     } catch (err) {
       inFlight.current = false;
       setPending(false);
@@ -45,7 +46,7 @@ export default function Signup() {
   }
 
   const message =
-    error?.status === 409
+    error?.status === 409 && !/email/i.test(error.message)
       ? 'That username is already taken.'
       : error && describeError(error);
 
@@ -68,6 +69,15 @@ export default function Signup() {
             autoComplete="new-password"
             hint="At least 6 characters."
             onChange={(e) => setPassword(e.target.value)}
+          />
+          <Input
+            label="Email (optional)"
+            type="email"
+            value={email}
+            autoComplete="email"
+            autoCapitalize="none"
+            hint="Only used to send you a link if you forget your password."
+            onChange={(e) => setEmail(e.target.value)}
           />
           {message && (
             <p className="auth-error" role="alert">

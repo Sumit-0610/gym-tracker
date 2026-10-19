@@ -17,3 +17,18 @@
   text-align: center;
   color: var(--c-text-dim);
 }
+
+.auth-forgot {
+  margin: 0;
+  text-align: center;
+  font-size: var(--t-sm);
+}
+
+.auth-intro {
+  margin: 0;
+  color: var(--c-text-dim);
+}
+
+.auth-done {
+  margin: 0;
+}

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useAuth } from '../auth';
 import { ApiError } from '../api';
-import { formatDuration } from '../format';
+import { describeError, formatDuration } from '../format';
 import Card from '../components/Card';
 import Button from '../components/Button';
+import Input from '../components/Input';
 import ErrorMessage from '../components/ErrorMessage';
 import ExportCard from '../components/ExportCard';
 import './Settings.css';
@@ -13,7 +14,7 @@ const REST_MAX = 600;
 const REST_STEP = 15;
 
 // Preferences screen: weight unit, default rest-timer length and the AI coach
-// recap opt-in. All saved server-side (PATCH /api/me) so they follow the
+// recap opt-in, plus the account email used for password resets. All saved server-side (PATCH /api/me) so they follow the
 // account across devices. Below them, the data export.
 export default function Settings() {
   const { user, updatePreferences } = useAuth();
@@ -24,6 +25,10 @@ export default function Settings() {
   const [savingWhat, setSavingWhat] = useState(null); // 'unit' | 'rest' | 'ai' | null
   const [error, setError] = useState(null);
   const [savedAt, setSavedAt] = useState(0);
+  const [email, setEmail] = useState(user?.email || '');
+  const [emailPending, setEmailPending] = useState(false);
+  const [emailError, setEmailError] = useState(null);
+  const [emailSaved, setEmailSaved] = useState(false);
 
   async function save(what, patch, revert) {
     if (savingWhat) return;
@@ -62,6 +67,26 @@ export default function Settings() {
   }
 
   const busy = savingWhat !== null;
+  const emailChanged = email.trim().toLowerCase() !== (user?.email || '');
+
+  // The email has its own Save button (typing shouldn't save on every key)
+  // and its own messages, so a taken-email error shows next to the field.
+  async function saveEmail(e) {
+    e.preventDefault();
+    if (emailPending || !emailChanged) return;
+    setEmailError(null);
+    setEmailSaved(false);
+    setEmailPending(true);
+    try {
+      const u = await updatePreferences({ email: email.trim() });
+      setEmail(u.email || '');
+      setEmailSaved(true);
+    } catch (err) {
+      setEmailError(err instanceof ApiError ? err : new ApiError(0));
+    } finally {
+      setEmailPending(false);
+    }
+  }
 
   return (
     <div className="page">
@@ -71,6 +96,48 @@ export default function Settings() {
         <p className="settings-account">
           Signed in as <strong>{user?.username}</strong>
         </p>
+      </Card>
+
+      <Card>
+        <form className="settings-group" onSubmit={saveEmail} noValidate>
+          <p className="settings-legend">Email</p>
+          <p className="settings-hint">
+            {user?.email
+              ? 'Where a link goes if you forget your password.'
+              : 'Add one so you can reset your password if you forget it.'}{' '}
+            It is not shown to anyone.
+          </p>
+          <Input
+            label="Email address"
+            type="email"
+            value={email}
+            autoComplete="email"
+            autoCapitalize="none"
+            error={emailError ? describeError(emailError) : undefined}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setEmailSaved(false);
+            }}
+          />
+          <div className="settings-email-actions">
+            <Button
+              type="submit"
+              variant="secondary"
+              pending={emailPending}
+              pendingLabel="Saving…"
+              disabled={!emailChanged}
+            >
+              {email.trim() === '' && user?.email
+                ? 'Remove email'
+                : 'Save email'}
+            </Button>
+            {emailSaved && !emailChanged && (
+              <span className="settings-saved" role="status">
+                Saved.
+              </span>
+            )}
+          </div>
+        </form>
       </Card>
 
       <Card>

@@ -1,4 +1,5 @@
-// Rate limiters for the auth endpoints, the AI recap and export emails.
+// Rate limiters for the auth and password-reset endpoints, the AI recap and
+// export emails.
 //
 // Once the app is reachable from the public internet, brute-forcing a password
 // and mass-registering accounts are the obvious abuse vectors — every other
@@ -67,4 +68,31 @@ const exportEmailLimiter = rateLimit({
     }),
 });
 
-module.exports = { loginLimiter, signupLimiter, aiLimiter, exportEmailLimiter };
+// Forgot-password requests per IP: 5 per hour. Each one can send a real email,
+// so this keeps the form from being used to flood someone's inbox.
+const forgotLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: tooMany,
+});
+
+// Reset attempts per IP: 10 per 15 minutes, like login. Tokens are far too
+// long to guess, so this is a backstop rather than the real protection.
+const resetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: tooMany,
+});
+
+module.exports = {
+  loginLimiter,
+  signupLimiter,
+  aiLimiter,
+  exportEmailLimiter,
+  forgotLimiter,
+  resetLimiter,
+};

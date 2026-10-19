@@ -1,4 +1,5 @@
-// Auth routes: signup, login, logout, and "who am I".
+// Auth routes: signup, login, logout, and "who am I". Forgot password lives in
+// password-reset.js.
 
 const express = require('express');
 const bcrypt = require('bcryptjs');
@@ -6,18 +7,17 @@ const { get, run } = require('../db');
 const requireAuth = require('../middleware/auth');
 const { loginLimiter, signupLimiter } = require('../middleware/rate-limit');
 const { oneOf } = require('../validation');
-const ai = require('../ai');
-const mailer = require('../mailer');
+const {
+  BCRYPT_ROUNDS,
+  MIN_PASSWORD,
+  readEmail,
+  isEmailTaken,
+  loadMe,
+} = require('../account');
 
 const router = express.Router();
 
 const WEIGHT_UNITS = ['kg', 'lb'];
-
-// bcrypt "cost factor": the hash runs 2^rounds internal iterations. Each +1
-// doubles the time. 12 is a common default — a few hundred ms per hash, which
-// is trivial for one login but makes brute-forcing a stolen table of hashes
-// enormously expensive.
-const BCRYPT_ROUNDS = 12;
 
 router.post('/signup', signupLimiter, async (req, res, next) => {
   try {
@@ -27,10 +27,15 @@ router.post('/signup', signupLimiter, async (req, res, next) => {
         .status(400)
         .json({ error: 'username and password are required' });
     }
-    if (password.length < 6) {
-      return res
-        .status(400)
-        .json({ error: 'password must be at least 6 characters' });
+    if (password.length < MIN_PASSWORD) {
+      return res.status(400).json({
+        error: `password must be at least ${MIN_PASSWORD} characters`,
+      });
+    }
+    // Optional: without one the account just can't use forgot password.
+    const email = readEmail((req.body || {}).email);
+    if (email && typeof email === 'object') {
+      return res.status(400).json({ error: email.error });
     }
 
     // Never store the raw password. bcrypt.hash produces a one-way hash with a
@@ -38,9 +43,10 @@ router.post('/signup', signupLimiter, async (req, res, next) => {
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
     const result = await run(
-      'INSERT INTO users (username, password_hash) VALUES (?, ?)',
+      'INSERT INTO users (username, password_hash, email) VALUES (?, ?, ?)',
       username,
       passwordHash,
+      email ?? null,
     );
 
     const id = Number(result.lastInsertRowid);
@@ -48,6 +54,11 @@ router.post('/signup', signupLimiter, async (req, res, next) => {
     // Same shape as GET /api/me, so the client has the preferences at once.
     res.status(201).json(await loadMe(id));
   } catch (err) {
+    if (isEmailTaken(err)) {
+      return res
+        .status(409)
+        .json({ error: 'That email is already used by another account.' });
+    }
     if (String(err.message).includes('UNIQUE')) {
       return res.status(409).json({ error: 'username already taken' });
     }
@@ -91,29 +102,6 @@ router.post('/logout', (req, res) => {
   });
 });
 
-const ME_COLUMNS =
-  'id, username, created_at, weight_unit, rest_seconds, ai_enabled';
-
-/**
- * The caller's profile + preferences, as GET/PATCH /api/me return it.
- * ai_enabled comes back as a boolean; ai_available says whether this server
- * has an AI provider configured at all (the client hides the toggle if not);
- * email_available likewise for emailing a data export.
- * @param {number} userId
- */
-async function loadMe(userId) {
-  const user = await get(
-    `SELECT ${ME_COLUMNS} FROM users WHERE id = ?`,
-    userId,
-  );
-  if (!user) return user;
-  return {
-    ...user,
-    ai_enabled: Boolean(user.ai_enabled),
-    ai_available: ai.isConfigured(),
-    email_available: mailer.isConfigured(),
-  };
-}
 const REST_MIN = 15;
 const REST_MAX = 600;
 
@@ -128,9 +116,11 @@ router.get('/me', requireAuth, async (req, res, next) => {
 
 // PATCH /api/me
 //   Update the caller's preferences. Any of:
-//     { weight_unit: 'kg' | 'lb', rest_seconds: 15..600, ai_enabled: boolean }
-//   Returns: 200 { id, username, created_at, weight_unit, rest_seconds,
+//     { weight_unit: 'kg' | 'lb', rest_seconds: 15..600, ai_enabled: boolean,
+//       email: string ('' or null removes it) }
+//   Returns: 200 { id, username, email, created_at, weight_unit, rest_seconds,
 //                  ai_enabled, ai_available, email_available }
+//            409 another account already has that email
 router.patch('/me', requireAuth, async (req, res, next) => {
   try {
     const body = req.body || {};
@@ -160,6 +150,14 @@ router.patch('/me', requireAuth, async (req, res, next) => {
       updates.push('ai_enabled = ?');
       args.push(body.ai_enabled ? 1 : 0);
     }
+    const email = readEmail(body.email);
+    if (email && typeof email === 'object') {
+      return res.status(400).json({ error: email.error });
+    }
+    if (email !== undefined) {
+      updates.push('email = ?');
+      args.push(email);
+    }
     if (updates.length === 0) {
       return res.status(400).json({ error: 'no preferences to update' });
     }
@@ -169,6 +167,11 @@ router.patch('/me', requireAuth, async (req, res, next) => {
 
     res.json(await loadMe(req.userId));
   } catch (err) {
+    if (isEmailTaken(err)) {
+      return res
+        .status(409)
+        .json({ error: 'That email is already used by another account.' });
+    }
     next(err);
   }
 });

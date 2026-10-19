@@ -53,3 +53,19 @@
   min-width: 3.5rem;
   text-align: center;
 }
+
+.settings-legend {
+  font-weight: 600;
+  margin: 0 0 var(--s-2);
+}
+
+.settings-email-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-3);
+}
+
+.settings-email-actions .settings-saved {
+  margin: 0;
+}

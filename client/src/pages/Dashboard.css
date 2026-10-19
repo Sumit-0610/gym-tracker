@@ -30,14 +30,59 @@
   color: var(--c-text);
 }
 
-.dash-gear {
+.dash-actions {
   flex: none;
-  color: var(--c-text-dim);
-  padding: var(--s-1);
+  display: flex;
+  gap: var(--s-1);
 }
 
-.dash-gear:hover {
+/* Icon buttons in the header, each with a small label on hover / focus. */
+.dash-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--r-sm);
+  color: var(--c-text-dim);
+  cursor: pointer;
+}
+
+.dash-icon:hover,
+.dash-icon:focus-visible {
   color: var(--c-text);
+  background: var(--c-surface);
+}
+
+.dash-icon::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+  font-size: var(--t-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+  z-index: 5;
+}
+
+.dash-icon:hover::after,
+.dash-icon:focus-visible::after {
+  opacity: 1;
+  transform: none;
 }
 
 .dash-section {

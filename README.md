@@ -61,7 +61,7 @@ read-only local copy of the production database and open that:
    ```
    `.env` is gitignored. Don't `npm start` with it loaded unless you mean to
    run against production.
-2. Run `cd server && npm run db:snapshot`. It syncs Turso into
+2. Run `cd server && npm run db:snapshot`. It copies Turso into
    `server/data/gym-tracker-snapshot.db` (also gitignored) and prints the user
    count.
 3. In DBeaver: **New Database Connection → SQLite → Path** = that file.
@@ -74,10 +74,12 @@ SELECT id, username, created_at, weight_unit FROM users ORDER BY created_at;
 
 **Keeping it current:** the snapshot does not update on its own. It reflects
 production as of the last `npm run db:snapshot`; re-run it whenever you want
-fresh data (it syncs only what changed, then refresh in DBeaver with F5).
-Edits made in DBeaver stay in the local file and are never pushed back to
-Turso; they can also break the next sync, in which case delete the snapshot
-file and re-run. To change production data, use the app or the Turso CLI.
+fresh data, then refresh in DBeaver with F5. Each run builds a fresh copy and
+swaps it in, so disconnect the DBeaver connection first (on Windows an open
+connection locks the file; the script tells you if that happened). Edits made
+in DBeaver stay in the local file, are never pushed back to Turso, and are
+overwritten by the next snapshot. To change production data, use the app or
+the Turso CLI.
 
 ## Checks
 

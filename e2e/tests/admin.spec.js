@@ -16,7 +16,7 @@ test('saving the admin email without verifying it does not grant admin', async (
 }) => {
   await signUp(page);
   await page.goto('/settings');
-  await page.getByLabel('Email address').fill('sumit@gmail.com');
+  await page.getByLabel('Email address').fill('sumitjad36@gmail.com');
   await page.getByRole('button', { name: 'Save email' }).click();
   // Another run may already have saved it (one account per email).
   await expect(

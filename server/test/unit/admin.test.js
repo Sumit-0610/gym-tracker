@@ -6,8 +6,8 @@ const { adminEmails, isAdmin, configSnapshot } = require('../../src/admin');
 
 const VERIFIED = '2026-10-19 09:00:00';
 
-test('adminEmails — defaults to sumit@gmail.com, env overrides, lowercased', () => {
-  assert.deepEqual(adminEmails({}), ['sumit@gmail.com']);
+test('adminEmails — defaults to sumitjad36@gmail.com, env overrides, lowercased', () => {
+  assert.deepEqual(adminEmails({}), ['sumitjad36@gmail.com']);
   assert.deepEqual(adminEmails({ ADMIN_EMAILS: ' A@x.co , b@y.co,, ' }), [
     'a@x.co',
     'b@y.co',
@@ -18,12 +18,15 @@ test('adminEmails — defaults to sumit@gmail.com, env overrides, lowercased', (
 test('isAdmin — needs an admin email AND a verified one', () => {
   const env = {};
   assert.equal(
-    isAdmin({ email: 'sumit@gmail.com', email_verified_at: VERIFIED }, env),
+    isAdmin(
+      { email: 'sumitjad36@gmail.com', email_verified_at: VERIFIED },
+      env,
+    ),
     true,
   );
   // Typing the address into Settings is not enough.
   assert.equal(
-    isAdmin({ email: 'sumit@gmail.com', email_verified_at: null }, env),
+    isAdmin({ email: 'sumitjad36@gmail.com', email_verified_at: null }, env),
     false,
   );
   assert.equal(
@@ -61,6 +64,6 @@ test('configSnapshot — flags and public values, never secrets', () => {
     provider: 'Brevo',
     from: 'me@gmail.com',
   });
-  assert.deepEqual(snap.admin_emails, ['sumit@gmail.com']);
+  assert.deepEqual(snap.admin_emails, ['sumitjad36@gmail.com']);
   assert.ok(!JSON.stringify(snap).includes('secret'));
 });

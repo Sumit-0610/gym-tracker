@@ -155,8 +155,13 @@ router.patch('/me', requireAuth, async (req, res, next) => {
       return res.status(400).json({ error: email.error });
     }
     if (email !== undefined) {
-      updates.push('email = ?');
-      args.push(email);
+      // A new address has to be verified again. SQLite reads `email` in the
+      // CASE as the old value, since every SET expression sees the old row.
+      updates.push(
+        'email = ?',
+        'email_verified_at = CASE WHEN email IS ? THEN email_verified_at ELSE NULL END',
+      );
+      args.push(email, email);
     }
     if (updates.length === 0) {
       return res.status(400).json({ error: 'no preferences to update' });

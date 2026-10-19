@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../auth';
-import { ApiError } from '../api';
+import { api, ApiError } from '../api';
+import { Link } from '../router';
 import { describeError, formatDuration } from '../format';
 import Card from '../components/Card';
 import Button from '../components/Button';
@@ -29,6 +30,11 @@ export default function Settings() {
   const [emailPending, setEmailPending] = useState(false);
   const [emailError, setEmailError] = useState(null);
   const [emailSaved, setEmailSaved] = useState(false);
+  const [verify, setVerify] = useState({
+    pending: false,
+    sent: false,
+    error: null,
+  });
 
   async function save(what, patch, revert) {
     if (savingWhat) return;
@@ -81,10 +87,26 @@ export default function Settings() {
       const u = await updatePreferences({ email: email.trim() });
       setEmail(u.email || '');
       setEmailSaved(true);
+      setVerify({ pending: false, sent: false, error: null });
     } catch (err) {
       setEmailError(err instanceof ApiError ? err : new ApiError(0));
     } finally {
       setEmailPending(false);
+    }
+  }
+
+  async function sendVerify() {
+    if (verify.pending) return;
+    setVerify({ pending: true, sent: false, error: null });
+    try {
+      await api.sendVerifyEmail();
+      setVerify({ pending: false, sent: true, error: null });
+    } catch (err) {
+      setVerify({
+        pending: false,
+        sent: false,
+        error: err instanceof ApiError ? err : new ApiError(0),
+      });
     }
   }
 
@@ -96,6 +118,11 @@ export default function Settings() {
         <p className="settings-account">
           Signed in as <strong>{user?.username}</strong>
         </p>
+        {user?.is_admin && (
+          <p className="settings-admin">
+            <Link to="/admin">Open the admin page</Link>
+          </p>
+        )}
       </Card>
 
       <Card>
@@ -105,7 +132,7 @@ export default function Settings() {
             {user?.email
               ? 'Where a link goes if you forget your password.'
               : 'Add one so you can reset your password if you forget it.'}{' '}
-            It is not shown to anyone.
+            Only the app's admin can see it.
           </p>
           <Input
             label="Email address"
@@ -137,6 +164,35 @@ export default function Settings() {
               </span>
             )}
           </div>
+          {user?.email && !emailChanged && (
+            <div className="settings-verify">
+              {user.email_verified ? (
+                <p className="settings-verified">✓ Verified</p>
+              ) : verify.sent ? (
+                <p className="settings-hint" role="status">
+                  Check {user.email} for a link to verify it. The link works for
+                  24 hours.
+                </p>
+              ) : (
+                <>
+                  <p className="settings-hint">
+                    Not verified yet. Verifying proves the address is yours.
+                  </p>
+                  {user.email_available && (
+                    <Button
+                      variant="secondary"
+                      pending={verify.pending}
+                      pendingLabel="Sending…"
+                      onClick={sendVerify}
+                    >
+                      Send verify link
+                    </Button>
+                  )}
+                </>
+              )}
+              {verify.error && <ErrorMessage error={verify.error} />}
+            </div>
+          )}
         </form>
       </Card>
 

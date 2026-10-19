@@ -90,6 +90,24 @@ check "reset: made-up token"     400 "$(code POST /api/password/reset "$TMP/x.ja
 check "reset: short password"    400 "$(code POST /api/password/reset "$TMP/x.jar" '{"token":"x","password":"123"}')"
 check "alice can still log in"   200 "$(code POST /api/login "$TMP/x.jar" "{\"username\":\"${U}_a\",\"password\":\"secret1\"}")"
 
+echo "== admin + verify email =="
+check "me: not verified, not admin" "false false" "$(code GET /api/me "$A" >/dev/null; body | jget '[d.email_verified, d.is_admin].join(" ")')"
+check "admin users: signed out -> 401"   401 "$(code GET /api/admin/users "$TMP/anon.jar")"
+check "admin users: not an admin -> 403" 403 "$(code GET /api/admin/users "$A")"
+check "admin config: not an admin -> 403" 403 "$(code GET /api/admin/config "$A")"
+# Saving the admin address is not enough: it has to be verified first.
+D="$TMP/dave.jar"
+code POST /api/signup "$D" "{\"username\":\"${U}_d\",\"password\":\"secret1\"}" >/dev/null
+SAVE_ADMIN="$(code PATCH /api/me "$D" '{"email":"sumit@gmail.com"}')"
+if [ "$SAVE_ADMIN" = 200 ]; then
+  check "unverified admin email is not admin" "false" "$(body | jget 'd.is_admin')"
+  check "  ...and gets 403"                  403 "$(code GET /api/admin/users "$D")"
+  code PATCH /api/me "$D" '{"email":""}' >/dev/null
+fi
+check "verify link: made-up token"       400 "$(code POST /api/email/verify "$TMP/x.jar" "{\"token\":\"$(printf 'b%.0s' $(seq 64))\"}")"
+check "verify request: signed out -> 401" 401 "$(code POST /api/me/email/verify "$TMP/anon.jar")"
+check "verify request: no email -> 400"   400 "$(code POST /api/me/email/verify "$B")"
+
 echo "== phase 7: exercises =="
 check "exercises unauthenticated" 401 "$(code GET /api/exercises "$TMP/anon.jar")"
 code GET /api/exercises "$A" >/dev/null

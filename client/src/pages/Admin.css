@@ -1,0 +1,99 @@
+.admin {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.admin-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-3);
+}
+
+.admin-count {
+  padding: 0 var(--s-2);
+  border-radius: 999px;
+  background: var(--c-surface-2);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-users {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.admin-user p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-user-name {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.admin-tag {
+  padding: 0 var(--s-2);
+  border-radius: 999px;
+  background: var(--c-primary);
+  color: var(--c-bg);
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+
+.admin-user-email {
+  margin-top: var(--s-1) !important;
+}
+
+.admin-dim {
+  color: var(--c-text-dim);
+}
+
+.admin-facts,
+.admin-config {
+  margin: var(--s-3) 0 0;
+  display: grid;
+  gap: var(--s-2);
+}
+
+.admin-facts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-config {
+  margin-top: 0;
+}
+
+.admin-config > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.admin-facts dt,
+.admin-config dt {
+  color: var(--c-text-dim);
+  font-size: var(--t-sm);
+}
+
+.admin-facts dd,
+.admin-config dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-config dd {
+  text-align: right;
+}
+
+.admin-note {
+  margin: var(--s-3) 0 0;
+  font-size: var(--t-sm);
+}

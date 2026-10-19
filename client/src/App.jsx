@@ -22,6 +22,8 @@ import Settings from './pages/Settings';
 import Stats from './pages/Stats';
 import Calendar from './pages/Calendar';
 import Measures from './pages/Measures';
+import VerifyEmail from './pages/VerifyEmail';
+import Admin from './pages/Admin';
 
 // The whole route table in one readable list.
 //   public: true  -> reachable when logged out (login / signup)
@@ -32,6 +34,8 @@ const ROUTES = [
   { path: '/signup', component: Signup, public: true },
   { path: '/forgot-password', component: ForgotPassword, public: true },
   { path: '/reset-password', component: ResetPassword, anyone: true },
+  { path: '/verify-email', component: VerifyEmail, anyone: true },
+  { path: '/admin', component: Admin },
   { path: '/', component: Dashboard },
   { path: '/exercises', component: Exercises },
   { path: '/exercises/:id', component: ExerciseProgress },

@@ -40,6 +40,20 @@ function provider() {
 /** True when email can be sent at all. */
 const isConfigured = () => provider() !== null;
 
+/** The configured provider's name and sender, for the admin config view. */
+const describe = () => {
+  const which = provider();
+  if (which === 'brevo')
+    return { provider: 'Brevo', from: process.env.EMAIL_FROM };
+  if (which === 'resend') {
+    return {
+      provider: 'Resend',
+      from: process.env.EMAIL_FROM || RESEND_DEFAULT_FROM,
+    };
+  }
+  return { provider: null, from: null };
+};
+
 /**
  * An Error with the status and the provider's short message, never the body.
  * `reason` is that message alone (e.g. "unrecognised IP address"), safe to
@@ -132,4 +146,4 @@ async function sendMail({ to, subject, text, attachment }) {
   throw new Error('no email provider is configured');
 }
 
-module.exports = { isConfigured, sendMail, parseFrom };
+module.exports = { isConfigured, describe, sendMail, parseFrom };

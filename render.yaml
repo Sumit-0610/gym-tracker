@@ -40,3 +40,6 @@ services:
         sync: false
       - key: EMAIL_FROM
         sync: false
+      # Who can open the admin page (comma-separated; must be verified emails).
+      - key: ADMIN_EMAILS
+        value: sumit@gmail.com

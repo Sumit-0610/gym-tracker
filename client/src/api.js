@@ -118,6 +118,13 @@ export const api = {
 
   // preferences
   updatePreferences: (prefs) => request('PATCH', '/api/me', prefs),
+  // email verification: send a link to the account email, then confirm it
+  sendVerifyEmail: () => request('POST', '/api/me/email/verify'),
+  verifyEmail: (token) => request('POST', '/api/email/verify', { token }),
+
+  // admin (admins only; everyone else gets 403)
+  adminUsers: () => request('GET', '/api/admin/users'),
+  adminConfig: () => request('GET', '/api/admin/config'),
 
   // stats
   stats: () => request('GET', '/api/stats'),

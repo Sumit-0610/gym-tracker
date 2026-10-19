@@ -75,6 +75,16 @@ export default function Dashboard() {
           >
             <Icon.Download />
           </button>
+          {user?.is_admin && (
+            <Link
+              to="/admin"
+              className="dash-icon"
+              aria-label="Admin"
+              data-tip="Admin"
+            >
+              <Icon.Shield />
+            </Link>
+          )}
           <Link
             to="/settings"
             className="dash-icon"

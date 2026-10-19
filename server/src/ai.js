@@ -14,6 +14,9 @@ const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 /** True when an API key is configured, i.e. AI features can run at all. */
 const isConfigured = () => Boolean(process.env.GEMINI_API_KEY);
 
+/** The model generateText() uses. */
+const model = () => process.env.AI_MODEL || DEFAULT_MODEL;
+
 /**
  * Send a system prompt + user message, return the model's plain-text reply.
  * Throws on a missing key, a timeout, an HTTP error or an empty answer, so
@@ -24,10 +27,10 @@ const isConfigured = () => Boolean(process.env.GEMINI_API_KEY);
 async function generateText({ system, user }) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error('GEMINI_API_KEY is not set');
-  const model = process.env.AI_MODEL || DEFAULT_MODEL;
+  const modelName = model();
 
   const res = await fetch(
-    `${API_BASE}/${encodeURIComponent(model)}:generateContent`,
+    `${API_BASE}/${encodeURIComponent(modelName)}:generateContent`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
@@ -54,4 +57,4 @@ async function generateText({ system, user }) {
   return text;
 }
 
-module.exports = { isConfigured, generateText };
+module.exports = { isConfigured, model, generateText };

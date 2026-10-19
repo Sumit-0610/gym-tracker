@@ -94,6 +94,12 @@ export function AuthProvider({ children }) {
     [navigate],
   );
 
+  // Replace the local user with a fresh copy from the server (e.g. after a
+  // verify link changed email_verified elsewhere).
+  const setUserFromServer = useCallback((u) => {
+    if (u) setUser(u);
+  }, []);
+
   // Update a preference (e.g. weight unit) and refresh the local user object
   // from the server's response — same pattern as login/signup.
   const updatePreferences = useCallback(async (prefs) => {
@@ -123,6 +129,7 @@ export function AuthProvider({ children }) {
         logout,
         resetPassword,
         updatePreferences,
+        setUserFromServer,
       }}
     >
       {children}

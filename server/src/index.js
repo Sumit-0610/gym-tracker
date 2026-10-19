@@ -60,6 +60,8 @@ app.get('/healthz', (req, res) => res.send('ok'));
 
 app.use('/api', require('./routes/auth'));
 app.use('/api', require('./routes/password-reset'));
+app.use('/api', require('./routes/email-verify'));
+app.use('/api', require('./routes/admin'));
 app.use('/api', require('./routes/exercises'));
 app.use('/api', require('./routes/routines'));
 app.use('/api', require('./routes/workouts'));

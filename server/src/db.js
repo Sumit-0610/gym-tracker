@@ -87,6 +87,8 @@ const MIGRATIONS = [
   ['users', 'ai_enabled', 'INTEGER NOT NULL DEFAULT 0'],
   // Optional email for password resets (stored lowercased).
   ['users', 'email', 'TEXT'],
+  // When the email was proven (a verify link was used). Admin access needs it.
+  ['users', 'email_verified_at', 'TEXT'],
 ];
 
 async function migrate() {

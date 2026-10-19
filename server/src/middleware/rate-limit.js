@@ -88,7 +88,28 @@ const resetLimiter = rateLimit({
   handler: tooMany,
 });
 
+// Verify-email requests per signed-in user: 5 per hour (each sends an email).
+const verifyRequestLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  keyGenerator: (req) => `user:${req.userId}`,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: tooMany,
+});
+
+// Verify-link attempts per IP: 10 per 15 minutes, like password reset.
+const verifyLinkLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: tooMany,
+});
+
 module.exports = {
+  verifyRequestLimiter,
+  verifyLinkLimiter,
   loginLimiter,
   signupLimiter,
   aiLimiter,

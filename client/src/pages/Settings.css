@@ -69,3 +69,17 @@
 .settings-email-actions .settings-saved {
   margin: 0;
 }
+
+.settings-admin {
+  margin: var(--s-2) 0 0;
+}
+
+.settings-verify {
+  margin-top: var(--s-3);
+}
+
+.settings-verified {
+  margin: 0;
+  color: var(--c-primary);
+  font-size: var(--t-sm);
+}

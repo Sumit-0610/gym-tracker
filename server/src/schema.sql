@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
   weight_unit   TEXT NOT NULL DEFAULT 'kg',  -- 'kg' | 'lb'; weights are stored in kg, converted for display
   rest_seconds  INTEGER NOT NULL DEFAULT 120, -- default rest-timer length, 15..600
   ai_enabled    INTEGER NOT NULL DEFAULT 0,   -- 1 = opted in to the AI coach recap
-  email         TEXT                          -- optional, lowercased; where a password reset link goes
+  email         TEXT,                         -- optional, lowercased; where a password reset link goes
+  email_verified_at TEXT                      -- set once the owner clicks a verify link; cleared when email changes
 );
 
 -- Shared exercise library (not per-user). Seeded on first boot.
@@ -79,6 +80,19 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE TABLE IF NOT EXISTS password_resets (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id     INTEGER NOT NULL,
+  token_hash  TEXT UNIQUE NOT NULL,
+  expires_at  INTEGER NOT NULL,
+  used_at     INTEGER,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- "Verify your email" links. Same idea as password_resets: only the token's
+-- hash is stored. `email` is the address the link was sent to, so a link
+-- can't verify an address the account switched to afterwards.
+CREATE TABLE IF NOT EXISTS email_verifications (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id     INTEGER NOT NULL,
+  email       TEXT NOT NULL,
   token_hash  TEXT UNIQUE NOT NULL,
   expires_at  INTEGER NOT NULL,
   used_at     INTEGER,

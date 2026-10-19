@@ -5,6 +5,7 @@ const { get } = require('./db');
 const { isEmail, normalizeEmail } = require('./validation');
 const ai = require('./ai');
 const mailer = require('./mailer');
+const { isAdmin } = require('./admin');
 
 // bcrypt "cost factor": the hash runs 2^rounds internal iterations. Each +1
 // doubles the time. 12 is a common default — a few hundred ms per hash, which
@@ -34,13 +35,14 @@ const isEmailTaken = (err) =>
   String(err.message).includes('email');
 
 const ME_COLUMNS =
-  'id, username, email, created_at, weight_unit, rest_seconds, ai_enabled';
+  'id, username, email, email_verified_at, created_at, weight_unit, rest_seconds, ai_enabled';
 
 /**
  * The caller's profile + preferences, as GET/PATCH /api/me return it.
  * ai_enabled comes back as a boolean; ai_available says whether this server
  * has an AI provider configured at all (the client hides the toggle if not);
- * email_available likewise for emailing a data export.
+ * email_available likewise for emailing a data export (and the email links).
+ * is_admin says whether to show the Admin page link.
  * @param {number} userId
  */
 async function loadMe(userId) {
@@ -49,8 +51,11 @@ async function loadMe(userId) {
     userId,
   );
   if (!user) return user;
+  const { email_verified_at: verifiedAt, ...rest } = user;
   return {
-    ...user,
+    ...rest,
+    email_verified: Boolean(verifiedAt),
+    is_admin: isAdmin(user),
     ai_enabled: Boolean(user.ai_enabled),
     ai_available: ai.isConfigured(),
     email_available: mailer.isConfigured(),

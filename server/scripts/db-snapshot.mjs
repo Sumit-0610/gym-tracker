@@ -8,8 +8,8 @@
 // where .env has TURSO_DATABASE_URL and TURSO_AUTH_TOKEN (copy them from the
 // Render dashboard -> Environment, using the eye icon).
 //
-// Every run builds a fresh copy in a temp file and then swaps it in, so a
-// half-finished run never leaves a broken snapshot behind. (An earlier version
+// Every run deletes the old snapshot and builds a fresh one; if a run fails
+// part-way, the half-written file is deleted. (An earlier version
 // used libSQL's embedded-replica sync, which broke whenever its hidden metadata
 // file went missing or the download was cut off.)
 //
@@ -35,7 +35,6 @@ const dataDir = path.join(
   'data',
 );
 const outFile = path.join(dataDir, 'gym-tracker-snapshot.db');
-const tmpFile = outFile + '.tmp';
 fs.mkdirSync(dataDir, { recursive: true });
 
 // Remove a file and its SQLite/replica side files (-wal, -shm, -info, ...).
@@ -53,60 +52,12 @@ const remote = createClient({
   authToken: TURSO_AUTH_TOKEN,
 });
 
-removeWithSideFiles(tmpFile);
-const local = createClient({ url: 'file:' + tmpFile });
-
-// Tables first, then indexes/views/triggers.
-const { rows: objects } = await remote.execute(
-  `SELECT type, name, sql FROM sqlite_master
-   WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'libsql_%'
-   ORDER BY CASE type WHEN 'table' THEN 0 ELSE 1 END, name`,
-);
-
-// Create every table before copying any rows, and copy with foreign-key
-// checks off: a child table (e.g. workout_sets) can sort before its parent
-// (workouts), and production may hold orphan rows the checks would reject.
-// Indexes and triggers are added after the data so triggers never fire.
-const tableObjs = objects.filter((o) => o.type === 'table');
-for (const obj of tableObjs) await local.execute(String(obj.sql));
-await local.execute('PRAGMA foreign_keys = OFF');
-
-const BATCH = 500;
-for (const obj of tableObjs) {
-  const name = String(obj.name);
-  const quoted = '"' + name.replaceAll('"', '""') + '"';
-  // Page by rowid so large tables never come back in one huge response.
-  let last = Number.MIN_SAFE_INTEGER;
-  for (;;) {
-    const { rows, columns } = await remote.execute({
-      sql: `SELECT rowid AS __rowid, * FROM ${quoted} WHERE rowid > ? ORDER BY rowid LIMIT ${BATCH}`,
-      args: [last],
-    });
-    if (rows.length === 0) break;
-    const cols = columns.slice(1);
-    const insert = `INSERT INTO ${quoted} (${cols
-      .map((c) => '"' + c.replaceAll('"', '""') + '"')
-      .join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`;
-    await local.batch(
-      rows.map((r) => ({ sql: insert, args: cols.map((c) => r[c]) })),
-      'write',
-    );
-    last = Number(rows[rows.length - 1].__rowid);
-    if (rows.length < BATCH) break;
-  }
-}
-
-for (const obj of objects) {
-  if (obj.type !== 'table') await local.execute(String(obj.sql));
-}
-
-const { rows: count } = await local.execute('SELECT COUNT(*) AS n FROM users');
-local.close();
-remote.close();
-
+// Write straight to the final path. (Building in a temp file and renaming it
+// failed on Windows with EBUSY: libSQL keeps the file handle open after
+// close(), and Windows can't rename an open file.)
 try {
+  removeWithSideFiles(outFile + '.tmp'); // left over from that older version
   removeWithSideFiles(outFile);
-  fs.renameSync(tmpFile, outFile);
 } catch (err) {
   console.error(
     `Could not replace ${outFile} (${err.code ?? err.message}).\n` +
@@ -114,9 +65,71 @@ try {
   );
   process.exit(1);
 }
+const local = createClient({ url: 'file:' + outFile });
 
-console.log(`Copied ${tableObjs.length} tables, ${count[0].n} users -> ${outFile}`);
-console.log(
-  'Open that file in DBeaver: New Connection -> SQLite -> Path (press F5 to refresh).',
-);
+try {
+  // Tables first, then indexes/views/triggers.
+  const { rows: objects } = await remote.execute(
+    `SELECT type, name, sql FROM sqlite_master
+   WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'libsql_%'
+   ORDER BY CASE type WHEN 'table' THEN 0 ELSE 1 END, name`,
+  );
+
+  // Create every table before copying any rows, and copy with foreign-key
+  // checks off: a child table (e.g. workout_sets) can sort before its parent
+  // (workouts), and production may hold orphan rows the checks would reject.
+  // Indexes and triggers are added after the data so triggers never fire.
+  const tableObjs = objects.filter((o) => o.type === 'table');
+  for (const obj of tableObjs) await local.execute(String(obj.sql));
+  await local.execute('PRAGMA foreign_keys = OFF');
+
+  const BATCH = 500;
+  for (const obj of tableObjs) {
+    const name = String(obj.name);
+    const quoted = '"' + name.replaceAll('"', '""') + '"';
+    // Page by rowid so large tables never come back in one huge response.
+    let last = Number.MIN_SAFE_INTEGER;
+    for (;;) {
+      const { rows, columns } = await remote.execute({
+        sql: `SELECT rowid AS __rowid, * FROM ${quoted} WHERE rowid > ? ORDER BY rowid LIMIT ${BATCH}`,
+        args: [last],
+      });
+      if (rows.length === 0) break;
+      const cols = columns.slice(1);
+      const insert = `INSERT INTO ${quoted} (${cols
+        .map((c) => '"' + c.replaceAll('"', '""') + '"')
+        .join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`;
+      await local.batch(
+        rows.map((r) => ({ sql: insert, args: cols.map((c) => r[c]) })),
+        'write',
+      );
+      last = Number(rows[rows.length - 1].__rowid);
+      if (rows.length < BATCH) break;
+    }
+  }
+
+  for (const obj of objects) {
+    if (obj.type !== 'table') await local.execute(String(obj.sql));
+  }
+
+  const { rows: count } = await local.execute(
+    'SELECT COUNT(*) AS n FROM users',
+  );
+  console.log(
+    `Copied ${tableObjs.length} tables, ${count[0].n} users -> ${outFile}`,
+  );
+  console.log(
+    'Open that file in DBeaver: New Connection -> SQLite -> Path (press F5 to refresh).',
+  );
+} catch (err) {
+  local.close();
+  try {
+    removeWithSideFiles(outFile); // don't leave a half-written snapshot
+  } catch {
+    // still locked; the next run deletes it
+  }
+  throw err;
+}
+local.close();
+remote.close();
 process.exit(0);

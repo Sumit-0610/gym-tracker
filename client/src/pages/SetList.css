@@ -44,6 +44,14 @@
   color: var(--c-text-dim);
 }
 
+/* Keep "11 reps × 60 kg", the RPE and the volume each in one piece, so a
+   narrow row breaks between them rather than in the middle of "60 kg". */
+.set-row-main,
+.set-row-rpe,
+.set-row-volume {
+  white-space: nowrap;
+}
+
 .set-rows {
   list-style: none;
   padding: 0;
@@ -53,19 +61,24 @@
 }
 
 .set-row {
-  display: flex;
-  gap: var(--s-3);
+  /* label | detail | icons. The detail column takes the leftover space and
+     wraps its own text, so the icons stay on the same line on narrow phones. */
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+  column-gap: var(--s-3);
+  align-items: center;
   padding: var(--s-1) 0;
 }
 
 .set-row-n {
-  flex-shrink: 0;
-  width: 3.5rem;
   color: var(--c-text-dim);
   font-size: var(--t-sm);
 }
 
 .set-row-detail {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.3em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -74,16 +87,23 @@
 }
 
 /* --- edit / delete controls --- */
-.set-row {
-  flex-wrap: wrap;
-  align-items: baseline;
-}
-
 .set-row-actions {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
-  margin-left: auto;
+  gap: var(--s-1);
+}
+
+/* The question gets its own line; Cancel / Delete sit together under it. */
+.set-row-confirm > span {
+  flex: 1 1 100%;
+}
+
+/* The delete confirm and an error message need the whole row width, so they
+   drop onto their own line under the set. */
+.set-row-confirm,
+.set-row-error {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
 }
 
 .set-row-btn {
@@ -132,30 +152,38 @@
 
 .set-row-confirm {
   flex-wrap: wrap;
+  text-align: right;
   font-size: var(--t-sm);
   color: var(--c-text-dim);
 }
 
 .set-row-editing {
+  display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: var(--s-3);
-  width: 100%;
+  min-width: 0;
   padding: var(--s-3) 0;
 }
 
+/* Reps and weight side by side, each taking half the card. */
 .set-edit-fields {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--s-3);
 }
 
-.set-edit-fields .field {
-  flex: 1;
+/* Inputs have a built-in minimum width (about 20 characters). Without this
+   they push past the card and make the whole page wider than the phone. */
+.set-row-editing input,
+.set-row-editing select {
+  width: 100%;
   min-width: 0;
 }
 
 .set-row-editing .set-row-actions {
-  margin-left: 0;
   justify-content: flex-end;
+  gap: var(--s-2);
 }
 
 .set-group-pr {

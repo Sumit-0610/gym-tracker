@@ -140,7 +140,9 @@ function SetRow({ set: s, unit, onEdit, onDelete }) {
         )}
       </span>
       <span className="set-row-detail">
-        {s.reps} reps × {formatWeight(s.weight, unit)}
+        <span className="set-row-main">
+          {s.reps} reps × {formatWeight(s.weight, unit)}
+        </span>
         {s.rpe != null && <span className="set-row-rpe"> · RPE {s.rpe}</span>}
         {volumeKg > 0 && (
           <span className="set-row-volume">
@@ -196,7 +198,7 @@ function SetRow({ set: s, unit, onEdit, onDelete }) {
       )}
 
       {error && mode === 'view' && (
-        <span className="set-row-actions">
+        <span className="set-row-actions set-row-error">
           <ErrorMessage error={error} />
         </span>
       )}

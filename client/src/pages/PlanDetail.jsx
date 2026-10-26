@@ -8,6 +8,7 @@ import Spinner from '../components/Spinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import { levelLabel, planMeta } from './plans';
+import { ZoomableImage } from '../components/ImageViewer';
 import { SafetyNote, Sources } from './PlanNotes';
 import './Plans.css';
 
@@ -179,12 +180,11 @@ export default function PlanDetail({ id }) {
                 {w.exercises.map((ex, i) => (
                   <li key={`${ex.id}-${i}`} className="plan-exercise">
                     {ex.image_url ? (
-                      <img
+                      <ZoomableImage
                         className="exercise-thumb"
                         src={ex.image_url}
-                        alt=""
+                        name={ex.name}
                         loading="lazy"
-                        decoding="async"
                       />
                     ) : (
                       <span className="exercise-thumb" aria-hidden="true" />

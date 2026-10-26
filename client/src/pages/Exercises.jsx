@@ -7,6 +7,7 @@ import Spinner from '../components/Spinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import ExerciseVideoLink from '../components/ExerciseVideoLink';
+import { ZoomableImage } from '../components/ImageViewer';
 import './Exercises.css';
 
 export default function Exercises() {
@@ -78,12 +79,11 @@ export default function Exercises() {
           {filtered.map((e) => (
             <li key={e.id} className="exercise-row">
               {e.image_url ? (
-                <img
+                <ZoomableImage
                   className="exercise-thumb"
                   src={e.image_url}
-                  alt=""
+                  name={e.name}
                   loading="lazy"
-                  decoding="async"
                 />
               ) : (
                 <span className="exercise-thumb" aria-hidden="true" />

@@ -125,3 +125,15 @@
   color: var(--c-text-dim);
   font-variant-numeric: tabular-nums;
 }
+
+.ep-media-zoom {
+  width: 100%;
+  border-radius: var(--r-md);
+}
+
+.ep-media-zoom .zoomable-hint {
+  right: var(--s-2);
+  bottom: var(--s-2);
+  width: 32px;
+  height: 32px;
+}

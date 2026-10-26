@@ -9,6 +9,7 @@ import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import ProgressChart from '../components/ProgressChart';
 import ExerciseVideoLink from '../components/ExerciseVideoLink';
+import { ZoomableImage } from '../components/ImageViewer';
 import './ExerciseProgress.css';
 
 // One lift's history: personal records, an estimated-1RM trend, and every
@@ -61,9 +62,11 @@ export default function ExerciseProgress({ id }) {
       {(exercise.image_url || exercise.video_url) && (
         <figure className="ep-media">
           {exercise.image_url && (
-            <img
+            <ZoomableImage
               src={exercise.image_url}
-              alt={`${exercise.name}: start and finish position`}
+              name={exercise.name}
+              buttonClassName="ep-media-zoom"
+              imgAlt={`${exercise.name}: start and finish position`}
             />
           )}
           <figcaption>

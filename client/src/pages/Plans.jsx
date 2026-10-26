@@ -5,6 +5,7 @@ import { Link } from '../router';
 import Spinner from '../components/Spinner';
 import ErrorMessage from '../components/ErrorMessage';
 import { LEVELS, planMeta } from './plans';
+import { SafetyNote, Sources } from './PlanNotes';
 import './Plans.css';
 
 // Browse the suggested plans, one level at a time.
@@ -24,6 +25,7 @@ export default function Plans() {
       <p className="plans-intro">
         Ready-made programs. Pick one and add it to your routines in one tap.
       </p>
+      <SafetyNote />
 
       {/* A tab list: one level visible at a time keeps the screen short. */}
       <div className="level-tabs" role="tablist" aria-label="Experience level">
@@ -68,6 +70,8 @@ export default function Plans() {
           ))}
         </ul>
       )}
+
+      <Sources />
     </div>
   );
 }

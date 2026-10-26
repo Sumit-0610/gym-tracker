@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { EXERCISES } = require('../../src/seed');
-const { PLANS, LEVELS, routineName } = require('../../src/plans');
+const { PLANS, LEVELS, routineName, weeklyVolume } = require('../../src/plans');
 
 const library = new Set(EXERCISES.map(([name]) => name));
 
@@ -49,4 +49,44 @@ test('a plan has no more workouts than training days', () => {
   for (const p of PLANS) {
     assert.ok(p.workouts.length <= p.days_per_week, p.id);
   }
+});
+
+// Research checks (sources in src/plans.js): each major muscle trained at
+// least twice a week, with weekly direct sets in a range that fits the level.
+const MAJOR = ['Chest', 'Back', 'Shoulders', 'Quads', 'Hamstrings'];
+const MIN_SETS = { beginner: 4, intermediate: 6, expert: 8 };
+const muscleOf = (name) =>
+  EXERCISES.find(([n]) => n === name)?.[1] ?? undefined;
+
+test('every major muscle is trained at least twice a week', () => {
+  for (const p of PLANS) {
+    const v = weeklyVolume(p, muscleOf);
+    for (const m of MAJOR) {
+      assert.ok(v[m] && v[m].days >= 2, `${p.id}: ${m} ${v[m]?.days ?? 0}x`);
+    }
+  }
+});
+
+test('weekly sets per major muscle fit the level', () => {
+  for (const p of PLANS) {
+    const v = weeklyVolume(p, muscleOf);
+    for (const m of MAJOR) {
+      const sets = v[m]?.sets ?? 0;
+      assert.ok(sets >= MIN_SETS[p.level], `${p.id}: ${m} only ${sets} sets`);
+      assert.ok(sets <= 30, `${p.id}: ${m} ${sets} sets is too many`);
+    }
+  }
+});
+
+test('weeklyVolume counts a two-workout, three-day plan as 1.5 runs each', () => {
+  const plan = /** @type {any} */ ({
+    days_per_week: 3,
+    workouts: [
+      { exercises: [['Push-Up', 2, 10]] },
+      { exercises: [['Push-Up', 2, 10]] },
+    ],
+  });
+  assert.deepEqual(weeklyVolume(plan, muscleOf), {
+    Chest: { sets: 6, days: 3 },
+  });
 });

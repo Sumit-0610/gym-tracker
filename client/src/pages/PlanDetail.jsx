@@ -8,6 +8,7 @@ import Spinner from '../components/Spinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import { levelLabel, planMeta } from './plans';
+import { SafetyNote, Sources } from './PlanNotes';
 import './Plans.css';
 
 // Copies the plan into the user's routines. Once done (now or on an earlier
@@ -72,6 +73,41 @@ function StartPlan({ plan }) {
   );
 }
 
+// Weekly direct sets and training days per muscle, biggest first. Lets the
+// user see the plan meets the "twice a week, ~10+ sets" guideline.
+function WeeklySets({ weekly }) {
+  const rows = Object.entries(weekly).sort((a, b) => b[1].sets - a[1].sets);
+  const fmt = (n) => (Number.isInteger(n) ? n : n.toFixed(1));
+  return (
+    <section className="plan-weekly">
+      <h2>Sets per muscle each week</h2>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Muscle</th>
+            <th scope="col">Sets</th>
+            <th scope="col">Days</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(([muscle, v]) => (
+            <tr key={muscle}>
+              <th scope="row">{muscle}</th>
+              <td>{fmt(v.sets)}</td>
+              <td>{fmt(v.days)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="plan-weekly-note">
+        Counts sets where the muscle is the main target. Big lifts also work
+        helper muscles (bench press works triceps, for example), so the real
+        totals are a little higher.
+      </p>
+    </section>
+  );
+}
+
 // `id` is the route parameter from "/routines/plans/:id".
 export default function PlanDetail({ id }) {
   const {
@@ -112,7 +148,25 @@ export default function PlanDetail({ id }) {
             <dd>{plan.schedule}</dd>
             <dt>How to progress</dt>
             <dd>{plan.progression}</dd>
+            {plan.based_on && (
+              <>
+                <dt>Based on</dt>
+                <dd>
+                  <a
+                    href={plan.based_on.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {plan.based_on.name}
+                  </a>
+                </dd>
+              </>
+            )}
           </dl>
+
+          <WeeklySets weekly={plan.weekly_sets} />
+
+          <SafetyNote full />
 
           <StartPlan plan={plan} />
 
@@ -154,6 +208,7 @@ export default function PlanDetail({ id }) {
               </ul>
             </section>
           ))}
+          <Sources />
         </>
       )}
     </div>

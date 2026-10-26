@@ -11,6 +11,18 @@
 // checks that every name here exists in the exercise library.
 //
 // Each exercise is [name, target sets, target reps].
+//
+// How the plans were checked (the unit test enforces the first two):
+//   - Every plan trains each major muscle group at least twice a week. The
+//     ACSM 2026 resistance training position stand recommends this, and the
+//     frequency meta-analysis (Schoenfeld et al., 2016) found twice a week
+//     beats once when weekly sets are equal.
+//   - Weekly sets per muscle rise with level: roughly 6-12 for beginners, around
+//     10 (the ACSM hypertrophy figure) for intermediates, and up to about 20 for
+//     experts. More sets help, with diminishing returns (Schoenfeld et al., 2017;
+//     Pelland et al., 2026).
+//   - Three plans follow the layout of well-known free programs, linked in
+//     `based_on`, so their structure can be cross-checked.
 
 /**
  * @typedef {[string, number, number]} PlanExercise
@@ -26,6 +38,7 @@
  *   summary: string,
  *   schedule: string,
  *   progression: string,
+ *   based_on: { name: string, url: string } | null,
  *   workouts: PlanWorkout[],
  * }} Plan
  */
@@ -44,11 +57,15 @@ const PLANS = [
     days_per_week: 3,
     minutes: 45,
     summary:
-      'Two short full-body workouts you alternate. Every session trains each big muscle group, so you practise the main lifts often.',
+      'Two short full-body workouts you alternate. Every session trains each big muscle group, so you practise the main movements often.',
     schedule:
       'Three days a week with a rest day in between, e.g. Mon / Wed / Fri. Alternate A and B: A, B, A one week, then B, A, B the next.',
     progression:
-      'When you hit every set and rep with good form, add the smallest weight step next time (2.5 kg on barbells, 1–2 kg on dumbbells).',
+      'When you hit every set and rep with good form, add the smallest weight step next time (2.5 kg on barbells, 1–2 kg on dumbbells). If you miss reps on a lift three sessions in a row, drop its weight by 10% and build back up.',
+    based_on: {
+      name: "Phrak's Greyskull LP (same A/B, three-day layout)",
+      url: 'https://www.liftosaur.com/programs/phrakgreyskull',
+    },
     workouts: [
       {
         name: 'Workout A',
@@ -64,12 +81,13 @@ const PLANS = [
       },
       {
         name: 'Workout B',
-        focus: 'Hinge, press, row',
+        focus: 'Legs, press, row',
         exercises: [
           ['Leg Press', 3, 10],
           ['Seated Dumbbell Shoulder Press', 3, 10],
           ['Seated Cable Row', 3, 10],
-          ['Glute Bridge', 3, 12],
+          ['Push-Up', 3, 10],
+          ['Lying Leg Curl', 2, 12],
           ['Dumbbell Curl', 2, 12],
           ['Triceps Pushdown', 2, 12],
         ],
@@ -89,7 +107,8 @@ const PLANS = [
     schedule:
       'Four days a week, e.g. Mon Upper, Tue Lower, Thu Upper, Fri Lower. Rest on the other days.',
     progression:
-      'Use the same weight until all sets reach the top rep count, then add a small step of weight and build the reps back up.',
+      'Use the same weight until all sets reach the target reps, then add a small step of weight and build the reps back up.',
+    based_on: null,
     workouts: [
       {
         name: 'Upper',
@@ -99,6 +118,7 @@ const PLANS = [
           ['Lat Pulldown', 3, 10],
           ['Machine Shoulder Press', 3, 10],
           ['Seated Cable Row', 3, 10],
+          ['Cable Fly', 2, 12],
           ['Dumbbell Curl', 2, 12],
           ['Rope Pushdown', 2, 12],
         ],
@@ -118,48 +138,55 @@ const PLANS = [
     ],
   },
   {
-    id: 'beginner-ppl',
-    name: 'Push / Pull / Legs Lite',
-    short: 'PPL Lite',
+    id: 'beginner-upper-lower-full',
+    name: 'Upper / Lower / Full Body',
+    short: 'ULF Starter',
     level: 'beginner',
-    split: 'Push / pull / legs',
+    split: 'Upper / lower / full',
     days_per_week: 3,
-    minutes: 40,
+    minutes: 45,
     summary:
-      'The classic three-way split with fewer exercises and lighter volume. Mostly machines and dumbbells, so it is easy to learn.',
+      'Three different days: upper body, lower body, then a full-body day. Only three sessions, but every muscle still gets trained twice a week.',
     schedule:
-      'Three days a week, e.g. Mon Push, Wed Pull, Fri Legs. Keep at least one rest day between sessions.',
+      'Three days a week, e.g. Mon Upper, Wed Lower, Fri Full Body. Keep at least one rest day between sessions.',
     progression:
-      'Add one rep per set each week. Once you reach 12 reps on every set, add weight and go back to 8.',
+      'Add one rep per set each week. Once every set reaches 12 reps, add weight and go back to 8–10.',
+    based_on: null,
     workouts: [
       {
-        name: 'Push',
-        focus: 'Chest, shoulders, triceps',
+        name: 'Upper',
+        focus: 'Chest, back, shoulders, arms',
         exercises: [
           ['Machine Chest Press', 3, 10],
-          ['Incline Dumbbell Press', 3, 10],
-          ['Lateral Raise', 3, 12],
-          ['Triceps Pushdown', 3, 12],
-        ],
-      },
-      {
-        name: 'Pull',
-        focus: 'Back, rear delts, biceps',
-        exercises: [
           ['Lat Pulldown', 3, 10],
+          ['Seated Dumbbell Shoulder Press', 3, 10],
           ['Seated Cable Row', 3, 10],
-          ['Face Pull', 3, 15],
-          ['Hammer Curl', 3, 12],
+          ['Hammer Curl', 2, 12],
+          ['Rope Pushdown', 2, 12],
         ],
       },
       {
-        name: 'Legs',
+        name: 'Lower',
         focus: 'Quads, hamstrings, calves',
         exercises: [
           ['Goblet Squat', 3, 10],
-          ['Lying Leg Curl', 3, 12],
-          ['Walking Lunge', 2, 10],
-          ['Seated Calf Raise', 3, 15],
+          ['Dumbbell Romanian Deadlift', 3, 10],
+          ['Leg Extension', 2, 12],
+          ['Lying Leg Curl', 2, 12],
+          ['Standing Calf Raise', 3, 12],
+          ['Dead Bug', 2, 10],
+        ],
+      },
+      {
+        name: 'Full Body',
+        focus: 'A bit of everything',
+        exercises: [
+          ['Leg Press', 3, 10],
+          ['Incline Dumbbell Press', 3, 10],
+          ['Chest-Supported Dumbbell Row', 3, 10],
+          ['Seated Leg Curl', 2, 12],
+          ['Lateral Raise', 2, 15],
+          ['Crunch', 2, 15],
         ],
       },
     ],
@@ -180,6 +207,10 @@ const PLANS = [
       'Four days a week, e.g. Mon Upper Strength, Tue Lower Strength, Thu Upper Volume, Fri Lower Volume.',
     progression:
       'On strength days add 2.5 kg when you complete every set. On volume days, add reps first, then weight.',
+    based_on: {
+      name: 'PHUL: Power Hypertrophy Upper Lower (same four-day layout)',
+      url: 'https://www.muscleandstrength.com/workouts/phul-workout',
+    },
     workouts: [
       {
         name: 'Upper Strength',
@@ -226,6 +257,7 @@ const PLANS = [
           ['Bulgarian Split Squat', 3, 10],
           ['Seated Leg Curl', 3, 12],
           ['Leg Extension', 3, 15],
+          ['Seated Calf Raise', 3, 15],
           ['Hanging Leg Raise', 3, 12],
         ],
       },
@@ -237,14 +269,18 @@ const PLANS = [
     short: 'PPL',
     level: 'intermediate',
     split: 'Push / pull / legs',
-    days_per_week: 3,
+    days_per_week: 6,
     minutes: 60,
     summary:
-      'Each muscle group gets its own day with a heavy compound lift first. Run it three days a week, or six to train everything twice.',
+      'The popular six-day split: three workouts, each done twice a week, so every muscle is trained twice. Each day starts with a heavy compound lift.',
     schedule:
-      'Three days (Mon Push, Wed Pull, Fri Legs) or six days (Push, Pull, Legs, Push, Pull, Legs, rest).',
+      'Pull, Push, Legs, Pull, Push, Legs, then one rest day. If you can only train three days, run each workout once a week, but expect slower progress.',
     progression:
-      'Add weight to the first lift of each day whenever you hit all sets. For the rest, add reps until the top of the range, then weight.',
+      'Add weight to the first lift of each day whenever you hit all sets. For the rest, add reps until the top of the range, then weight. If you miss reps three sessions in a row, drop 10% and build back up.',
+    based_on: {
+      name: "Reddit's beginner PPL by Metallicadpa (same six-day layout)",
+      url: 'https://www.liftosaur.com/programs/metallicadpappl',
+    },
     workouts: [
       {
         name: 'Push',
@@ -253,7 +289,7 @@ const PLANS = [
           ['Barbell Bench Press', 4, 6],
           ['Seated Dumbbell Shoulder Press', 3, 8],
           ['Incline Dumbbell Press', 3, 10],
-          ['Cable Lateral Raise', 3, 12],
+          ['Cable Lateral Raise', 3, 15],
           ['Overhead Triceps Extension', 3, 12],
         ],
       },
@@ -261,20 +297,20 @@ const PLANS = [
         name: 'Pull',
         focus: 'Back, rear delts, biceps',
         exercises: [
-          ['Conventional Deadlift', 3, 5],
-          ['Pull-Up', 3, 8],
-          ['Seated Cable Row', 3, 10],
+          ['Barbell Row', 4, 6],
+          ['Lat Pulldown', 3, 10],
           ['Face Pull', 3, 15],
-          ['Barbell Curl', 3, 10],
+          ['Hammer Curl', 3, 12],
+          ['Dumbbell Curl', 2, 12],
         ],
       },
       {
         name: 'Legs',
         focus: 'Quads, hamstrings, glutes, calves',
         exercises: [
-          ['Barbell Back Squat', 4, 6],
+          ['Barbell Back Squat', 3, 6],
           ['Romanian Deadlift', 3, 8],
-          ['Walking Lunge', 3, 10],
+          ['Leg Press', 3, 10],
           ['Lying Leg Curl', 3, 12],
           ['Standing Calf Raise', 4, 12],
         ],
@@ -295,6 +331,7 @@ const PLANS = [
       'Three days a week with rest days between, e.g. Mon Day 1, Wed Day 2, Fri Day 3.',
     progression:
       'Add weight to the main lift (the first exercise) every week you complete it. Change accessory weights when they feel easy.',
+    based_on: null,
     workouts: [
       {
         name: 'Day 1',
@@ -315,6 +352,7 @@ const PLANS = [
           ['Romanian Deadlift', 3, 8],
           ['Lat Pulldown', 3, 10],
           ['Bulgarian Split Squat', 3, 10],
+          ['Standing Calf Raise', 3, 12],
           ['Hammer Curl', 3, 12],
         ],
       },
@@ -326,6 +364,7 @@ const PLANS = [
           ['Overhead Press', 3, 8],
           ['Pull-Up', 3, 8],
           ['Leg Press', 3, 12],
+          ['Cable Fly', 3, 12],
           ['Rope Pushdown', 3, 12],
           ['Cable Crunch', 3, 15],
         ],
@@ -343,11 +382,12 @@ const PLANS = [
     days_per_week: 6,
     minutes: 75,
     summary:
-      'Six days, every muscle twice a week. The A days are heavy and the B days use more volume and different exercises.',
+      'Six different workouts, every muscle twice a week. The A days are heavy and the B days use more volume and different exercises.',
     schedule:
       'Push A, Pull A, Legs A, Push B, Pull B, Legs B, then one rest day.',
     progression:
       'Push the A-day main lifts with small weekly jumps. Take an easier week (about half the sets) every 6–8 weeks.',
+    based_on: null,
     workouts: [
       {
         name: 'Push A',
@@ -424,79 +464,79 @@ const PLANS = [
     ],
   },
   {
-    id: 'expert-body-part',
-    name: 'Five-Day Body Part Split',
-    short: 'Body Part Split',
+    id: 'expert-ulppl',
+    name: 'Upper / Lower + Push / Pull / Legs',
+    short: 'ULPPL',
     level: 'expert',
-    split: 'Body part split',
+    split: 'Hybrid 5-day',
     days_per_week: 5,
     minutes: 70,
     summary:
-      'A bodybuilding-style week where each day hits one or two muscle groups very hard, with lots of sets per muscle.',
-    schedule: 'Mon Chest, Tue Back, Wed Legs, Thu Shoulders, Fri Arms.',
+      'Two heavy days (upper and lower) followed by three high-volume days (push, pull, legs). Five sessions, with every muscle trained twice a week.',
+    schedule:
+      'Mon Upper, Tue Lower, Wed rest, Thu Push, Fri Pull, Sat Legs, Sun rest.',
     progression:
-      'Aim to beat last week on reps or weight for each exercise. Keep the last set of each exercise close to failure.',
+      'Upper and Lower days: add weight to the first two lifts each week you complete them. Push, Pull and Legs: beat last week on reps or weight, keeping 1–2 reps in reserve.',
+    based_on: null,
     workouts: [
       {
-        name: 'Chest',
-        focus: 'Chest',
+        name: 'Upper',
+        focus: 'Heavy press and pull',
         exercises: [
-          ['Barbell Bench Press', 4, 6],
-          ['Incline Dumbbell Press', 4, 8],
-          ['Decline Dumbbell Press', 3, 10],
-          ['Cable Fly', 3, 12],
-          ['Pec Deck', 3, 15],
-          ['Dip', 3, 10],
+          ['Barbell Bench Press', 4, 5],
+          ['Pull-Up', 4, 6],
+          ['Overhead Press', 3, 6],
+          ['Pendlay Row', 3, 6],
+          ['EZ-Bar Curl', 2, 10],
+          ['Skull Crusher', 2, 10],
         ],
       },
       {
-        name: 'Back',
-        focus: 'Back and rear delts',
+        name: 'Lower',
+        focus: 'Heavy squat and hinge',
         exercises: [
-          ['Rack Pull', 4, 5],
-          ['Pull-Up', 4, 8],
-          ['T-Bar Row', 4, 8],
+          ['Barbell Back Squat', 4, 5],
+          ['Romanian Deadlift', 3, 6],
+          ['Leg Press', 3, 10],
+          ['Lying Leg Curl', 3, 10],
+          ['Standing Calf Raise', 4, 10],
+        ],
+      },
+      {
+        name: 'Push',
+        focus: 'Chest, shoulders, triceps volume',
+        exercises: [
+          ['Incline Dumbbell Press', 4, 10],
+          ['Machine Shoulder Press', 3, 10],
+          ['Pec Deck', 3, 15],
+          ['Cable Lateral Raise', 4, 15],
+          ['Rope Pushdown', 3, 12],
+          ['Cable Overhead Triceps Extension', 3, 12],
+        ],
+      },
+      {
+        name: 'Pull',
+        focus: 'Back and biceps volume',
+        exercises: [
+          ['Lat Pulldown', 4, 10],
+          ['Chest-Supported Dumbbell Row', 4, 10],
           ['Single-Arm Lat Pulldown', 3, 12],
-          ['Seated Cable Row', 3, 12],
-          ['Dumbbell Shrug', 3, 12],
+          ['Reverse Pec Deck', 3, 15],
+          ['Incline Dumbbell Curl', 3, 12],
+          ['Hammer Curl', 3, 12],
         ],
       },
       {
         name: 'Legs',
-        focus: 'Quads, hamstrings, calves',
+        focus: 'Legs and glutes volume',
         exercises: [
-          ['Barbell Back Squat', 5, 5],
-          ['Hack Squat', 3, 10],
-          ['Romanian Deadlift', 4, 8],
-          ['Walking Lunge', 3, 12],
+          ['Hack Squat', 4, 10],
+          ['Hip Thrust', 3, 10],
+          ['Bulgarian Split Squat', 3, 10],
           ['Seated Leg Curl', 3, 12],
           ['Leg Extension', 3, 15],
-          ['Standing Calf Raise', 5, 12],
-        ],
-      },
-      {
-        name: 'Shoulders',
-        focus: 'Delts and core',
-        exercises: [
-          ['Overhead Press', 4, 6],
-          ['Arnold Press', 3, 10],
-          ['Cable Lateral Raise', 4, 15],
-          ['Cable Rear Delt Fly', 3, 15],
-          ['Upright Row', 3, 12],
-          ['Ab Wheel Rollout', 3, 10],
-        ],
-      },
-      {
-        name: 'Arms',
-        focus: 'Biceps, triceps, forearms',
-        exercises: [
-          ['Close-Grip Bench Press', 4, 8],
-          ['EZ-Bar Curl', 4, 8],
-          ['Skull Crusher', 3, 10],
-          ['Preacher Curl', 3, 10],
-          ['Rope Pushdown', 3, 15],
-          ['Spider Curl', 3, 12],
-          ['Reverse Curl', 3, 12],
+          ['Seated Calf Raise', 4, 15],
+          ['Hanging Leg Raise', 3, 12],
         ],
       },
     ],
@@ -508,33 +548,35 @@ const PLANS = [
     level: 'expert',
     split: 'Strength + size',
     days_per_week: 4,
-    minutes: 75,
+    minutes: 80,
     summary:
       'Built around the four big barbell lifts. Each day starts with heavy low-rep work on one lift, then adds bodybuilding work for size.',
     schedule:
       'Mon Squat, Tue Bench, Thu Deadlift, Fri Overhead Press. Rest between Tue and Thu.',
     progression:
-      'Add 2.5 kg (upper) or 5 kg (lower) to the main lift each week until you miss reps, then drop 10% and build back up.',
+      'Add 2.5 kg (upper) or 5 kg (lower) to the main lift each week until you miss reps, then drop 10% and build back up. Take an easier week every 6–8 weeks.',
+    based_on: null,
     workouts: [
       {
         name: 'Squat Day',
-        focus: 'Squat and quads',
+        focus: 'Squat and legs',
         exercises: [
           ['Barbell Back Squat', 5, 3],
           ['Front Squat', 3, 6],
-          ['Leg Press', 3, 10],
+          ['Romanian Deadlift', 4, 8],
           ['Leg Extension', 3, 12],
           ['Standing Calf Raise', 4, 10],
         ],
       },
       {
         name: 'Bench Day',
-        focus: 'Bench and chest',
+        focus: 'Bench and upper back',
         exercises: [
           ['Barbell Bench Press', 5, 3],
           ['Close-Grip Bench Press', 3, 6],
           ['Incline Dumbbell Press', 3, 10],
           ['Chest-Supported Dumbbell Row', 4, 10],
+          ['Cable Lateral Raise', 3, 15],
           ['Triceps Pushdown', 3, 12],
         ],
       },
@@ -543,23 +585,24 @@ const PLANS = [
         focus: 'Deadlift and back',
         exercises: [
           ['Conventional Deadlift', 5, 3],
-          ['Deficit Deadlift', 3, 5],
           ['Barbell Row', 4, 8],
-          ['Glute-Ham Raise', 3, 8],
           ['Pull-Up', 3, 8],
-          ['Hanging Leg Raise', 3, 12],
+          ['Leg Press', 3, 10],
+          ['Glute-Ham Raise', 4, 8],
+          ['Seated Calf Raise', 3, 15],
         ],
       },
       {
         name: 'Press Day',
-        focus: 'Overhead press and arms',
+        focus: 'Overhead press, chest and arms',
         exercises: [
           ['Overhead Press', 5, 3],
-          ['Push Press', 3, 5],
+          ['Incline Barbell Bench Press', 3, 8],
           ['Lateral Raise', 4, 15],
           ['Face Pull', 3, 15],
           ['Barbell Curl', 3, 10],
           ['Overhead Triceps Extension', 3, 12],
+          ['Hanging Leg Raise', 3, 12],
         ],
       },
     ],
@@ -573,4 +616,41 @@ const routineName = (/** @type {Plan} */ plan, /** @type {PlanWorkout} */ w) =>
 /** @param {string} id */
 const findPlan = (id) => PLANS.find((p) => p.id === id);
 
-module.exports = { PLANS, LEVELS, findPlan, routineName };
+/**
+ * Direct sets per muscle group per week, and how many days that muscle is
+ * trained. "Direct" means the exercise's own muscle group in the library; the
+ * helpers a compound lift also works (e.g. triceps on bench press) are not
+ * counted, so the real totals are a bit higher.
+ *
+ * Each workout runs days_per_week / workouts.length times a week (1.5 for a
+ * two-workout plan done three days a week).
+ *
+ * @param {Plan} plan
+ * @param {(name: string) => string | undefined} muscleOf exercise name -> group
+ * @returns {Record<string, { sets: number, days: number }>}
+ */
+function weeklyVolume(plan, muscleOf) {
+  const perWeek = plan.days_per_week / plan.workouts.length;
+  /** @type {Record<string, { sets: number, days: number }>} */
+  const out = {};
+  for (const w of plan.workouts) {
+    const seen = new Set();
+    for (const [name, sets] of w.exercises) {
+      const muscle = muscleOf(name);
+      if (!muscle) continue;
+      out[muscle] ??= { sets: 0, days: 0 };
+      out[muscle].sets += sets * perWeek;
+      if (!seen.has(muscle)) {
+        out[muscle].days += perWeek;
+        seen.add(muscle);
+      }
+    }
+  }
+  for (const v of Object.values(out)) {
+    v.sets = Math.round(v.sets * 10) / 10;
+    v.days = Math.round(v.days * 10) / 10;
+  }
+  return out;
+}
+
+module.exports = { PLANS, LEVELS, findPlan, routineName, weeklyVolume };

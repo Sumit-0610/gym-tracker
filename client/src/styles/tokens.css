@@ -16,6 +16,7 @@
   --c-danger: #f87171; /* errors */
   --c-danger-bg: #450a0a;
   --c-focus: #38bdf8; /* focus ring — high contrast, not the same as primary */
+  --c-warn: #f59e0b; /* caution notes (amber) */
 
   /* spacing scale (4px base) ------------------------------------------- */
   --s-1: 4px;

@@ -7,7 +7,7 @@
 const express = require('express');
 const { all, tx } = require('../db');
 const requireAuth = require('../middleware/auth');
-const { PLANS, findPlan, routineName } = require('../plans');
+const { PLANS, findPlan, routineName, weeklyVolume } = require('../plans');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -73,7 +73,8 @@ router.get('/plans', (req, res) => {
 });
 
 // GET /api/plans/:id
-//   Returns: 200 { ...summary, schedule, progression, started,
+//   Returns: 200 { ...summary, schedule, progression, based_on, started,
+//                  weekly_sets: { <muscle>: { sets, days } },
 //                  workouts: [{ name, focus, routine_name,
 //                    exercises: [{ id, name, muscle_group, image_url,
 //                                  video_url, target_sets, target_reps }] }] }
@@ -94,6 +95,11 @@ router.get('/plans/:id', async (req, res, next) => {
       ...summary(plan),
       schedule: plan.schedule,
       progression: plan.progression,
+      based_on: plan.based_on,
+      weekly_sets: weeklyVolume(
+        plan,
+        (name) => library.get(name)?.muscle_group,
+      ),
       started: existing.length === plan.workouts.length,
       workouts: plan.workouts.map((w) => ({
         name: w.name,

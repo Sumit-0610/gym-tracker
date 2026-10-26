@@ -528,6 +528,23 @@ fi
 check "email export unauthenticated"    401 "$(code POST /api/export/email "$TMP/anon.jar" '{}')"
 
 echo
+echo "== suggested plans =="
+check "list plans"                      200 "$(code GET /api/plans "$A")"
+check "nine plans"                      9   "$(body | jget 'd.length')"
+check "plan detail"                     200 "$(code GET /api/plans/beginner-upper-lower-full "$A")"
+check "plan reports weekly sets"        2   "$(body | jget 'd.weekly_sets.Chest.days')"
+check "plan not started yet"            false "$(body | jget 'd.started')"
+check "plan exercises resolve"          6   "$(body | jget 'd.workouts[0].exercises.length')"
+check "unknown plan -> 404"             404 "$(code GET /api/plans/nope "$A")"
+check "start plan (bob)"                201 "$(code POST /api/plans/beginner-upper-lower-full/start "$B")"
+check "start creates 3 routines"        3   "$(body | jget 'd.routines.length')"
+check "start same plan again -> 409"    409 "$(code POST /api/plans/beginner-upper-lower-full/start "$B")"
+check "plan now started for bob"        true "$(code GET /api/plans/beginner-upper-lower-full "$B" >/dev/null; body | jget 'd.started')"
+check "but not for alice"               false "$(code GET /api/plans/beginner-upper-lower-full "$A" >/dev/null; body | jget 'd.started')"
+check "start unknown plan -> 404"       404 "$(code POST /api/plans/nope/start "$B")"
+check "plans unauthenticated -> 401"    401 "$(code GET /api/plans "$TMP/anon.jar")"
+
+echo
 echo "== two-user authorization summary =="
 echo "  alice: routine $RID, workout $WID  |  bob: cannot touch either"
 check "regression: alice still authed"   200 "$(code GET /api/me "$A")"

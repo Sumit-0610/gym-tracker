@@ -6,6 +6,7 @@ import Input from '../components/Input';
 import Spinner from '../components/Spinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
+import ExerciseVideoLink from '../components/ExerciseVideoLink';
 import './Exercises.css';
 
 export default function Exercises() {
@@ -76,9 +77,23 @@ export default function Exercises() {
         <ul className="exercise-list">
           {filtered.map((e) => (
             <li key={e.id} className="exercise-row">
-              <Link to={`/exercises/${e.id}`} className="exercise-name">
-                {e.name}
-              </Link>
+              {e.image_url ? (
+                <img
+                  className="exercise-thumb"
+                  src={e.image_url}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <span className="exercise-thumb" aria-hidden="true" />
+              )}
+              <div className="exercise-info">
+                <Link to={`/exercises/${e.id}`} className="exercise-name">
+                  {e.name}
+                </Link>
+                <ExerciseVideoLink exercise={e} />
+              </div>
               {e.muscle_group && (
                 <span className="exercise-muscle">{e.muscle_group}</span>
               )}

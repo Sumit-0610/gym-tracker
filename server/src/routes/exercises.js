@@ -18,7 +18,8 @@ router.use(requireAuth);
 // GET /api/exercises
 //   Auth:     session required
 //   Body:     none
-//   Returns:  200 [{ id, name, muscle_group }, ...]
+//   Returns:  200 [{ id, name, muscle_group, image_url, video_url }, ...]
+//             image_url / video_url may be null.
 //
 // SQL notes:
 //   - No WHERE clause: every row in the library is public to any logged-in user.
@@ -31,7 +32,7 @@ router.use(requireAuth);
 router.get('/exercises', async (req, res, next) => {
   try {
     const exercises = await all(
-      `SELECT id, name, muscle_group
+      `SELECT id, name, muscle_group, image_url, video_url
          FROM exercises
         ORDER BY muscle_group, name`,
     );
@@ -59,7 +60,7 @@ async function loadExercise(req, res) {
   // The exercise must be a real library row (keeps the response meaningful;
   // an unknown id could otherwise 200-null forever).
   const exercise = await get(
-    'SELECT id, name, muscle_group FROM exercises WHERE id = ?',
+    'SELECT id, name, muscle_group, image_url, video_url FROM exercises WHERE id = ?',
     exerciseId,
   );
   if (!exercise) {
@@ -127,7 +128,7 @@ router.get('/exercises/:id/suggestion', async (req, res, next) => {
 //   The caller's history for one lift, one point per session, for the progress
 //   chart and PR list.
 //   Returns: 200 {
-//     exercise: { id, name, muscle_group },
+//     exercise: { id, name, muscle_group, image_url, video_url },
 //     sessions: [{ workout_id, date, best_e1rm, top_weight, volume, sets }]
 //                 oldest first, at most `limit` (default 30, max 100),
 //     prs: { e1rm, weight, volume } each { value, date } | null,

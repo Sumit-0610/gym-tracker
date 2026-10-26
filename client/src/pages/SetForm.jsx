@@ -14,6 +14,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import Select from '../components/Select';
 import ExerciseSelect from '../components/ExerciseSelect';
+import ExerciseVideoLink from '../components/ExerciseVideoLink';
 import ErrorMessage from '../components/ErrorMessage';
 import './SetForm.css';
 
@@ -211,7 +212,8 @@ export default function SetForm({
 
       {chosen && (
         <p className="set-form-context">
-          Logging <strong>set {nextSetNumber}</strong> of {chosen.name}
+          Logging <strong>set {nextSetNumber}</strong> of {chosen.name}{' '}
+          <ExerciseVideoLink exercise={chosen} label="How to" />
         </p>
       )}
 

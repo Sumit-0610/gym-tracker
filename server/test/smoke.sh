@@ -15,7 +15,7 @@ BASE="${BASE:-http://localhost:3000}"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-# Wait for the server to be reachable (it seeds ~68 exercises + runs migrations
+# Wait for the server to be reachable (it seeds ~150 exercises + runs migrations
 # on boot, so it is not instant). Fail fast rather than run against nothing.
 for _ in $(seq 1 60); do
   curl -sf "$BASE/healthz" >/dev/null 2>&1 && break
@@ -115,7 +115,11 @@ check "exercise library is non-trivial" "true" "$(body | jget 'd.length >= 40')"
 check "exercise rows have id/name/muscle_group" "true" \
   "$(body | jget "d.every(e => 'id' in e && 'name' in e && 'muscle_group' in e)")"
 check "no leaked columns"          "true" \
-  "$(body | jget "d.every(e => Object.keys(e).length === 3)")"
+  "$(body | jget "d.every(e => Object.keys(e).length === 5)")"
+check "exercise rows have image_url/video_url" "true" \
+  "$(body | jget "d.every(e => 'image_url' in e && 'video_url' in e)")"
+check "every exercise has a YouTube link" "true" \
+  "$(body | jget "d.every(e => /^https:\\/\\/www\\.youtube\\.com\\/watch\\?v=[A-Za-z0-9_-]{11}$/.test(e.video_url))")"
 check "exercises deterministically ordered" "true" \
   "$(body | jget "JSON.stringify(d) === JSON.stringify([...d].sort((x,y)=>(x.muscle_group+x.name).localeCompare(y.muscle_group+y.name)))")"
 

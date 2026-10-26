@@ -36,3 +36,29 @@
   color: var(--c-text-dim);
   font-size: var(--t-lg);
 }
+
+/* Entry point to the suggested plans. Green edge so it reads as an offer,
+   not as one of the user's own routines. */
+.plans-promo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  background: var(--c-surface);
+  border: 1px solid var(--c-primary);
+  border-radius: var(--r-md);
+  color: var(--c-text);
+  text-decoration: none;
+}
+
+.plans-promo-title {
+  display: block;
+  font-weight: 600;
+}
+
+.plans-promo-body {
+  display: block;
+  font-size: var(--t-sm);
+  color: var(--c-text-dim);
+}

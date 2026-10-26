@@ -15,6 +15,8 @@ import Exercises from './pages/Exercises';
 import ExerciseProgress from './pages/ExerciseProgress';
 import Routines from './pages/Routines';
 import RoutineDetail from './pages/RoutineDetail';
+import Plans from './pages/Plans';
+import PlanDetail from './pages/PlanDetail';
 import Workout from './pages/Workout';
 import History from './pages/History';
 import WorkoutDetail from './pages/WorkoutDetail';
@@ -40,6 +42,10 @@ const ROUTES = [
   { path: '/exercises', component: Exercises },
   { path: '/exercises/:id', component: ExerciseProgress },
   { path: '/routines', component: Routines },
+  // Before /routines/:id, so "plans" is not read as a routine id. Living under
+  // /routines keeps the Routines tab lit.
+  { path: '/routines/plans', component: Plans },
+  { path: '/routines/plans/:id', component: PlanDetail },
   { path: '/routines/:id', component: RoutineDetail },
   { path: '/workout', component: Workout },
   { path: '/workout/:id', component: Workout },

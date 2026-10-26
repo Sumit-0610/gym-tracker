@@ -64,6 +64,7 @@ app.use('/api', require('./routes/email-verify'));
 app.use('/api', require('./routes/admin'));
 app.use('/api', require('./routes/exercises'));
 app.use('/api', require('./routes/routines'));
+app.use('/api', require('./routes/plans'));
 app.use('/api', require('./routes/workouts'));
 app.use('/api', require('./routes/recap'));
 app.use('/api', require('./routes/stats'));

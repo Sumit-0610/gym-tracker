@@ -183,6 +183,12 @@ export const api = {
   addRoutineExercise: (routineId, payload) =>
     request('POST', `/api/routines/${routineId}/exercises`, payload),
 
+  // suggested plans (shared, read-only); starting one copies it into routines
+  plans: () => request('GET', '/api/plans'),
+  plan: (id) => request('GET', `/api/plans/${encodeURIComponent(id)}`),
+  startPlan: (id) =>
+    request('POST', `/api/plans/${encodeURIComponent(id)}/start`),
+
   // workouts
   workouts: ({ limit = 20, offset = 0 } = {}) =>
     request('GET', `/api/workouts?limit=${limit}&offset=${offset}`),

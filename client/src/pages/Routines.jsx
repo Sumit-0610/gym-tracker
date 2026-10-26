@@ -79,6 +79,18 @@ export default function Routines() {
     <div className="page">
       <h1>Routines</h1>
 
+      <Link to="/routines/plans" className="plans-promo">
+        <span>
+          <span className="plans-promo-title">Suggested plans</span>
+          <span className="plans-promo-body">
+            Beginner to expert programs you can add in one tap
+          </span>
+        </span>
+        <span className="routine-chevron" aria-hidden="true">
+          ›
+        </span>
+      </Link>
+
       <CreateRoutineForm onCreated={reload} />
 
       {loading && <Spinner label="Loading routines…" />}
@@ -86,7 +98,7 @@ export default function Routines() {
 
       {!loading && !error && routines && routines.length === 0 && (
         <EmptyState title="No routines yet">
-          Create your first routine above to start planning workouts.
+          Create your first routine above, or start from a suggested plan.
         </EmptyState>
       )}
 

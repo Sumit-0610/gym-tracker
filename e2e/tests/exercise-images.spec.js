@@ -14,6 +14,15 @@ async function openFirstPhoto(page) {
   return viewer;
 }
 
+// Closing also steps back over the history entry the viewer added. Wait for
+// that before the next action, as a person naturally would.
+async function expectClosed(page, viewer) {
+  await expect(viewer).toBeHidden();
+  await expect
+    .poll(() => page.evaluate(() => window.history.state?.imageViewer ?? null))
+    .toBeNull();
+}
+
 test('an exercise photo opens big and closes with ×, Escape or a tap outside', async ({
   page,
 }) => {
@@ -25,15 +34,15 @@ test('an exercise photo opens big and closes with ×, Escape or a tap outside', 
   const box = await viewer.getByRole('img').boundingBox();
   expect(box.width).toBeGreaterThan(300);
   await viewer.getByRole('button', { name: 'Close photo' }).click();
-  await expect(viewer).toBeHidden();
+  await expectClosed(page, viewer);
 
   viewer = await openFirstPhoto(page);
   await page.keyboard.press('Escape');
-  await expect(viewer).toBeHidden();
+  await expectClosed(page, viewer);
 
   viewer = await openFirstPhoto(page);
   await page.mouse.click(5, 5);
-  await expect(viewer).toBeHidden();
+  await expectClosed(page, viewer);
   await expect(page).toHaveURL(/\/exercises$/);
 });
 
@@ -42,7 +51,7 @@ test('Back closes the photo without leaving the page', async ({ page }) => {
   await page.goto('/exercises');
   const viewer = await openFirstPhoto(page);
   await page.goBack();
-  await expect(viewer).toBeHidden();
+  await expectClosed(page, viewer);
   await expect(page).toHaveURL(/\/exercises$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Exercises');
 });
@@ -55,11 +64,11 @@ test('the exercise page and suggested plans open photos too', async ({
   await page.locator('.exercise-name').first().click();
   let viewer = await openFirstPhoto(page);
   await viewer.getByRole('button', { name: 'Close photo' }).click();
-  await expect(viewer).toBeHidden();
+  await expectClosed(page, viewer);
 
   await page.goto('/routines/plans');
   await page.locator('a[href^="/routines/plans/"]').first().click();
   viewer = await openFirstPhoto(page);
   await page.keyboard.press('Escape');
-  await expect(viewer).toBeHidden();
+  await expectClosed(page, viewer);
 });

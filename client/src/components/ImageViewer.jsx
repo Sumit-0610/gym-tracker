@@ -36,9 +36,11 @@ export function ImageViewer({ src, alt, caption, onClose }) {
   }, []);
 
   // Closed by ×, Escape or the backdrop: take our history entry back off.
+  // The photo is hidden already; we unmount once Back has finished (the
+  // popstate above), so a quick re-open can't be closed by a late popstate.
   function handleClose() {
     if (window.history.state?.[HISTORY_KEY]) window.history.back();
-    onCloseRef.current();
+    else onCloseRef.current();
   }
 
   return (

@@ -8,6 +8,7 @@ import Spinner from '../components/Spinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import ProgressChart from '../components/ProgressChart';
+import ExerciseVideoLink from '../components/ExerciseVideoLink';
 import './ExerciseProgress.css';
 
 // One lift's history: personal records, an estimated-1RM trend, and every
@@ -56,6 +57,24 @@ export default function ExerciseProgress({ id }) {
           <span className="ep-muscle">{exercise.muscle_group}</span>
         )}
       </header>
+
+      {(exercise.image_url || exercise.video_url) && (
+        <figure className="ep-media">
+          {exercise.image_url && (
+            <img
+              src={exercise.image_url}
+              alt={`${exercise.name}: start and finish position`}
+            />
+          )}
+          <figcaption>
+            {exercise.image_url && <span>Start → finish</span>}
+            <ExerciseVideoLink
+              exercise={exercise}
+              label="Watch the form video on YouTube"
+            />
+          </figcaption>
+        </figure>
+      )}
 
       {sessions.length === 0 ? (
         <EmptyState title="No sets logged yet">

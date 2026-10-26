@@ -17,7 +17,9 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS exercises (
   id           INTEGER PRIMARY KEY AUTOINCREMENT,
   name         TEXT NOT NULL,
-  muscle_group TEXT
+  muscle_group TEXT,
+  image_url    TEXT,  -- start/end photo, e.g. '/exercise-images/push-up.webp'; NULL = none
+  video_url    TEXT   -- YouTube form tutorial (linked, never embedded)
 );
 
 -- User-created routines (templates).

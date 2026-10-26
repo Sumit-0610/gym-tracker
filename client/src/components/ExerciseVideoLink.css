@@ -1,0 +1,14 @@
+.exercise-video-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: var(--tap-min);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--c-focus);
+  text-decoration: none;
+}
+
+.exercise-video-link:hover {
+  text-decoration: underline;
+}

@@ -89,6 +89,9 @@ const MIGRATIONS = [
   ['users', 'email', 'TEXT'],
   // When the email was proven (a verify link was used). Admin access needs it.
   ['users', 'email_verified_at', 'TEXT'],
+  // Exercise picture and YouTube tutorial link. seed.js fills them in.
+  ['exercises', 'image_url', 'TEXT'],
+  ['exercises', 'video_url', 'TEXT'],
 ];
 
 async function migrate() {

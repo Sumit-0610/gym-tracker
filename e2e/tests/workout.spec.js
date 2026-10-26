@@ -1,7 +1,13 @@
 // Logging a workout: the "Workout", "Active workout refresh", "Completion" and
 // "History" sections of the old manual checklist.
 const { test, expect } = require('@playwright/test');
-const { signUp, startFreestyle, logSet, finishWorkout } = require('./helpers');
+const {
+  signUp,
+  startFreestyle,
+  logSet,
+  finishWorkout,
+  pickExercise,
+} = require('./helpers');
 
 test('log a freestyle workout, refresh mid-session, finish it', async ({
   page,
@@ -56,7 +62,7 @@ test('invalid set input is caught before anything is sent', async ({
   await form.getByRole('button', { name: 'Log set' }).click();
   await expect(form.getByRole('alert')).toContainText('Choose an exercise.');
 
-  await form.getByLabel('Exercise').selectOption({ label: 'Pull-Up' });
+  await pickExercise(page, form, 'Pull-Up');
   await form.getByLabel('Reps').fill('0');
   await form.getByLabel(/^Weight/).fill('0');
   await form.getByRole('button', { name: 'Log set' }).click();

@@ -1,7 +1,7 @@
 // The rules-based coach: "suggested routine today", the next-set suggestion
 // (double progression from last session) and the typo guard.
 const { test, expect } = require('@playwright/test');
-const { signUp, logSet, finishWorkout } = require('./helpers');
+const { signUp, logSet, finishWorkout, pickExercise } = require('./helpers');
 
 test('coach suggests a routine, then the next set from last session', async ({
   page,
@@ -13,9 +13,7 @@ test('coach suggests a routine, then the next set from last session', async ({
   await page.getByLabel('New routine').fill('Push Day');
   await page.getByRole('button', { name: 'Create routine' }).click();
   await page.getByRole('link', { name: /Push Day/ }).click();
-  await page
-    .getByLabel('Exercise')
-    .selectOption({ label: 'Barbell Bench Press' });
+  await pickExercise(page, page, 'Barbell Bench Press');
   await page.getByLabel('Target sets').fill('3');
   await page.getByLabel('Target reps').fill('12');
   await page.getByRole('button', { name: 'Add to routine' }).click();
@@ -38,7 +36,7 @@ test('coach suggests a routine, then the next set from last session', async ({
   // First session: nothing to build on, so no suggestion yet.
   await page.getByRole('button', { name: /Barbell Bench Press/ }).click();
   const form = page.locator('form.set-form');
-  await expect(form.getByLabel('Exercise')).toHaveValue(/\d+/);
+  await expect(form.getByLabel('Exercise')).toHaveText(/Barbell Bench Press/);
   await expect(
     form.getByText('Logging set 1 of Barbell Bench Press'),
   ).toBeVisible();

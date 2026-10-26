@@ -174,7 +174,7 @@ export default function SetForm({
       <ExerciseSelect
         exercises={exercises}
         value={exerciseId}
-        onChange={(e) => onExerciseChange(e.target.value)}
+        onChange={onExerciseChange}
       />
 
       {chosen && previous.data && (

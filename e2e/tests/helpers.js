@@ -39,6 +39,25 @@ async function startFreestyle(page) {
 }
 
 /**
+ * Choose an exercise in the photo picker inside `scope` (a form or the page).
+ * @param {import('@playwright/test').Page} page
+ * @param {import('@playwright/test').Locator | import('@playwright/test').Page} scope
+ * @param {string} name
+ */
+async function pickExercise(page, scope, name) {
+  await scope.getByLabel('Exercise').click();
+  const picker = page.getByRole('dialog', { name: 'Choose an exercise' });
+  await picker.getByRole('button', { name, exact: true }).click();
+  await expect(picker).toBeHidden();
+  // Closing steps back over the history entry the picker added; let it land.
+  await expect
+    .poll(() =>
+      page.evaluate(() => window.history.state?.exercisePicker ?? null),
+    )
+    .toBeNull();
+}
+
+/**
  * Fill and submit the "Log a set" form, then wait for the set to be listed.
  * @param {import('@playwright/test').Page} page
  * @param {{ exercise?: string, reps: number, weight: number }} set
@@ -46,7 +65,7 @@ async function startFreestyle(page) {
 async function logSet(page, { exercise, reps, weight }) {
   const form = page.locator('form.set-form');
   if (exercise) {
-    await form.getByLabel('Exercise').selectOption({ label: exercise });
+    await pickExercise(page, form, exercise);
   }
   await form.getByLabel('Reps').fill(String(reps));
   await form.getByLabel(/^Weight/).fill(String(weight));
@@ -75,4 +94,5 @@ module.exports = {
   startFreestyle,
   logSet,
   finishWorkout,
+  pickExercise,
 };

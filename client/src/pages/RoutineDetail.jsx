@@ -73,7 +73,7 @@ function AddExerciseForm({ routineId, exercises, onAdded }) {
       <ExerciseSelect
         exercises={exercises}
         value={exerciseId}
-        onChange={(e) => setExerciseId(e.target.value)}
+        onChange={setExerciseId}
       />
 
       <div className="target-row">
